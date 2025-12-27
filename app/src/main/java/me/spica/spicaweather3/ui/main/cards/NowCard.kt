@@ -5,7 +5,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
@@ -29,12 +28,6 @@ import me.spica.spicaweather3.R
 import me.spica.spicaweather3.common.WeatherAnimType
 import me.spica.spicaweather3.network.model.weather.WeatherData
 import me.spica.spicaweather3.ui.widget.WeatherBackground
-import me.spica.spicaweather3.ui.widget.icon.CloudIconView
-import me.spica.spicaweather3.ui.widget.icon.FogIcon
-import me.spica.spicaweather3.ui.widget.icon.RainIcon
-import me.spica.spicaweather3.ui.widget.icon.SnowIcon
-import me.spica.spicaweather3.ui.widget.icon.SunIconView
-import me.spica.spicaweather3.ui.widget.icon.WindIconView
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**

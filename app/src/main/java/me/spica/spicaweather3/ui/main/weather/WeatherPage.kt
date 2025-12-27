@@ -43,6 +43,7 @@ import me.spica.spicaweather3.theme.COLOR_WHITE_100
 import me.spica.spicaweather3.theme.WIDGET_CARD_CORNER_SHAPE
 import me.spica.spicaweather3.ui.LocalAnimatedContentScope
 import me.spica.spicaweather3.ui.LocalSharedTransitionScope
+import me.spica.spicaweather3.ui.air_quality.AirQualityScreen
 import me.spica.spicaweather3.ui.main.WeatherViewModel
 import me.spica.spicaweather3.ui.main.cards.AlertCard
 import me.spica.spicaweather3.ui.main.cards.AqiCard
@@ -550,7 +551,13 @@ private fun DataPage(
               )
               .fillMaxWidth()
               .noRippleClickable {
-
+                menuState.show {
+                  Text(
+                    stringResource(R.string.air_quality_please_use_menu),
+                    style = MiuixTheme.textStyles.body1,
+                    color = MiuixTheme.colorScheme.onSurface
+                  )
+                }
               }, weatherData = weatherEntity, startAnim = !anim.isRunning && anim.value > 0
           )
         }
@@ -588,8 +595,8 @@ private fun EmptyPage(modifier: Modifier = Modifier) {
     modifier = Modifier,
     contentAlignment = Alignment.Center
   ) {
-      Text(
-        stringResource(R.string.empty_state_no_data),
+    Text(
+      stringResource(R.string.empty_state_no_data),
       modifier = Modifier.align(Alignment.Center),
       style = MiuixTheme.textStyles.title2,
       color = COLOR_WHITE_100

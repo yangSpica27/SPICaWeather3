@@ -225,9 +225,9 @@ private fun AddCityButton(
        .clip(CircleShape)
        .hazeEffect(
          hazeState, style = HazeDefaults.style(
-           backgroundColor = MiuixTheme.colorScheme.primary,
+           backgroundColor = MiuixTheme.colorScheme.surfaceContainerHigh,
            blurRadius = 15.dp,
-           tint = tint(MiuixTheme.colorScheme.primary.copy(alpha = .1f))
+           tint = tint(MiuixTheme.colorScheme.surface.copy(alpha = .1f))
          )
        ),
      contentAlignment = Alignment.Center

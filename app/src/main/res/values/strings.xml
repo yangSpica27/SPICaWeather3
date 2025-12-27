@@ -91,4 +91,5 @@
   <string name="pollutant_carbon_monoxide">一氧化碳</string>
   <string name="pollutant_sulfur_dioxide">二氧化硫</string>
   <string name="pollutant_nitrogen_dioxide">二氧化氮</string>
+  <string name="air_quality_please_use_menu">敬请期待</string>
 </resources>

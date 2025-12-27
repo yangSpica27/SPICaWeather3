@@ -324,8 +324,10 @@ fun WeatherListScreen() {
                 .animateItem()
                 // 点击显示删除对话框
                 .noRippleClickable {
-                  selectedCity = item.cityEntity
-                  showDialog.value = true
+                  if (index != 0) {
+                    selectedCity = item.cityEntity
+                    showDialog.value = true
+                  }
                 }
                 // 长按拖拽排序（首个 item 禁用拖拽）
                 .longPressDraggableHandle(
