@@ -169,7 +169,7 @@ app/src/main/java/me/spica/spicaweather3/
 
 如有问题或建议，欢迎通过以下方式联系：
 
-- 提交 [Issue](https://github.com/yangSpica27/SPICaWeather32/issues)
+- 提交 [Issue](https://github.com/yangSpica27/SPICaWeather3/issues)
 ---
 
 <p align="center">
