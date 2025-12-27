@@ -1,0 +1,94 @@
+<resources>
+  <!-- App -->
+  <string name="app_name">SPICa Weather III</string>
+
+  <!-- Common actions & descriptions -->
+  <string name="action_confirm">Confirm</string>
+  <string name="dialog_title_notice">Notice</string>
+  <string name="cd_search">Search</string>
+  <string name="cd_back">Back</string>
+  <string name="cd_add_city">Add city</string>
+  <string name="main_city_unknown">Beyond the void</string>
+  <string name="common_today">Today</string>
+
+  <!-- Refresh state -->
+  <string name="refresh_pull_down">Pull to refresh</string>
+  <string name="refresh_release">Release to refresh</string>
+  <string name="refresh_refreshing">Refreshing…</string>
+  <string name="refresh_complete">Refresh complete</string>
+
+  <!-- Error & status messages -->
+  <string name="error_request_failed">Request failed</string>
+  <string name="location_failed_with_code">Location failed, code %1$s</string>
+  <string name="empty_state_no_data">No data</string>
+  <string name="sunrise_no_data">No data yet</string>
+
+  <!-- Weather list & city selector -->
+  <string name="weather_list_title">City management</string>
+  <string name="weather_list_search_placeholder">Search location</string>
+  <string name="weather_list_delete_city_message">Remove %1$s?</string>
+  <string name="user_location_badge">Loc</string>
+  <string name="user_location_subtitle">Based on location · %1$s, %2$s</string>
+  <string name="user_location_coordinate">Lat/Lng %1$s, %2$s</string>
+  <string name="cd_user_location">Current location</string>
+  <string name="city_selector_input_hint">Enter city name</string>
+  <string name="city_selector_hot_cities">Popular cities</string>
+
+  <!-- Sections & cards -->
+  <string name="air_quality_title">Air quality</string>
+  <string name="air_quality_detail_placeholder">Details coming soon</string>
+  <string name="alert_info_title">Weather alerts</string>
+  <string name="alert_placeholder">No alerts available</string>
+  <string name="alert_more_count">Plus %1$d more alerts</string>
+  <string name="hourly_info_title">Hourly overview</string>
+  <string name="hourly_tab_temperature">Temperature</string>
+  <string name="hourly_tab_wind">Wind</string>
+  <string name="feel_temp_title">Feels like</string>
+  <string name="feel_temp_extremely_hot">Scorching</string>
+  <string name="feel_temp_hot">Hot</string>
+  <string name="feel_temp_warm">Warm</string>
+  <string name="feel_temp_comfortable">Comfortable</string>
+  <string name="feel_temp_cool">Cool</string>
+  <string name="feel_temp_cold">Cold</string>
+  <string name="feel_temp_freezing">Freezing</string>
+  <string name="minutely_info_title">Precipitation trend</string>
+  <string name="one_hour">1 hour</string>
+  <string name="rain_light">Light</string>
+  <string name="rain_heavy">Heavy</string>
+  <string name="humidity_info_title">Humidity</string>
+  <string name="humidity_tip_dry">Dry, watch for static and stay hydrated</string>
+  <string name="humidity_tip_comfortable">Comfortable, great for activities</string>
+  <string name="humidity_tip_humid">Humid, consider taking it easy</string>
+  <string name="daily_info_title">Daily outlook</string>
+  <string name="daily_info_humidity">Humidity</string>
+  <string name="daily_humidity_value">%1$d%%</string>
+  <string name="daily_info_uv_level">UV level</string>
+  <string name="daily_info_visibility">Visibility</string>
+  <string name="daily_visibility_value">%1$s m</string>
+  <string name="daily_info_precipitation">Precipitation</string>
+  <string name="daily_precipitation_value">%1$s mm</string>
+  <string name="daily_info_wind_speed">Wind speed</string>
+  <string name="daily_wind_speed_value">%1$s m/s</string>
+  <string name="daily_info_wind_direction">Wind direction</string>
+  <string name="precipitation_info_title">Precipitation</string>
+  <string name="precipitation_probability_label">Chance of rain</string>
+  <string name="now_card_condition">%1$s feels like %2$s°C</string>
+  <string name="now_card_humidity">Humidity %1$s%%</string>
+  <string name="sunrise_title">Sunrise &amp; sunset</string>
+  <string name="sunrise_label">Sunrise %1$s</string>
+  <string name="sunset_label">Sunset %1$s</string>
+  <string name="uv_info_title">UV index</string>
+  <string name="uv_level_low">Low</string>
+  <string name="uv_level_medium">Moderate</string>
+  <string name="uv_level_high">High</string>
+  <string name="uv_level_extreme">Very high</string>
+  <string name="uv_tip_low">Enjoy the sunshine</string>
+  <string name="uv_tip_medium">Wear hats and sunscreen</string>
+  <string name="uv_tip_high">Use sunglasses and SPF 15+</string>
+  <string name="uv_tip_extreme">Avoid midday sun for ±3 hours</string>
+
+  <!-- Pollutants -->
+  <string name="pollutant_carbon_monoxide">Carbon monoxide</string>
+  <string name="pollutant_sulfur_dioxide">Sulfur dioxide</string>
+  <string name="pollutant_nitrogen_dioxide">Nitrogen dioxide</string>
+</resources>

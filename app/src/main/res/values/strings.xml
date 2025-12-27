@@ -1,0 +1,94 @@
+<resources>
+  <!-- App -->
+  <string name="app_name">柠檬天气Ⅲ</string>
+
+  <!-- Common actions & descriptions -->
+  <string name="action_confirm">确定</string>
+  <string name="dialog_title_notice">提示</string>
+  <string name="cd_search">搜索</string>
+  <string name="cd_back">返回</string>
+  <string name="cd_add_city">添加城市</string>
+  <string name="main_city_unknown">虚空之外</string>
+  <string name="common_today">今天</string>
+
+  <!-- Refresh state -->
+  <string name="refresh_pull_down">下拉刷新</string>
+  <string name="refresh_release">松开刷新</string>
+  <string name="refresh_refreshing">正在刷新</string>
+  <string name="refresh_complete">刷新完成</string>
+
+  <!-- Error & status messages -->
+  <string name="error_request_failed">请求失败</string>
+  <string name="location_failed_with_code">定位失败，错误码 %1$s</string>
+  <string name="empty_state_no_data">没有数据</string>
+  <string name="sunrise_no_data">暂无数据</string>
+
+  <!-- Weather list & city selector -->
+  <string name="weather_list_title">城市管理</string>
+  <string name="weather_list_search_placeholder">搜索位置</string>
+  <string name="weather_list_delete_city_message">是否删除%1$s?</string>
+  <string name="user_location_badge">定位</string>
+  <string name="user_location_subtitle">基于定位 · %1$s, %2$s</string>
+  <string name="user_location_coordinate">经纬度 %1$s, %2$s</string>
+  <string name="cd_user_location">当前定位</string>
+  <string name="city_selector_input_hint">输入城市名称</string>
+  <string name="city_selector_hot_cities">热门城市</string>
+
+  <!-- Sections & cards -->
+  <string name="air_quality_title">空气质量信息</string>
+  <string name="air_quality_detail_placeholder">详情页面</string>
+  <string name="alert_info_title">预警信息</string>
+  <string name="alert_placeholder">暂无预警信息</string>
+  <string name="alert_more_count">还有%1$d条预警</string>
+  <string name="hourly_info_title">小时级别信息</string>
+  <string name="hourly_tab_temperature">气温</string>
+  <string name="hourly_tab_wind">风力</string>
+  <string name="feel_temp_title">体感温度</string>
+  <string name="feel_temp_extremely_hot">炎热</string>
+  <string name="feel_temp_hot">热</string>
+  <string name="feel_temp_warm">温暖</string>
+  <string name="feel_temp_comfortable">舒适</string>
+  <string name="feel_temp_cool">凉爽</string>
+  <string name="feel_temp_cold">寒冷</string>
+  <string name="feel_temp_freezing">极寒</string>
+  <string name="minutely_info_title">降雨量信息</string>
+  <string name="one_hour">1小时</string>
+  <string name="rain_light">小雨</string>
+  <string name="rain_heavy">大雨</string>
+  <string name="humidity_info_title">湿度信息</string>
+  <string name="humidity_tip_dry">干燥，注意静电和补水</string>
+  <string name="humidity_tip_comfortable">舒适，适宜运动</string>
+  <string name="humidity_tip_humid">潮湿，建议减少运动</string>
+  <string name="daily_info_title">天级别信息</string>
+  <string name="daily_info_humidity">湿度</string>
+  <string name="daily_humidity_value">%1$d%%</string>
+  <string name="daily_info_uv_level">UV级别</string>
+  <string name="daily_info_visibility">能见度</string>
+  <string name="daily_visibility_value">%1$s米</string>
+  <string name="daily_info_precipitation">降水量</string>
+  <string name="daily_precipitation_value">%1$smm</string>
+  <string name="daily_info_wind_speed">风速</string>
+  <string name="daily_wind_speed_value">%1$s米/秒</string>
+  <string name="daily_info_wind_direction">风向</string>
+  <string name="precipitation_info_title">降水信息</string>
+  <string name="precipitation_probability_label">降水概率</string>
+  <string name="now_card_condition">%1$s 体感 %2$s℃</string>
+  <string name="now_card_humidity">湿度%1$s%%</string>
+  <string name="sunrise_title">日出日落</string>
+  <string name="sunrise_label">日出 %1$s</string>
+  <string name="sunset_label">日落 %1$s</string>
+  <string name="uv_info_title">紫外线信息</string>
+  <string name="uv_level_low">低</string>
+  <string name="uv_level_medium">中</string>
+  <string name="uv_level_high">高</string>
+  <string name="uv_level_extreme">非常高</string>
+  <string name="uv_tip_low">出去玩玩吧</string>
+  <string name="uv_tip_medium">注意佩戴衣帽和注意防晒</string>
+  <string name="uv_tip_high">建议佩戴太阳镜使用SPF大等于15的防晒霜</string>
+  <string name="uv_tip_extreme">太阳正午前两小时到之后三小时间躲避阳光</string>
+
+  <!-- Pollutants -->
+  <string name="pollutant_carbon_monoxide">一氧化碳</string>
+  <string name="pollutant_sulfur_dioxide">二氧化硫</string>
+  <string name="pollutant_nitrogen_dioxide">二氧化氮</string>
+</resources>
