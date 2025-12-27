@@ -24,7 +24,7 @@
 ## 📸 应用截图
 
 <p>
-<img src="/pic/Screenshot_20251118_171516.png" width="20%"/>
+<img src="/pic/Screenshot_20251227_194828.png" width="20%"/>
 <img src="/pic/Screenshot_20251118_171558.png" width="20%"/>
 <img src="/pic/Screenshot_20251118_171608.png" width="20%"/>
 </p>

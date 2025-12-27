@@ -118,9 +118,9 @@ fun AppMain() {
       Box(
         modifier = Modifier
           .fillMaxSize()
-          .hazeEffect {
-            this.blurRadius = blurRadius
-          }
+//          .hazeEffect {
+//            this.blurRadius = blurRadius
+//          }
           .background(MiuixTheme.colorScheme.surface)
       ) {
         CompositionLocalProvider(
