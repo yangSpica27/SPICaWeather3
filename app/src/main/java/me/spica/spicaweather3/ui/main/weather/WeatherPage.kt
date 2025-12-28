@@ -5,7 +5,12 @@ import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.EaseOutCubic
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -117,6 +122,19 @@ private fun DataPage(
     mutableStateOf<List<WeatherCardConfig>>(emptyList())
   }
 
+  // iOS 风格的抖动动画 - 当有任何 item 被拖拽且当前 item 未被拖拽时启用
+  val infiniteTransition = rememberInfiniteTransition(label = "shake")
+  val shakeOffset by infiniteTransition.animateFloat(
+    initialValue = -1f,
+    targetValue = 1f,
+    animationSpec = infiniteRepeatable(
+      animation = tween(80, easing = LinearEasing),
+      repeatMode = RepeatMode.Reverse
+    ),
+    label = "shake_offset"
+  )
+
+
   LaunchedEffect(cardsConfigs, weatherEntity) {
     if (!isDrag) {
       val temp = cardsConfigs.filter { cardsConfig ->
@@ -179,13 +197,23 @@ private fun DataPage(
 
         ReorderableItem(
           key = cardsConfig.cardType.key, state = reorderableLazyListState
-        ) {
+        ) { isDragging ->
+
+          val shouldShake = isDrag && !isDragging
+
           CardContainer(
             animationSpec = tween(
               durationMillis = durationMillis, delayMillis = delayMillis,
               easing = EaseOutCubic
             ),
-            modifier = Modifier.longPressDraggableHandle(
+            modifier = Modifier
+              .graphicsLayer{
+                if (shouldShake) {
+                  rotationZ = shakeOffset * 0.5f  // 轻微旋转
+                  translationX = shakeOffset * 1.5f  // 轻微水平偏移
+                }
+              }
+              .longPressDraggableHandle(
               enabled = true,
               onDragStarted = {
                 isDrag = true
