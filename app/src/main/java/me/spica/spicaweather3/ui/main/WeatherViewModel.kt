@@ -15,14 +15,17 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import me.spica.spicaweather3.common.WeatherAnimType
+import me.spica.spicaweather3.common.WeatherCardConfig
 import me.spica.spicaweather3.db.PersistenceRepository
 import me.spica.spicaweather3.db.entity.CityEntity
 import me.spica.spicaweather3.network.ApiRepository
 import me.spica.spicaweather3.ui.main.weather.WeatherPageState
+import me.spica.spicaweather3.utils.DataStoreUtil
 
 class WeatherViewModel(
   private val apiRepository: ApiRepository,
-  private val persistenceRepository: PersistenceRepository
+  private val persistenceRepository: PersistenceRepository,
+  val dataStoreUtil: DataStoreUtil
 ) : ViewModel() {
 
   // 上次刷新时间戳
@@ -44,6 +47,11 @@ class WeatherViewModel(
     .conflate()
     .distinctUntilChanged()
     .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+
+  val cardsConfig: StateFlow<List<WeatherCardConfig>> =
+    dataStoreUtil.getWeatherCardsConfig().conflate()
+      .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
   private val _isRefreshing = MutableStateFlow(false)
 

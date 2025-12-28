@@ -1,7 +1,7 @@
 # SPICaWeather3 - Copilot Instructions
 
 ## 项目概述
-基于 Jetpack Compose 开发的 Android 天气应用，使用和风天气 API，采用现代 MVVM 架构模式。项目强调声明式 UI 和响应式数据流，集成了丰富的自定义天气动画效果。
+基于 Jetpack Compose 开发的 Android 天气应用（柠檬天气3），使用和风天气 API，采用现代 MVVM 架构模式。项目强调声明式 UI 和响应式数据流，集成了丰富的自定义天气动画效果。支持多城市管理、天气卡片拖拽排序、实时定位等功能。
 
 ## 架构模式
 
@@ -63,6 +63,18 @@ with(LocalSharedTransitionScope.current) {
 - `LocalNavController` - 导航控制器 (全局路由，定义在 route/Routes.kt)
 - `LocalMenuState` - 底部菜单状态管理
 
+**使用方式**:
+```kotlin
+// 在 Screen composable 中获取 NavController
+val navController = LocalNavController.current
+navController.navigate(Routes.WeatherList)
+
+// 访问共享转场作用域
+with(LocalSharedTransitionScope.current) {
+  Modifier.sharedElement(...)
+}
+```
+
 **2. 自定义天气动画系统**  
 基于 `common/WeatherAnimType.kt` 密封类配置,每个类型定义:
 - 顶部/底部渐变色 (`topColor`, `bottomColor`)
@@ -96,7 +108,19 @@ ShowOnIdleContent(
 - 在组件 `remember {}` 中创建物理世界和粒子系统
 - 使用专用 `Executors.newFixedThreadPool(1)` + `asCoroutineDispatcher()` 处理物理计算
 - **必须**在 `DisposableEffect` 中关闭线程池: `computeContext.close()`
-- 示例: [HazeView.kt](app/src/main/java/me/spica/spicaweather3/ui/widget/haze/HazeView.kt)
+- 示例: `ui/widget/haze/HazeView.kt`
+
+```kotlin
+// 正确的 JBox2D 集成模式
+val computeContext = remember { 
+  Executors.newFixedThreadPool(1).asCoroutineDispatcher() 
+}
+DisposableEffect(Unit) {
+  onDispose { 
+    computeContext.close()  // ← 防止内存泄漏
+  }
+}
+```
 
 **3. 屏幕适配 (AndroidAutoSize)**  
 - 基准宽度: **375dp**
@@ -136,25 +160,57 @@ val cities by viewModel.cities.collectAsStateWithLifecycle()
 
 ### DataStore 使用规范
 集中管理在 `utils/DataStoreUtil.kt`:
-- 所有 Key 定义为伴生对象常量 (如 `KEY_IS_FIRST_LAUNCH`)
+- 所有 Key 定义为伴生对象常量 (如 `KEY_IS_FIRST_LAUNCH`, `KEY_WEATHER_CARDS_CONFIG`)
 - 读取方法返回 `Flow<T>`，自动去重 (`distinctUntilChanged()`)
 - 写入方法使用 `suspend` + `withContext(Dispatchers.IO)`
+- **天气卡片配置**: 使用 Kotlinx Serialization 序列化为 JSON 保存，支持拖拽排序和显示/隐藏管理
+
 ```kotlin
 // 读取
 val isFirstLaunch = dataStoreUtil.getIsFirstLaunch().collectAsStateWithLifecycle(false).value
 
 // 写入
 dataStoreUtil.setIsFirstLaunch(true)
+
+// 天气卡片配置管理
+val cardsConfig = dataStoreUtil.getWeatherCardsConfig()
+  .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+dataStoreUtil.updateCardVisibility(WeatherCardType.HOURLY, false)
 ```
+
+### 天气卡片系统
+**核心组件** (`common/WeatherCardType.kt`):
+- `WeatherCardType` 枚举: 定义所有卡片类型（NOW, ALERT, HOURLY, DAILY, UV, AQI 等）
+- `WeatherCardConfig`: 卡片配置数据类，包含类型、可见性、排序
+- NOW 和 ALERT 卡片不可移除，其他卡片可自定义显示
+
+**卡片管理方法**:
+```kotlin
+// 获取默认配置
+WeatherCardType.getDefaultCards()
+
+// 过滤可见/隐藏卡片
+configs.getVisibleCards()
+configs.getHiddenCards()
+
+// 切换显示状态
+dataStoreUtil.updateCardVisibility(cardType, isVisible)
+
+// 更新排序
+dataStoreUtil.updateCardsOrder(reorderedCards)
+```
+实现位置: `common/WeatherCardType.kt`  
+使用示例: 参考项目根目录的 `WEATHER_CARD_REFACTOR_README.md`
 
 ## 项目特殊配置
 
 ### 构建配置
-- **minSdk**: 33
+- **minSdk**: 31
 - **targetSdk/compileSdk**: 36
 - **Java版本**: 11
-- **KSP**: 用于 Room 注解处理
+- **KSP**: 用于 Room 注解处理 (2.2.21-2.0.4)
 - **签名配置**: debug/release 使用同一签名 (key.jks，密钥: SPICa27)
+- **JBox2D 模块**: 独立子项目 (`jbox2d/`) 用于物理引擎，需在 settings.gradle.kts 包含
 
 ### ProGuard 混淆规则
 关键保留规则 (在 `app/proguard-rules.pro`):
@@ -166,6 +222,9 @@ dataStoreUtil.setIsFirstLaunch(true)
 # 保留 Koin 注解
 -keep class org.koin.core.annotation.** { *; }
 -keep @org.koin.core.annotation.* class * { *; }
+
+# 保留百度定位 SDK
+-keep class com.baidu.location.** {*;}
 ```
 **重要**: 所有网络响应模型必须添加 `@Keep` 注解 (位于 `network/model/`)
 
@@ -360,6 +419,21 @@ startKoin { ... }
 ```
 原因: 百度 SDK 要求在首次使用前设置隐私政策同意状态。
 
+**权限请求**: 在 AppMain.kt 使用 Accompanist Permissions 库请求定位权限:
+```kotlin
+val locationPermissionState = rememberMultiplePermissionsState(
+  permissions = listOf(
+    android.Manifest.permission.ACCESS_COARSE_LOCATION,
+    android.Manifest.permission.ACCESS_FINE_LOCATION
+  )
+)
+LaunchedEffect(isFirstLaunch) {
+  if (!locationPermissionState.allPermissionsGranted) {
+    locationPermissionState.launchMultiplePermissionRequest()
+  }
+}
+```
+
 ### Compose 重组优化
 - 使用 `remember` 缓存昂贵对象 (如物理引擎实例、Paint 对象)
 - 使用 `derivedStateOf` 避免不必要的重组
@@ -381,3 +455,22 @@ val data by viewModel.data.collectAsStateWithLifecycle()
 
 // ❌ 避免使用 collectAsState (不感知生命周期)
 ```
+
+## 项目文档引用
+
+### 重要文档
+- **README.md**: 项目概述、技术栈说明、架构图
+- **WEATHER_CARD_REFACTOR_README.md**: 天气卡片拖拽排序功能详细文档
+- **gradle/libs.versions.toml**: 所有依赖版本的集中管理
+- **app/proguard-rules.pro**: ProGuard 混淆规则
+
+### API 文档
+- **和风天气 API**: 主要天气数据来源 (https://n85egdbbrr.re.qweaterapi.com/)
+- **私有天气服务**: 补充天气接口 (http://106.54.25.152:4040/api/weather/all)
+- API 密钥配置在 `network/HefengConfig.kt`
+
+### 关键实现参考
+- **共享元素转场**: `ui/AppMain.kt` 中的 `SharedTransitionLayout` 集成
+- **天气动画系统**: `ui/widget/WeatherBackground.kt` 渐变背景 + 各动画组件
+- **卡片拖拽**: 参考 `WEATHER_CARD_REFACTOR_README.md` 实现指南
+- **物理引擎动画**: `ui/widget/haze/HazeView.kt` JBox2D 集成示例

@@ -29,3 +29,4 @@
 # Keep classes annotated with Koin annotations
 -keep @org.koin.core.annotation.* class * { *; }
 -keep class com.baidu.location.** {*;}
+-keep class me.spica.spicaweather3.common.** { *;}

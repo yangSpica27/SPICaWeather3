@@ -87,6 +87,21 @@
   <string name="uv_tip_high">建议佩戴太阳镜使用SPF大等于15的防晒霜</string>
   <string name="uv_tip_extreme">太阳正午前两小时到之后三小时间躲避阳光</string>
 
+  <!-- AQI (Air Quality Index) -->
+  <string name="aqi_title">空气质量</string>
+  <string name="aqi_level_excellent">优</string>
+  <string name="aqi_level_good">良</string>
+  <string name="aqi_level_lightly_polluted">轻度污染</string>
+  <string name="aqi_level_moderately_polluted">中度污染</string>
+  <string name="aqi_level_heavily_polluted">重度污染</string>
+  <string name="aqi_level_severely_polluted">严重污染</string>
+  <string name="aqi_tip_excellent">空气质量令人满意，各类人群可正常活动</string>
+  <string name="aqi_tip_good">空气质量可接受，敏感人群建议减少户外活动</string>
+  <string name="aqi_tip_lightly_polluted">儿童、老人及心脏病患者应减少长时间户外活动</string>
+  <string name="aqi_tip_moderately_polluted">儿童、老人及心脏病患者避免户外活动</string>
+  <string name="aqi_tip_heavily_polluted">所有人应避免户外活动</string>
+  <string name="aqi_tip_severely_polluted">儿童、老人和病人应留在室内，一般人群避免户外活动</string>
+
   <!-- Pollutants -->
   <string name="pollutant_carbon_monoxide">一氧化碳</string>
   <string name="pollutant_sulfur_dioxide">二氧化硫</string>

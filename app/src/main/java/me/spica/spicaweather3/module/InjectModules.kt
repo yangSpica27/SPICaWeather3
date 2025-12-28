@@ -33,7 +33,7 @@ object InjectModules {
     single<OkHttpClient> {
       OkHttpClient.Builder()
         .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
-        .retryOnConnectionFailure(true).connectTimeout(1500L, TimeUnit.MILLISECONDS)
+        .retryOnConnectionFailure(true).connectTimeout(3500L, TimeUnit.MILLISECONDS)
         .readTimeout(3000L, TimeUnit.MILLISECONDS).callTimeout(3000L, TimeUnit.MILLISECONDS)
         .writeTimeout(3000L, TimeUnit.MILLISECONDS)
         .build()
@@ -64,6 +64,7 @@ object InjectModules {
       WeatherViewModel(
         persistenceRepository = get(),
         apiRepository = get(),
+        dataStoreUtil = get(),
       )
     }
   }

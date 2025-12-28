@@ -27,6 +27,7 @@ fun AnimateOnEnter(
     dampingRatio = Spring.DampingRatioLowBouncy,
     stiffness = Spring.StiffnessMedium
   ),
+  delayMillis: Int = 0,
   initialValue: Float = 0f,
   targetValue: Float = 1f,
   content: @Composable (animatedValue: Float, Animatable<Float, AnimationVector1D>) -> Unit
@@ -35,14 +36,17 @@ fun AnimateOnEnter(
   val animatable = remember { Animatable(initialValue) }
   val visible = rememberSaveable { mutableStateOf(false) }
   val view = LocalView.current
+  
   LaunchedEffect(visible.value) {
     if (visible.value) {
+      if (delayMillis > 0) {
+        kotlinx.coroutines.delay(delayMillis.toLong())
+      }
       animatable.animateTo(targetValue, animationSpec)
     }
   }
 
   val coroutineScope = rememberCoroutineScope()
-
 
   Box(
     modifier = modifier

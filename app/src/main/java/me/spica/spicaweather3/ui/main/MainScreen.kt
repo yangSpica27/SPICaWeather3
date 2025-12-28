@@ -3,7 +3,6 @@ package me.spica.spicaweather3.ui.main
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -24,7 +23,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -34,7 +32,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kyant.capsule.ContinuousRoundedRectangle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.HazeDefaults.tint
 import dev.chrisbanes.haze.HazeState
@@ -42,12 +40,10 @@ import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import me.spica.spicaweather3.R
-import me.spica.spicaweather3.common.SharedContentKey
 import me.spica.spicaweather3.common.WeatherAnimType
 import me.spica.spicaweather3.route.LocalNavController
 import me.spica.spicaweather3.route.Routes
 import me.spica.spicaweather3.theme.MAIN_PLUS_BUTTON_SIZE
-import me.spica.spicaweather3.ui.LocalAnimatedContentScope
 import me.spica.spicaweather3.ui.LocalSharedTransitionScope
 import me.spica.spicaweather3.ui.main.weather.WeatherPage
 import me.spica.spicaweather3.ui.main.weather.WeatherPageState
@@ -66,7 +62,6 @@ import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.ScrollBehavior
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.utils.pressable
 
 /**
  * 主屏幕 - 展示天气信息的主要界面
@@ -285,7 +280,7 @@ private fun WeatherPager(
   HorizontalPager(
     state = pagerState,
     modifier = Modifier.fillMaxSize(),
-    beyondViewportPageCount = 2, // 预加载相邻2页，提升滑动流畅度
+    beyondViewportPageCount = 1, // 预加载相邻2页，提升滑动流畅度
   ) { currentIndex ->
     // 仅在目标页面时显示内容，优化性能
     ShowOnIdleContent(
