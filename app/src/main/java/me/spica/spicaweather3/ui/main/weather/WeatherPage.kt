@@ -310,6 +310,7 @@ fun CardContainer(
           this.alpha = progress
           scaleX = 0.25f + 0.75f * progress
           scaleY = 0.25f + 0.75f * progress
+          transformOrigin = TransformOrigin(0.5f, 0.5f)
         }
         .cardBackground()
         .clip(WIDGET_CARD_CORNER_SHAPE), 
