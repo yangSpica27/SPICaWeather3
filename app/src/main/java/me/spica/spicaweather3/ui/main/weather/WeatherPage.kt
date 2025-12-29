@@ -300,9 +300,6 @@ fun CardContainer(
       .then(ratioModifier), animationSpec = animationSpec
   ) { progress, anim ->
 
-
-
-
     Box(
       modifier = Modifier
         .fillMaxSize()

@@ -205,9 +205,10 @@ dataStoreUtil.updateCardsOrder(reorderedCards)
 ## 项目特殊配置
 
 ### 构建配置
-- **minSdk**: 31
+- **minSdk**: 31 (注意: README 显示为 33，但实际配置是 31)
 - **targetSdk/compileSdk**: 36
 - **Java版本**: 11
+- **Gradle**: 8.13+
 - **KSP**: 用于 Room 注解处理 (2.2.21-2.0.4)
 - **签名配置**: debug/release 使用同一签名 (key.jks，密钥: SPICa27)
 - **JBox2D 模块**: 独立子项目 (`jbox2d/`) 用于物理引擎，需在 settings.gradle.kts 包含

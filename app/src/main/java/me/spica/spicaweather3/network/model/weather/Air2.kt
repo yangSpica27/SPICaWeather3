@@ -20,8 +20,22 @@ data class Air2(
     val health: Health,
     val level: String,
     val name: String,
-    val primaryPollutant: Any
+    val primaryPollutant: PrimaryPollutant?
   ) {
+
+    @Immutable
+    data class PrimaryPollutant(
+      val name: String,
+      val fullName: String,
+      val concentration: Concentration
+    ){
+      @Immutable
+      data class Concentration(
+        val unit: String,
+        val value: Double
+      )
+    }
+
     @Immutable
     data class Color(
       val alpha: Int,

@@ -60,7 +60,7 @@ fun AqiCard(weatherData: WeatherData, startAnim: Boolean) {
   val category = airIndex.category
   val level = airIndex.level
   val healthAdvice = airIndex.health.advice.generalPopulation
-  val primaryPollutant = airIndex.primaryPollutant.toString()
+
   
   // 从 ARGB 构建颜色
   val aqiColor = remember(airIndex.color) {
@@ -149,7 +149,9 @@ fun AqiCard(weatherData: WeatherData, startAnim: Boolean) {
           fontWeight = FontWeight.ExtraBold,
           fontSize = 38.sp
         ),
-        modifier = Modifier.graphicsLayer {
+        modifier = Modifier
+          .alignByBaseline()
+          .graphicsLayer {
           alpha = textAnimValue2
           translationY = -12.dp.toPx() * (1f - textAnimValue2)
         }
@@ -178,7 +180,7 @@ fun AqiCard(weatherData: WeatherData, startAnim: Boolean) {
           color = MiuixTheme.colorScheme.surfaceContainer,
         )
         ,
-      contentAlignment = Alignment.BottomCenter,
+      contentAlignment = Alignment.BottomStart,
     ) {
       // 渐变背景条
       Box(
