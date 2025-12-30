@@ -2,11 +2,13 @@ package me.spica.spicaweather3.ui.main.cards
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -20,10 +22,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.kyant.backdrop.drawPlainBackdrop
+import com.kyant.backdrop.effects.blur
 import com.kyant.capsule.ContinuousRoundedRectangle
-import dev.chrisbanes.haze.hazeEffect
-import dev.chrisbanes.haze.materials.CupertinoMaterials
-import dev.chrisbanes.haze.rememberHazeState
 import me.spica.spicaweather3.R
 import me.spica.spicaweather3.common.WeatherAnimType
 import me.spica.spicaweather3.network.model.weather.WeatherData
@@ -55,9 +57,6 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: 
     )
   }
 
-  // 毛玻璃模糊效果状态
-  val hazeState = rememberHazeState()
-
   // ==================== 动画配置 ====================
   // 温度数字动画（无延迟，持续450ms）
   val textAnimValue1 = animateFloatAsState(
@@ -87,7 +86,6 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: 
     WeatherBackground(
       currentWeatherType = currentWeatherAnimType,
       collapsedFraction = 0f, // 0=完全展开，1=完全折叠
-      hazeState = hazeState
     )
 
     // 天气信息文字层
@@ -169,10 +167,9 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: 
             ContinuousRoundedRectangle(12.dp)
           )
           // 应用 Cupertino 风格超薄毛玻璃效果
-          .hazeEffect(
-            hazeState, style = CupertinoMaterials.ultraThin(
-              containerColor = MiuixTheme.colorScheme.surfaceContainer
-            )
+          .background(
+            MiuixTheme.colorScheme.surface.copy(alpha = 0.2f),
+            CircleShape
           )
           .padding(
             horizontal = 8.dp,

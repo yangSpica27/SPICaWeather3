@@ -113,7 +113,7 @@ private fun DailyItem(item: DailyWeather, limitLow: Int, limitHigh: Int) {
     Row(
       modifier = Modifier
         .fillMaxWidth()
-        .pressable(delay = 0)
+        .pressable(null)
         .noRippleClickable {
           showExtraPanel = !showExtraPanel
         }

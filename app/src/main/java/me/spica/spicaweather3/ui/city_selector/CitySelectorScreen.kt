@@ -6,6 +6,7 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -145,7 +146,10 @@ private fun ListSelector() {
       Column(
         modifier = Modifier
           .fillMaxWidth()
-          .pressable(delay = 0)
+          .pressable(
+            enabled = true,
+            interactionSource = remember { MutableInteractionSource() },
+          )
           .noRippleClickable {
             viewModel.saveLocation(item, onSucceed = {
               weatherViewModel.refresh()
@@ -221,7 +225,7 @@ private fun TopCities(modifier: Modifier = Modifier) {
               scaleY = scale
               alpha = progress
             }
-            .pressable(delay = 0)
+            .pressable(null)
             .background(
               MiuixTheme.colorScheme.surfaceContainerHigh, ContinuousRoundedRectangle(8.dp)
             )

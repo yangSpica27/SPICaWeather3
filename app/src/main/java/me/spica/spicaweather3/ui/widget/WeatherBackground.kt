@@ -10,10 +10,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import dev.chrisbanes.haze.HazeProgressive
-import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeEffect
-import dev.chrisbanes.haze.hazeSource
 import kotlinx.coroutines.launch
 import me.spica.spicaweather3.common.WeatherAnimType
 import me.spica.spicaweather3.ui.widget.cloud.CloudView
@@ -22,14 +18,13 @@ import me.spica.spicaweather3.ui.widget.haze.HazeView
 import me.spica.spicaweather3.ui.widget.rain.RainView
 import me.spica.spicaweather3.ui.widget.snow.SnowView
 import me.spica.spicaweather3.ui.widget.sun.SunView
-import me.spica.spicaweather3.ui.widget.sun.SunView2
+import me.spica.spicaweather3.utils.blur.progressiveBlur
 
 
 @Composable
 fun WeatherBackground(
   collapsedFraction: Float,
   currentWeatherType: WeatherAnimType,
-  hazeState: HazeState,
 ) {
 
   val currentTopColor = remember { Animatable(WeatherAnimType.RainLight.topColor) }
@@ -46,14 +41,8 @@ fun WeatherBackground(
 
   Box(
     modifier = Modifier
+      .progressiveBlur(fromBottom = true)
       .fillMaxSize()
-      .hazeSource(hazeState)
-      .hazeEffect {
-        progressive = HazeProgressive.verticalGradient(
-          startIntensity = 0f,
-          endIntensity = .8f
-        )
-      }
       .background(
         // 渐变色的绘制视线
         brush = Brush.verticalGradient(

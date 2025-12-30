@@ -58,7 +58,7 @@ android {
 }
 
 dependencies {
-  implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
+  implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.aar"))))
   implementation(project(":jbox2d"))
   implementation(libs.androidx.core.ktx)
   implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -86,14 +86,15 @@ dependencies {
   implementation(libs.androidx.datastore.preferences)
   implementation(libs.androidx.dynamicanimation.ktx)
   implementation(libs.miuix.android)
-//  implementation(libs.backdrop)
+//  implementation(libs.miuix.android.icon)
+  implementation(libs.backdrop)
   implementation(libs.capsule)
-  implementation(libs.haze.materials)
+//  implementation(libs.haze.materials)
   implementation(libs.accompanist.systemuicontroller)
   // define a BOM and its version
   implementation(platform(libs.okhttp.bom))
   // define any required OkHttp artifacts without version
-  implementation(libs.haze)
+//  implementation(libs.haze)
   implementation(libs.okhttp)
   implementation(libs.logging.interceptor)
   implementation(libs.retrofit)

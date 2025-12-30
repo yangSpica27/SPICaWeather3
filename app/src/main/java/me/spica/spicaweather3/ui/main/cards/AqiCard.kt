@@ -1,6 +1,5 @@
 package me.spica.spicaweather3.ui.main.cards
 
-import android.graphics.Color.argb
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -24,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
@@ -31,15 +31,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kyant.backdrop.backdrops.layerBackdrop
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.kyant.backdrop.drawBackdrop
+import com.kyant.backdrop.drawPlainBackdrop
+import com.kyant.backdrop.effects.lens
+import com.kyant.backdrop.highlight.Highlight
+import com.kyant.backdrop.shadow.Shadow
 import com.kyant.capsule.ContinuousRoundedRectangle
-import dev.chrisbanes.haze.ExperimentalHazeApi
-import dev.chrisbanes.haze.HazeDefaults
-import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeEffect
-import dev.chrisbanes.haze.hazeSource
-import dev.chrisbanes.haze.materials.CupertinoMaterials
 import me.spica.spicaweather3.R
 import me.spica.spicaweather3.network.model.weather.WeatherData
+import me.spica.spicaweather3.theme.COLOR_BLACK_20
 import me.spica.spicaweather3.theme.WIDGET_CARD_PADDING
 import me.spica.spicaweather3.theme.WIDGET_CARD_TITLE_TEXT_STYLE
 import top.yukonga.miuix.kmp.basic.Text
@@ -49,11 +51,10 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
  * 空气质量卡片
  * 使用 air2 数据显示详细的 AQI 信息、等级、健康建议和主要污染物
  */
-@OptIn(ExperimentalHazeApi::class)
 @Composable
 fun AqiCard(weatherData: WeatherData, startAnim: Boolean) {
-  val hazeState = HazeState()
-  
+  val backdrop = rememberLayerBackdrop()
+  val glassColor = MiuixTheme.colorScheme.onSurface.copy(alpha = .04f)
   // 从 air2 获取数据，使用第一个 index（通常是综合 AQI）
   val airIndex = weatherData.air2.indexes.firstOrNull() ?: return
   val aqi = airIndex.aqi
@@ -152,9 +153,9 @@ fun AqiCard(weatherData: WeatherData, startAnim: Boolean) {
         modifier = Modifier
           .alignByBaseline()
           .graphicsLayer {
-          alpha = textAnimValue2
-          translationY = -12.dp.toPx() * (1f - textAnimValue2)
-        }
+            alpha = textAnimValue2
+            translationY = -12.dp.toPx() * (1f - textAnimValue2)
+          }
       )
       Text(
         text = category,
@@ -190,7 +191,7 @@ fun AqiCard(weatherData: WeatherData, startAnim: Boolean) {
           .graphicsLayer {
             translationY = -5.5.dp.toPx() - 4.dp.toPx()
           }
-          .hazeSource(state = hazeState)
+          .layerBackdrop(backdrop)
           .background(
             brush = Brush.horizontalGradient(
               colors = listOf(
@@ -201,13 +202,10 @@ fun AqiCard(weatherData: WeatherData, startAnim: Boolean) {
                 Color(0xFF99004C), // 重度污染 (201-300)
                 Color(0xFF7E0023)  // 严重污染 (300+)
               )
-            ),
-            shape = ContinuousRoundedRectangle(2.dp)
+            ), shape = ContinuousRoundedRectangle(2.dp)
           )
           .border(
-            1.dp,
-            color = Color.White.copy(alpha = 0.3f),
-            ContinuousRoundedRectangle(2.dp)
+            1.dp, color = Color.White.copy(alpha = 0.3f), ContinuousRoundedRectangle(2.dp)
           )
       )
       
@@ -217,27 +215,39 @@ fun AqiCard(weatherData: WeatherData, startAnim: Boolean) {
           .size(32.dp)
           .graphicsLayer {
             // AQI 最大值通常是500，映射到0-1范围
-            translationX = (constraints.maxWidth - 32.dp.toPx()) * 
-              ((aqi.toFloat() / 500f).coerceIn(0f, 1f)) * progressAnimValue
+            translationX = (constraints.maxWidth - 32.dp.toPx()) * ((aqi.toFloat() / 500f).coerceIn(
+              0f, 1f
+            )) * progressAnimValue
           }
           .clip(CircleShape)
           .background(
-            color = MiuixTheme.colorScheme.surfaceContainer,
-            shape = CircleShape
+            color = MiuixTheme.colorScheme.surfaceContainer, shape = CircleShape
           ),
         contentAlignment = Alignment.Center
       ) {
         Box(
           modifier = Modifier
             .fillMaxSize()
-            .graphicsLayer {
-              scaleY = 1.2f
-            }
-            .hazeEffect(
-              state = hazeState,
-              style = CupertinoMaterials.ultraThin(
-                containerColor = MiuixTheme.colorScheme.surfaceContainerHigh
-              )
+            .drawPlainBackdrop(
+              backdrop = backdrop, shape = { CircleShape },
+              effects = {
+                lens(
+                  5f.dp.toPx(),
+                  10f.dp.toPx(),
+                  chromaticAberration = true
+                )
+              },
+              onDrawFront = {
+                drawRect(
+                  color = glassColor,
+                  size = this.size
+                )
+              },
+              onDrawBackdrop = { draw ->
+                scale(1.5f, 1.5f) {
+                  draw()
+                }
+              },
             )
         )
       }

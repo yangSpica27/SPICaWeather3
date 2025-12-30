@@ -1,5 +1,6 @@
 package me.spica.spicaweather3.ui.main.cards
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -17,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
-import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -25,19 +25,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kyant.backdrop.backdrops.layerBackdrop
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.kyant.backdrop.drawPlainBackdrop
+import com.kyant.backdrop.effects.lens
 import com.kyant.capsule.ContinuousRoundedRectangle
-import dev.chrisbanes.haze.ExperimentalHazeApi
-import dev.chrisbanes.haze.HazeDefaults
-import dev.chrisbanes.haze.HazeDefaults.tint
-import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeEffect
-import dev.chrisbanes.haze.hazeSource
 import me.spica.spicaweather3.R
 import me.spica.spicaweather3.theme.WIDGET_CARD_PADDING
 import me.spica.spicaweather3.theme.WIDGET_CARD_TITLE_TEXT_STYLE
@@ -45,14 +44,15 @@ import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 
-@OptIn(ExperimentalHazeApi::class)
 @Composable
 fun UVCard(uv: Int, startAnim: Boolean) {
-  val hazeState = HazeState()
+  val backdrop = rememberLayerBackdrop()
   val uvDescriptionRes = remember(uv) { uv.toUvLevelRes() }
   val uvDescription = stringResource(id = uvDescriptionRes)
   val uvTipRes = remember(uv) { uv.toUvTipRes() }
   val uvExtraDesc = stringResource(id = uvTipRes)
+
+  val glassColor = MiuixTheme.colorScheme.onSurface.copy(alpha = .04f)
 
   val progressAnimValue = animateFloatAsState(
     if (startAnim) 1f else 0f
@@ -124,7 +124,7 @@ fun UVCard(uv: Int, startAnim: Boolean) {
           .graphicsLayer {
             translationY = -5.5.dp.toPx() - 4.dp.toPx()
           }
-          .hazeSource(state = hazeState)
+          .layerBackdrop(backdrop)
           .background(
             brush = Brush.horizontalGradient(
               colors = listOf(
@@ -165,18 +165,27 @@ fun UVCard(uv: Int, startAnim: Boolean) {
         Box(
           modifier = Modifier
             .fillMaxSize()
-            .graphicsLayer {
-              scaleY = 1.2f
-            }
-            .hazeEffect(
-              state = hazeState,
-              style = HazeDefaults.style(
-                backgroundColor = MiuixTheme.colorScheme.surfaceContainer,
-                blurRadius = 2.dp,
-                tint = tint(
-                  MiuixTheme.colorScheme.primary.copy(alpha = .06f)
+            .drawPlainBackdrop(
+              backdrop = backdrop,
+              shape = { CircleShape },
+              onDrawFront = {
+                drawRect(
+                  color = glassColor,
+                  size = this.size
                 )
-              )
+              },
+              onDrawBackdrop = { draw ->
+                scale(1.5f, 1.5f) {
+                  draw()
+                }
+              },
+              effects = {
+                lens(
+                  5f.dp.toPx(),
+                  10f.dp.toPx(),
+                  chromaticAberration = true
+                )
+              }
             )
         )
       }

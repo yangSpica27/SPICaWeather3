@@ -127,6 +127,31 @@ DisposableEffect(Unit) {
 - 实现位置: `MainActivity` 实现 `CustomAdapt` 接口
 - 所有尺寸自动按设备宽度缩放，无需手动适配
 
+**4. 自定义模糊效果 (RuntimeShader + AGSL)**  
+项目实现了两种模糊效果，使用 Android 13+ 的 RuntimeShader API:
+- **uniformBlur()**: 均匀模糊，使用 Compose 标准 `Modifier.blur()`
+- **progressiveBlur(fromBottom)**: 渐进式模糊，使用自定义 AGSL Shader
+
+实现位置: `utils/blur/BlurImpl.kt`，关键模式:
+```kotlin
+// 使用 RuntimeShader 实现渐进式模糊 (Android 13+)
+val shader = remember { RuntimeShader(BLUR_SHADER) }
+this.graphicsLayer {
+  shader.setFloatUniform("uMaxSigma", maxSigma)
+  shader.setFloatUniform("uImageHeight", size.height)
+  // 两步高斯模糊: X 方向 + Y 方向
+  val blurEffectX = RenderEffect.createRuntimeShaderEffect(shader, "uContent")
+  val blurEffectY = RenderEffect.createRuntimeShaderEffect(shader, "uContent")
+  this.renderEffect = RenderEffect.createChainEffect(blurEffectY, blurEffectX).asComposeRenderEffect()
+}
+```
+**使用方式**:
+```kotlin
+// 在 Compose 组件中使用
+Box(Modifier.progressiveBlur(fromBottom = true)) { /* content */ }
+```
+**注意**: 低于 Android 13 的设备会自动降级为 `uniformBlur()`
+
 ### 网络请求模式
 使用 **Sandwich** 库封装 Retrofit 响应，提供类型安全的错误处理:
 ```kotlin
@@ -244,12 +269,13 @@ retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit
 在 build.gradle.kts 中引用: `implementation(libs.retrofit)`
 
 ### 关键依赖
-- **Compose BOM**: 统一 Compose 版本 (2025.11.00)
+- **Compose BOM**: 统一 Compose 版本 (2025.12.01)
 - **Haze**: 实现毛玻璃模糊效果 (`dev.chrisbanes.haze`)
 - **MiuiX**: MIUI 风格组件库 (`top.yukonga.miuix.kmp.theme`)
 - **Baidu Location**: 百度定位服务，需在 `App.onCreate()` 调用 `LocationClient.setAgreePrivacy(true)`
 - **Sandwich**: Retrofit 响应封装 (`com.skydoves.sandwich`)
 - **AndroidAutoSize**: 屏幕适配库 (`com.github.JessYanCoding:AndroidAutoSize`)
+- **Reorderable**: 列表拖拽排序 (`sh.calvin.reorderable`)
 
 ### 必须的初始化顺序
 `App.onCreate()` 中:
@@ -345,6 +371,7 @@ retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit
   - `widget/`: 可复用的自定义 Compose 组件
     - `rain/`, `cloud/`, `sun/`, `galaxy/`, `wind/`, `haze/`: 天气动画组件
 - `utils/`: 工具类 (DataStoreUtil, LocationHelper, RainDropManager)
+  - `blur/`: 自定义模糊效果实现 (RuntimeShader + AGSL)
 - `module/`: Koin 依赖注入模块配置 (InjectModules.kt)
 - `route/`: 导航路由定义 (Routes.kt + LocalNavController)
 

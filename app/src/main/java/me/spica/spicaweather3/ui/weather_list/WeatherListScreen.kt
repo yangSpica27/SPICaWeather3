@@ -28,6 +28,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -77,9 +80,6 @@ import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.extra.SuperDialog
-import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.icons.useful.Back
-import top.yukonga.miuix.kmp.icon.icons.useful.Search
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
@@ -163,7 +163,7 @@ fun WeatherListScreen() {
               ) {
 
                 Icon(
-                  MiuixIcons.Useful.Search,
+                  Icons.Default.Search,
                   contentDescription = stringResource(R.string.cd_search),
                   tint = MiuixTheme.colorScheme.onSurface
                 )
@@ -184,7 +184,10 @@ fun WeatherListScreen() {
               navController.popBackStack()
             }
           ) {
-            Icon(MiuixIcons.Useful.Back, contentDescription = stringResource(R.string.cd_back))
+            Icon(
+              Icons.AutoMirrored.Default.ArrowBack,
+              contentDescription = stringResource(R.string.cd_back)
+            )
           }
         }
       )

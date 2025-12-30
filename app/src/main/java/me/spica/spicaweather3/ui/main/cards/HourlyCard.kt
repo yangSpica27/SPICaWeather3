@@ -245,7 +245,7 @@ fun TabItem(
       .noRippleClickable {
         onClick()
       }
-      .pressable(delay = 0)
+      .pressable(null)
       .padding(horizontal = 12.dp, vertical = 6.dp),
     contentAlignment = Alignment.Center
   ) {

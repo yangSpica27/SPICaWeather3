@@ -69,7 +69,7 @@ uniform float uImageHeight;        // Height of the image/composable
 uniform float uDirection;          // 0 = X direction, 1 = Y direction
 uniform float uFromBottom;
 
-const int MAX_RADIUS = 24;         // Maximum blur radius
+const int MAX_RADIUS = 12;         // Maximum blur radius
 
 half4 main(float2 fragCoord) {
     float2 pixel = fragCoord;
@@ -77,7 +77,7 @@ half4 main(float2 fragCoord) {
     // Compute normalized vertical position (0 at halfway down, 1 at bottom)
     float verticalProgress = clamp((0.5 * uImageHeight - pixel.y) / (0.5 * uImageHeight), 0.0, 1.0);
     if(uFromBottom > 0.0){
-      float verticalProgress = clamp((pixel.y - 0.5 * uImageHeight) / (0.5 * uImageHeight), 0.0, 1.0);
+      verticalProgress = clamp((pixel.y - 0.5 * uImageHeight) / (0.5 * uImageHeight), 0.0, 1.0);
     }
 
     // Interpolate blurSigma: 0 at halfway, uMaxSigma at bottom

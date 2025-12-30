@@ -23,6 +23,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.PaintingStyle
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
@@ -48,6 +50,8 @@ fun GalaxyView(
     val random = remember { kotlin.random.Random.Default }
 
     val stars = remember { mutableListOf<Star>() }
+    val meteors = remember { mutableListOf<Meteor>() }
+    var nextMeteorTime by remember { mutableLongStateOf(0L) }
 
     val viewWidth = with(LocalDensity.current) {
       maxWidth.toPx()
@@ -122,8 +126,22 @@ fun GalaxyView(
             // withFrameNanos 是实现每帧回调的关键
             // 它会在下一帧准备好时执行代码块
             withFrameMillis { frameTimeMillis ->
+              val currentTime = frameTimeMillis - startTime
+              
               // 遍历列表并更新每个星星的状态
-              stars.forEach { it.shine((frameTimeMillis - startTime)) }
+              stars.forEach { it.shine(currentTime) }
+
+              // 流星生成逻辑：随机间隔 3-8 秒生成一颗流星
+              if (currentTime >= nextMeteorTime) {
+                val meteor = Meteor.createRandom(viewWidth, viewHeight, random)
+                meteors.add(meteor)
+                // 下一颗流星的时间：3-8 秒后
+                nextMeteorTime = currentTime + 3000L + random.nextLong(5000L)
+              }
+
+              // 更新流星状态并移除不活跃的流星
+              meteors.forEach { it.update(currentTime) }
+              meteors.removeAll { !it.isActive }
               frameTick = frameTimeMillis
             }
             delay(16)
@@ -132,15 +150,23 @@ fun GalaxyView(
         }
       }
 
+      val paint = remember { Paint() }
+      val meteorPaint = remember {
+        Paint().apply {
+          style = PaintingStyle.Stroke
+          strokeCap = StrokeCap.Round
+        }
+      }
+
       Box(
         modifier =
           Modifier
             .fillMaxSize()
             .drawWithCache {
-              val paint = Paint()
               val tick = frameTick
               onDrawWithContent {
                 drawIntoCanvas { canvas ->
+                  // 绘制星星
                   stars.forEach { star ->
                     paint.color = Color(star.color)
                     paint.alpha = star.alpha
@@ -150,6 +176,36 @@ fun GalaxyView(
                       star.radius,
                       paint.asFrameworkPaint()
                     )
+                  }
+
+                  // 绘制流星
+                  meteors.forEach { meteor ->
+                    if (meteor.isActive) {
+                      // 绘制流星尾巴：从头到尾的渐变线条
+                      val headX = meteor.currentX
+                      val headY = meteor.currentY
+                      val tailX = meteor.getTailX()
+                      val tailY = meteor.getTailY()
+
+                      // 流星头部（亮）
+                      meteorPaint.color = Color(meteor.color)
+                      meteorPaint.alpha = meteor.alpha
+                      meteorPaint.strokeWidth = 3f
+                      canvas.nativeCanvas.drawLine(
+                        headX, headY,
+                        (headX + tailX) / 2, (headY + tailY) / 2,
+                        meteorPaint.asFrameworkPaint()
+                      )
+
+                      // 流星尾部（暗淡）
+                      meteorPaint.alpha = meteor.alpha * 0.3f
+                      meteorPaint.strokeWidth = 1.5f
+                      canvas.nativeCanvas.drawLine(
+                        (headX + tailX) / 2, (headY + tailY) / 2,
+                        tailX, tailY,
+                        meteorPaint.asFrameworkPaint()
+                      )
+                    }
                   }
                 }
               }
@@ -161,6 +217,7 @@ fun GalaxyView(
     DisposableEffect(Unit) {
       onDispose {
         stars.clear() // 清空列表
+        meteors.clear() // 清空流星列表
       }
     }
 

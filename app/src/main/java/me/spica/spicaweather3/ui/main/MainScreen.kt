@@ -33,12 +33,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.chrisbanes.haze.HazeDefaults
-import dev.chrisbanes.haze.HazeDefaults.tint
-import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeEffect
-import dev.chrisbanes.haze.hazeSource
-import dev.chrisbanes.haze.rememberHazeState
+import com.kyant.backdrop.backdrops.LayerBackdrop
+import com.kyant.backdrop.backdrops.layerBackdrop
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.kyant.backdrop.drawBackdrop
+import com.kyant.backdrop.effects.lens
+import com.kyant.backdrop.effects.vibrancy
+import com.kyant.backdrop.highlight.Highlight
 import me.spica.spicaweather3.R
 import me.spica.spicaweather3.common.WeatherAnimType
 import me.spica.spicaweather3.route.LocalNavController
@@ -126,7 +127,7 @@ fun MainScreen() {
   val navigator = LocalNavController.current
 
   // 毛玻璃效果状态
-  val hazeState = rememberHazeState()
+  val backdrop = rememberLayerBackdrop()
 
   val refreshTexts = listOf(
     stringResource(R.string.refresh_pull_down),
@@ -143,7 +144,7 @@ fun MainScreen() {
       // 浮动添加按钮 - 跳转到城市列表
       floatingActionButton = {
         AddCityButton(
-          hazeState = hazeState,
+          backdrop = backdrop,
           onClick = { navigator.navigate(Routes.WeatherList) }
         )
       },
@@ -180,7 +181,7 @@ fun MainScreen() {
       Box(
         modifier = Modifier
           .fillMaxSize()
-          .hazeSource(hazeState) // 毛玻璃效果源
+          .layerBackdrop(backdrop) // 毛玻璃效果源
       ) {
         // 下拉刷新容器
         PullToRefresh(
@@ -209,21 +210,36 @@ fun MainScreen() {
  */
 @Composable
 private fun AddCityButton(
-  hazeState: HazeState,
+  backdrop: LayerBackdrop,
   onClick: () -> Unit
 ) {
  with(LocalSharedTransitionScope.current){
+   val glassColor = MiuixTheme.colorScheme.primary.copy(alpha = .7f)
    Box(
      modifier = Modifier
        .size(MAIN_PLUS_BUTTON_SIZE)
        .noRippleClickable(onClick = onClick)
        .clip(CircleShape)
-       .hazeEffect(
-         hazeState, style = HazeDefaults.style(
-           backgroundColor = MiuixTheme.colorScheme.surfaceContainerHigh,
-           blurRadius = 15.dp,
-           tint = tint(MiuixTheme.colorScheme.surface.copy(alpha = .1f))
-         )
+       .drawBackdrop(
+         highlight = {
+           Highlight.Plain
+         },
+         backdrop = backdrop,
+         shape = { CircleShape },
+         onDrawSurface = {
+           drawCircle(
+             color = glassColor,
+             radius = size.minDimension / 2f
+           )
+         },
+         effects = {
+           vibrancy()
+           lens(
+             8f.dp.toPx(),
+             16f.dp.toPx(),
+             chromaticAberration = true
+           )
+         }
        ),
      contentAlignment = Alignment.Center
    ) {
@@ -280,24 +296,23 @@ private fun WeatherPager(
   HorizontalPager(
     state = pagerState,
     modifier = Modifier.fillMaxSize(),
-    beyondViewportPageCount = 1, // 预加载相邻2页，提升滑动流畅度
-  ) { currentIndex ->
-    // 仅在目标页面时显示内容，优化性能
-    ShowOnIdleContent(
-      visible = currentIndex == pagerState.targetPage,
-      modifier = Modifier.fillMaxSize(),
-      enter = fadeIn(),
-      exit = fadeOut()
-    ) {
-      WeatherPage(
-        weatherPageStates[currentIndex],
-        scrollBehavior = scrollBehavior,
-        modifier = Modifier
-          .fillMaxSize()
-          .padding(paddingValues = paddingValues)
-      )
+    beyondViewportPageCount = 0,
+    pageContent = { currentIndex ->
+      // 仅在目标页面时显示内容，优化性能
+      if (weatherPageStates.isNotEmpty()) {
+        ShowOnIdleContent(visible = currentIndex == pagerState.targetPage) {
+          WeatherPage(
+            weatherPageStates[currentIndex],
+            scrollBehavior = scrollBehavior,
+            modifier = Modifier
+              .fillMaxSize()
+              .padding(paddingValues = paddingValues)
+          )
+        }
+      }
+
     }
-  }
+  )
 }
 
 
