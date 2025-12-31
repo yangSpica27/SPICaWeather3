@@ -138,7 +138,7 @@ private fun DataPage(
         if (!currentAnimType.showRain && cardsConfig.cardType == WeatherCardType.MINUTELY) {
           include = false
         }
-        if (weatherEntity.warnings.isEmpty() && cardsConfig.cardType == WeatherCardType.ALERT) {
+        if (cardsConfig.cardType == WeatherCardType.ALERT) {
           include = false
         }
         return@filter include
