@@ -127,9 +127,9 @@ class WeatherViewModel(
     if (currentCityIds == lastRefreshedCityIds &&
       currentTime - lastRefreshTime < REFRESH_INTERVAL_MS
     ) {
+      _isRefreshing.value = false
       return
     }
-
     _isRefreshing.value = true
     refreshJob?.cancel(java.util.concurrent.CancellationException())
     refreshJob = viewModelScope.launch {

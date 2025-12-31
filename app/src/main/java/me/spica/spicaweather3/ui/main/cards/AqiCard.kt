@@ -3,45 +3,34 @@ package me.spica.spicaweather3.ui.main.cards
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kyant.backdrop.backdrops.layerBackdrop
-import com.kyant.backdrop.backdrops.rememberLayerBackdrop
-import com.kyant.backdrop.drawBackdrop
-import com.kyant.backdrop.drawPlainBackdrop
-import com.kyant.backdrop.effects.lens
-import com.kyant.backdrop.highlight.Highlight
-import com.kyant.backdrop.shadow.Shadow
 import com.kyant.capsule.ContinuousRoundedRectangle
 import me.spica.spicaweather3.R
+import me.spica.spicaweather3.network.model.weather.Air2
 import me.spica.spicaweather3.network.model.weather.WeatherData
-import me.spica.spicaweather3.theme.COLOR_BLACK_20
+import me.spica.spicaweather3.theme.COLOR_BLACK_5
 import me.spica.spicaweather3.theme.WIDGET_CARD_PADDING
 import me.spica.spicaweather3.theme.WIDGET_CARD_TITLE_TEXT_STYLE
 import top.yukonga.miuix.kmp.basic.Text
@@ -53,16 +42,12 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
  */
 @Composable
 fun AqiCard(weatherData: WeatherData, startAnim: Boolean) {
-  val backdrop = rememberLayerBackdrop()
-  val glassColor = MiuixTheme.colorScheme.onSurface.copy(alpha = .04f)
   // 从 air2 获取数据，使用第一个 index（通常是综合 AQI）
   val airIndex = weatherData.air2.indexes.firstOrNull() ?: return
   val aqi = airIndex.aqi
-  val category = airIndex.category
-  val level = airIndex.level
   val healthAdvice = airIndex.health.advice.generalPopulation
 
-  
+
   // 从 ARGB 构建颜色
   val aqiColor = remember(airIndex.color) {
     Color(
@@ -72,47 +57,27 @@ fun AqiCard(weatherData: WeatherData, startAnim: Boolean) {
       alpha = 255
     )
   }
-  
-  // 优化后的显示颜色，确保在浅色背景下可读
-  val displayColor = remember(aqiColor) {
-    // 转换到 HSL 色彩空间进行调整
-    val hsl = FloatArray(3)
-    android.graphics.Color.colorToHSV(aqiColor.toArgb(), hsl)
-    
-    // 降低饱和度和亮度，提高对比度
-    hsl[1] = (hsl[1] * 0.7f).coerceIn(0.3f, 1f) // 饱和度降低到70%，最低保持30%
-    hsl[2] = (hsl[2] * 0.8f).coerceIn(0.3f, 0.7f) // 亮度控制在30%-70%之间
-    
-    Color(android.graphics.Color.HSVToColor(hsl))
-  }
 
   // 动画配置
   val progressAnimValue = animateFloatAsState(
-    if (startAnim) 1f else 0f,
-    label = "progress"
+    if (startAnim) 1f else 0f, label = "progress"
   ).value
 
   val textAnimValue1 = animateFloatAsState(
-    if (startAnim) 1f else 0f,
-    animationSpec = tween(durationMillis = 450, 150),
-    label = "text1"
+    if (startAnim) 1f else 0f, animationSpec = tween(durationMillis = 450, 150), label = "text1"
   ).value
 
   val textAnimValue2 = animateFloatAsState(
-    if (startAnim) 1f else 0f,
-    animationSpec = tween(durationMillis = 550, 250),
-    label = "text2"
+    if (startAnim) 1f else 0f, animationSpec = tween(durationMillis = 550, 250), label = "text2"
   ).value
 
   val textAnimValue3 = animateFloatAsState(
-    if (startAnim) 1f else 0f,
-    animationSpec = tween(durationMillis = 750, 350),
-    label = "text3"
+    if (startAnim) 1f else 0f, animationSpec = tween(durationMillis = 750, 350), label = "text3"
   ).value
 
   Column(
     modifier = Modifier.padding(WIDGET_CARD_PADDING),
-    verticalArrangement = Arrangement.spacedBy(8.dp),
+    verticalArrangement = Arrangement.spacedBy(12.dp),
     horizontalAlignment = Alignment.Start
   ) {
     // 标题行
@@ -122,7 +87,7 @@ fun AqiCard(weatherData: WeatherData, startAnim: Boolean) {
       verticalAlignment = Alignment.CenterVertically
     ) {
       Icon(
-        painter = painterResource(id = R.drawable.material_symbols_outlined_air),
+        painter = painterResource(id = R.drawable.icon_aqi),
         contentDescription = null,
         tint = MiuixTheme.colorScheme.onSurface
       )
@@ -133,154 +98,156 @@ fun AqiCard(weatherData: WeatherData, startAnim: Boolean) {
         modifier = Modifier.graphicsLayer {
           alpha = textAnimValue1
           translationY = -12.dp.toPx() * (1f - textAnimValue1)
-        }
-      )
+        })
     }
 
     // AQI 数值和等级
     Row(
       modifier = Modifier.fillMaxWidth(),
-      horizontalArrangement = Arrangement.spacedBy(8.dp),
-      verticalAlignment = Alignment.Bottom
+      horizontalArrangement = Arrangement.spacedBy(12.dp),
+      verticalAlignment = Alignment.CenterVertically
     ) {
-      Text(
-        text = aqi.toString(),
-        color = displayColor,
-        style = MiuixTheme.textStyles.main.copy(
-          fontWeight = FontWeight.ExtraBold,
-          fontSize = 38.sp
-        ),
-        modifier = Modifier
-          .alignByBaseline()
-          .graphicsLayer {
-            alpha = textAnimValue2
-            translationY = -12.dp.toPx() * (1f - textAnimValue2)
-          }
-      )
-      Text(
-        text = category,
-        color = MiuixTheme.colorScheme.onSurface,
-        style = MiuixTheme.textStyles.main.copy(
-          fontWeight = FontWeight.SemiBold,
-          fontSize = 16.sp
-        ),
-        modifier = Modifier
-          .alignByBaseline()
-          .graphicsLayer {
-            alpha = textAnimValue2
-            translationY = -12.dp.toPx() * (1f - textAnimValue2)
-          }
-      )
-    }
 
-    // AQI 可视化指示器
-    BoxWithConstraints(
-      modifier = Modifier
-        .height(32.dp)
-        .background(
-          color = MiuixTheme.colorScheme.surfaceContainer,
-        )
-        ,
-      contentAlignment = Alignment.BottomStart,
-    ) {
-      // 渐变背景条
       Box(
         modifier = Modifier
-          .fillMaxWidth()
-          .height(11.dp)
-          .graphicsLayer {
-            translationY = -5.5.dp.toPx() - 4.dp.toPx()
-          }
-          .layerBackdrop(backdrop)
-          .background(
-            brush = Brush.horizontalGradient(
-              colors = listOf(
-                Color(0xFF00E400), // 优 (0-50)
-                Color(0xFFFFFF00), // 良 (51-100)
-                Color(0xFFFF7E00), // 轻度污染 (101-150)
-                Color(0xFFFF0000), // 中度污染 (151-200)
-                Color(0xFF99004C), // 重度污染 (201-300)
-                Color(0xFF7E0023)  // 严重污染 (300+)
-              )
-            ), shape = ContinuousRoundedRectangle(2.dp)
-          )
-          .border(
-            1.dp, color = Color.White.copy(alpha = 0.3f), ContinuousRoundedRectangle(2.dp)
-          )
-      )
-      
-      // 指示器圆圈
-      Box(
-        modifier = Modifier
-          .size(32.dp)
-          .graphicsLayer {
-            // AQI 最大值通常是500，映射到0-1范围
-            translationX = (constraints.maxWidth - 32.dp.toPx()) * ((aqi.toFloat() / 500f).coerceIn(
-              0f, 1f
-            )) * progressAnimValue
-          }
-          .clip(CircleShape)
-          .background(
-            color = MiuixTheme.colorScheme.surfaceContainer, shape = CircleShape
-          ),
-        contentAlignment = Alignment.Center
-      ) {
-        Box(
-          modifier = Modifier
-            .fillMaxSize()
-            .drawPlainBackdrop(
-              backdrop = backdrop, shape = { CircleShape },
-              effects = {
-                lens(
-                  5f.dp.toPx(),
-                  10f.dp.toPx(),
-                  chromaticAberration = true
-                )
-              },
-              onDrawFront = {
-                drawRect(
-                  color = glassColor,
-                  size = this.size
-                )
-              },
-              onDrawBackdrop = { draw ->
-                scale(1.5f, 1.5f) {
-                  draw()
-                }
-              },
+          .width(100.dp)
+          .height(100.dp)
+          .drawBehind {
+            drawCircle(
+              brush = Brush.sweepGradient(
+                colors = listOf(
+                  Color(0XFFb37feb),
+                  Color(0XFFf759ab),
+                  Color(0XFFffc53d),
+                  Color(0XFFfff566),
+                  Color(0XFF73d13d),
+                  Color(0XFFbae637),
+                  Color(0XFFb37feb),
+                  Color(0XFFb37feb),
+                ), center = center
+              ), center = center, radius = size.minDimension / 2 - 6.dp.toPx()
             )
+            for (i in 0..5) {
+              drawCircle(
+                style = Fill,
+                color = Color.White.copy(alpha = 0.3f),
+                center = center,
+                radius = 12.dp.toPx() + i * ((size.minDimension / 2 - 6.dp.toPx()) / 5f)
+              )
+            }
+            drawArc(
+              color = COLOR_BLACK_5,
+              startAngle = -135f,
+              sweepAngle = -270f * progressAnimValue,
+              useCenter = false,
+              style = androidx.compose.ui.graphics.drawscope.Stroke(
+                7.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round
+              )
+            )
+            drawArc(
+              brush = Brush.sweepGradient(
+                colors = listOf(
+                  Color(0XFFb37feb),
+                  Color(0XFFf759ab),
+                  Color(0XFFffc53d),
+                  Color(0XFFfff566),
+                  Color(0XFF73d13d),
+                  Color(0XFFbae637),
+                  Color(0XFFb37feb),
+                  Color(0XFFb37feb),
+                ), center = center
+              ),
+              startAngle = -135f,
+              sweepAngle = -270f * progressAnimValue * (aqi.coerceIn(0, 500) / 500f),
+              useCenter = false,
+              style = androidx.compose.ui.graphics.drawscope.Stroke(
+                7.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round
+              )
+            )
+          }, contentAlignment = Alignment.Center
+      ) {
+        Text(
+          modifier = Modifier.graphicsLayer {
+            alpha = textAnimValue2
+            translationY = -12.dp.toPx() * (1f - textAnimValue2) + 2.dp.toPx()
+          },
+          text = aqi.toString(),
+          color = MiuixTheme.colorScheme.onSurface,
+          style = WIDGET_CARD_TITLE_TEXT_STYLE().copy(
+            fontSize = 36.sp, fontWeight = FontWeight.ExtraBold
+          )
         )
       }
+      // 污染物
+      Column(
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalAlignment = Alignment.Start,
+        modifier = Modifier.graphicsLayer {
+          alpha = textAnimValue2
+          translationY = -12.dp.toPx() * (1f - textAnimValue2)
+        }) {
+        for (index in 0 until weatherData.air2.pollutants.size step 2) {
+          Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+          ) {
+            val pollutant1 = weatherData.air2.pollutants.getOrNull(index)
+            val pollutant2 = weatherData.air2.pollutants.getOrNull(index + 1)
+            if (pollutant1 != null) {
+              PollutantItem(
+                modifier = Modifier.weight(1f),
+                pollutant = pollutant1
+              )
+            }
+            if (pollutant2 != null) {
+              PollutantItem(
+                modifier = Modifier.weight(1f),
+                pollutant = pollutant2
+              )
+            }
+          }
+        }
+      }
     }
+    // 健康建议
+    Text(
+      modifier = Modifier
+        .fillMaxWidth()
+        .graphicsLayer {
+          alpha = textAnimValue3
+          translationY = -12.dp.toPx() * (1f - textAnimValue3)
+        },
+      text = healthAdvice,
+      color = MiuixTheme.colorScheme.onSurfaceContainer.copy(alpha = .7f),
+      style = MiuixTheme.textStyles.body1,
+    )
+  }
+}
 
-    // 底部健康建议
-    Row(
-      modifier = Modifier.fillMaxWidth(),
-      verticalAlignment = Alignment.Top,
-      horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-      Text(
-        modifier = Modifier
-          .weight(1f)
-          .graphicsLayer {
-            alpha = textAnimValue3
-            translationY = -12.dp.toPx() * (1f - textAnimValue3)
-          },
-        text = healthAdvice,
-        color = MiuixTheme.colorScheme.onSurface.copy(alpha = .6f),
-        style = WIDGET_CARD_TITLE_TEXT_STYLE().copy(
-          fontWeight = FontWeight.W500,
-          fontSize = 13.sp
-        ),
-        maxLines = 2
+@Composable
+fun PollutantItem(modifier: Modifier = Modifier, pollutant: Air2.Pollutant) {
+  Column(
+    modifier = modifier
+      .padding(vertical = 2.dp)
+      .background(
+        MiuixTheme.colorScheme.secondaryContainer, ContinuousRoundedRectangle(4.dp)
       )
-      Icon(
-        modifier = Modifier.size(28.dp),
-        painter = painterResource(R.drawable.material_symbols_outlined_masks),
-        tint = MiuixTheme.colorScheme.onSurface,
-        contentDescription = null
-      )
-    }
+      .padding(
+        horizontal = 8.dp, vertical = 8.dp
+      ),
+    verticalArrangement = Arrangement.spacedBy(4.dp),
+    horizontalAlignment = Alignment.CenterHorizontally
+  ) {
+    Text(
+      text = pollutant.name,
+      color = MiuixTheme.colorScheme.onSurfaceContainer.copy(alpha = .7f),
+      style = MiuixTheme.textStyles.body2
+    )
+    Text(
+      text = "${pollutant.concentration.value.toInt()} ${pollutant.concentration.unit}",
+      color = MiuixTheme.colorScheme.onSurface,
+      style = MiuixTheme.textStyles.body2.copy(fontWeight = FontWeight.Bold)
+    )
   }
 }
 

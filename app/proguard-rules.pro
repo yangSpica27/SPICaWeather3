@@ -30,3 +30,4 @@
 -keep @org.koin.core.annotation.* class * { *; }
 -keep class com.baidu.location.** {*;}
 -keep class me.spica.spicaweather3.common.** { *;}
+-keep class com.kyant.** { *;}

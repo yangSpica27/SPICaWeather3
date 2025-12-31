@@ -37,6 +37,8 @@ import com.kyant.backdrop.backdrops.LayerBackdrop
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import com.kyant.backdrop.drawBackdrop
+import com.kyant.backdrop.effects.blur
+import com.kyant.backdrop.effects.colorControls
 import com.kyant.backdrop.effects.lens
 import com.kyant.backdrop.effects.vibrancy
 import com.kyant.backdrop.highlight.Highlight
@@ -214,7 +216,7 @@ private fun AddCityButton(
   onClick: () -> Unit
 ) {
  with(LocalSharedTransitionScope.current){
-   val glassColor = MiuixTheme.colorScheme.primary.copy(alpha = .7f)
+   val glassColor = MiuixTheme.colorScheme.onSurface.copy(alpha = .1f)
    Box(
      modifier = Modifier
        .size(MAIN_PLUS_BUTTON_SIZE)
@@ -234,9 +236,14 @@ private fun AddCityButton(
          },
          effects = {
            vibrancy()
+           blur(8.dp.toPx())
+           this.colorControls(
+              saturation = 1.6f,
+              brightness = 0.3f
+           )
            lens(
-             8f.dp.toPx(),
-             16f.dp.toPx(),
+             12f.dp.toPx(),
+             22f.dp.toPx(),
              chromaticAberration = true
            )
          }

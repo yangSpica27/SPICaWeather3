@@ -1,6 +1,5 @@
 package me.spica.spicaweather3.ui.main.weather
 
-import android.R.attr.rotation
 import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.AnimationSpec
@@ -64,15 +63,12 @@ import me.spica.spicaweather3.ui.main.cards.SunriseCard
 import me.spica.spicaweather3.ui.main.cards.UVCard
 import me.spica.spicaweather3.ui.widget.AnimateOnEnter
 import me.spica.spicaweather3.ui.widget.LocalMenuState
-import me.spica.spicaweather3.ui.widget.ShowOnIdleContent
 import org.koin.compose.koinInject
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyGridState
 import top.yukonga.miuix.kmp.basic.ScrollBehavior
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.utils.scrollEndHaptic
-import kotlin.collections.toMutableList
 import kotlin.random.Random
 
 
@@ -178,8 +174,7 @@ private fun DataPage(
   LazyVerticalGrid(
     modifier = Modifier
       .fillMaxSize()
-      .nestedScroll(scrollBehavior.nestedScrollConnection)
-      .scrollEndHaptic(),
+      .nestedScroll(scrollBehavior.nestedScrollConnection),
     columns = GridCells.Fixed(2),
     horizontalArrangement = Arrangement.spacedBy(12.dp),
     verticalArrangement = Arrangement.spacedBy(12.dp),

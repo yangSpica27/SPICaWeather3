@@ -82,7 +82,6 @@ import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.extra.SuperDialog
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.overScrollVertical
-import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 import kotlin.random.Random
 
 
@@ -248,9 +247,6 @@ fun WeatherListScreen() {
           .padding(it)
           .fillMaxSize()
           .nestedScroll(scrollBehavior.nestedScrollConnection)
-          .scrollEndHaptic(
-            hapticFeedbackType = HapticFeedbackType.GestureEnd
-          )
           .overScrollVertical(),
       contentPadding = PaddingValues(top = 12.dp, bottom = 48.dp),
       overscrollEffect = null
@@ -346,7 +342,8 @@ fun WeatherListScreen() {
                   elevation = elevation,
                   shape = ContinuousRoundedRectangle(12.dp),
                 )
-                .clip(ContinuousRoundedRectangle(12.dp)),
+                .clip(ContinuousRoundedRectangle(12.dp)
+                ),
               cityData = item,
             )
 
