@@ -10,7 +10,7 @@ import me.spica.spicaweather3.db.entity.CityEntity
   entities = [
     CityEntity::class,
   ],
-  version = 4,
+  version = 5,
   exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

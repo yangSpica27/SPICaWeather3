@@ -7,7 +7,6 @@ import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.LocalRippleConfiguration
@@ -19,7 +18,6 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -42,9 +40,9 @@ import me.spica.spicaweather3.utils.DataStoreUtil
 import me.spica.spicaweather3.utils.LocationHelper
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinActivityViewModel
+import top.yukonga.miuix.kmp.theme.ColorSchemeMode
 import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.theme.darkColorScheme
-import top.yukonga.miuix.kmp.theme.lightColorScheme
+import top.yukonga.miuix.kmp.theme.ThemeController
 
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -59,11 +57,6 @@ val LocalAnimatedContentScope = compositionLocalOf<AnimatedContentScope> {
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalPermissionsApi::class)
 @Composable
 fun AppMain() {
-  val colors = if (isSystemInDarkTheme()) {
-    darkColorScheme()
-  } else {
-    lightColorScheme()
-  }
 
   val navController = rememberNavController()
 
@@ -94,6 +87,8 @@ fun AppMain() {
 
   val weatherViewModel = koinActivityViewModel<WeatherViewModel>()
 
+  val themeController = remember { ThemeController(ColorSchemeMode.System) }
+
   LaunchedEffect(locationPermissionState.allPermissionsGranted) {
     if (locationPermissionState.allPermissionsGranted){
       locationHelper.fetchLocation(
@@ -110,7 +105,7 @@ fun AppMain() {
   }
 
   MiuixTheme(
-    colors = colors
+    controller = themeController
   ) {
     SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
       Box(

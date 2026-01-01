@@ -138,7 +138,7 @@ private fun DataPage(
         if (!currentAnimType.showRain && cardsConfig.cardType == WeatherCardType.MINUTELY) {
           include = false
         }
-        if (cardsConfig.cardType == WeatherCardType.ALERT) {
+        if (cardsConfig.cardType == WeatherCardType.ALERT && weatherEntity.warnings.isEmpty()) {
           include = false
         }
         return@filter include
@@ -163,10 +163,19 @@ private fun DataPage(
 
   val reorderableLazyListState = rememberReorderableLazyGridState(listState) { from, to ->
     val mutableList = cardsConfigs2.toMutableList()
+    val fromItem = mutableList[from.index]
+    val toItem = mutableList[to.index]
     val item = mutableList.removeAt(from.index)
     mutableList.add(to.index, item)
     cardsConfigs2 = mutableList
-    dataStoreUtil.updateCardsOrder(mutableList)
+
+    // 更新实际数据采用原始数据进行存储
+    val originalList = cardsConfigs.toMutableList()
+    val fromIndex = originalList.indexOfFirst { it.cardType == fromItem.cardType }
+    val toIndex = originalList.indexOfFirst { it.cardType == toItem.cardType }
+    val originalItem = originalList.removeAt(fromIndex)
+    originalList.add(toIndex, originalItem)
+    dataStoreUtil.updateCardsOrder(originalList)
     // 触发触觉反馈
     hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
   }
@@ -187,8 +196,8 @@ private fun DataPage(
       ) {
 
         // 优化延迟和持续时间，创造更流畅的波浪式入场效果
-        val delayMillis = remember(cardsConfig.cardType.key) { Random.nextInt(50, 180) }
-        val durationMillis = remember(cardsConfig.cardType.key) { Random.nextInt(400, 600) }
+        val delayMillis = remember(cardsConfig.cardType.key) { Random.nextInt(50, 280) }
+        val durationMillis = remember(cardsConfig.cardType.key) { Random.nextInt(100, 700) }
 
         ReorderableItem(
           key = cardsConfig.cardType.key, state = reorderableLazyListState
@@ -202,21 +211,21 @@ private fun DataPage(
               easing = EaseOutCubic
             ),
             modifier = Modifier
-              .graphicsLayer{
+              .graphicsLayer {
                 if (shouldShake) {
                   rotationZ = shakeOffset * 0.5f  // 轻微旋转
                   translationX = shakeOffset * 1.5f  // 轻微水平偏移
                 }
               }
               .longPressDraggableHandle(
-              enabled = true,
-              onDragStarted = {
-                isDrag = true
-              },
-              onDragStopped = {
-                isDrag = false
-              }
-            ),
+                enabled = true,
+                onDragStarted = {
+                  isDrag = true
+                },
+                onDragStopped = {
+                  isDrag = false
+                }
+              ),
             ratio = if (cardsConfig.cardType.spanSize == 2) 0f else 1f,
             content = { isAnimEnd ->
               when (cardsConfig.cardType) {

@@ -61,19 +61,19 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: 
   // 温度数字动画（无延迟，持续450ms）
   val textAnimValue1 = animateFloatAsState(
     if (startAnim) 1f else 0f,
-    animationSpec = tween(durationMillis = 450, 0)
+    animationSpec = tween(durationMillis = 250, 0)
   ).value
 
   // 天气状况和体感温度动画（延迟50ms，持续550ms）
   val textAnimValue2 = animateFloatAsState(
     if (startAnim) 1f else 0f,
-    animationSpec = tween(durationMillis = 550, 50)
+    animationSpec = tween(durationMillis = 350, 50)
   ).value
 
   // 湿度信息动画（延迟150ms，持续750ms）
   val textAnimValue3 = animateFloatAsState(
     if (startAnim) 1f else 0f,
-    animationSpec = tween(durationMillis = 750, 150)
+    animationSpec = tween(durationMillis = 550, 150)
   ).value
 
   // ==================== 主布局 ====================

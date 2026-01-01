@@ -30,6 +30,7 @@ import com.kyant.capsule.ContinuousRoundedRectangle
 import me.spica.spicaweather3.R
 import me.spica.spicaweather3.network.model.weather.Air2
 import me.spica.spicaweather3.network.model.weather.WeatherData
+import me.spica.spicaweather3.theme.COLOR_BLACK_100
 import me.spica.spicaweather3.theme.COLOR_BLACK_5
 import me.spica.spicaweather3.theme.WIDGET_CARD_PADDING
 import me.spica.spicaweather3.theme.WIDGET_CARD_TITLE_TEXT_STYLE
@@ -127,7 +128,7 @@ fun AqiCard(weatherData: WeatherData, startAnim: Boolean) {
                 ), center = center
               ), center = center, radius = size.minDimension / 2 - 6.dp.toPx()
             )
-            for (i in 0..5) {
+            for (i in 0 until 5) {
               drawCircle(
                 style = Fill,
                 color = Color.White.copy(alpha = 0.3f),
@@ -172,7 +173,7 @@ fun AqiCard(weatherData: WeatherData, startAnim: Boolean) {
             translationY = -12.dp.toPx() * (1f - textAnimValue2) + 2.dp.toPx()
           },
           text = aqi.toString(),
-          color = MiuixTheme.colorScheme.onSurface,
+          color = COLOR_BLACK_100,
           style = WIDGET_CARD_TITLE_TEXT_STYLE().copy(
             fontSize = 36.sp, fontWeight = FontWeight.ExtraBold
           )

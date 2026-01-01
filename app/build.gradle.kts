@@ -22,6 +22,10 @@ android {
     versionName = "1.0_preview"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    ndk {
+      //armeabi armeabi-v7a arm64-v8a x86 x86_64
+      abiFilters.add("arm64-v8a")
+    }
   }
 
   signingConfigs {
