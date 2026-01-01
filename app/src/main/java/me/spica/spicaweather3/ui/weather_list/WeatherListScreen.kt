@@ -30,6 +30,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -66,7 +67,9 @@ import me.spica.spicaweather3.ui.LocalAnimatedContentScope
 import me.spica.spicaweather3.ui.LocalSharedTransitionScope
 import me.spica.spicaweather3.ui.main.WeatherViewModel
 import me.spica.spicaweather3.ui.main.weather.WeatherPageState
+import me.spica.spicaweather3.ui.widget.DropdownMenuItem
 import me.spica.spicaweather3.ui.widget.MainTopBar
+import me.spica.spicaweather3.ui.widget.captureToDropdownMenu
 import me.spica.spicaweather3.utils.noRippleClickable
 import org.koin.compose.viewmodel.koinActivityViewModel
 import sh.calvin.reorderable.ReorderableItem
@@ -322,27 +325,27 @@ fun WeatherListScreen() {
                 .padding(horizontal = 22.dp)
                 .animateItem()
                 // 点击显示删除对话框
-                .noRippleClickable {
-                  if (index != 0) {
-                    selectedCity = item.cityEntity
-                    showDialog.value = true
-                  }
-                }
-                // 长按拖拽排序（首个 item 禁用拖拽）
-                .longPressDraggableHandle(
-                  enabled = index != 0,
-                  onDragStarted = {
-                    isDrag = true
-                  },
-                  onDragStopped = {
-                    isDrag = false
-                  }
+                .captureToDropdownMenu(
+                  enabled = index != 0, items = listOf(
+                    DropdownMenuItem(
+                      text = "删除", icon = Icons.Default.Delete
+                    ) {
+                      selectedCity = item.cityEntity
+                      showDialog.value = true
+                    })
                 )
+                // 长按拖拽排序（首个 item 禁用拖拽）
+                .longPressDraggableHandle(enabled = index != 0, onDragStarted = {
+                  isDrag = true
+                }, onDragStopped = {
+                  isDrag = false
+                })
                 .shadow(
                   elevation = elevation,
                   shape = ContinuousRoundedRectangle(12.dp),
                 )
-                .clip(ContinuousRoundedRectangle(12.dp)
+                .clip(
+                  ContinuousRoundedRectangle(12.dp)
                 ),
               cityData = item,
             )
@@ -389,8 +392,7 @@ fun WeatherItem(
     modifier = modifier
       .background(cardColor.value)
       .padding(
-        horizontal = 16.dp,
-        vertical = 12.dp
+        horizontal = 16.dp, vertical = 12.dp
       ),
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(12.dp)

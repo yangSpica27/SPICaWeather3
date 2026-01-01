@@ -54,7 +54,7 @@
 
 ### UI 增强
 - **MiuiX** - MIUI 风格组件库
-- **Haze** - 毛玻璃模糊效果
+- **AndroidLiquidGlass** - 毛玻璃模糊效果
 - **AndroidAutoSize** - 屏幕适配解决方案
 - **Accompanist** - Compose 辅助库（权限、系统 UI 控制器）
 
@@ -151,7 +151,8 @@ app/src/main/java/me/spica/spicaweather3/
 - ✅ 生活指数建议
 - ✅ 天气动画效果
 - ✅ 深色模式支持
-
+- ✅ 拖拽排序卡片
+- ✅ 桌面小组件
 
 
 ## 📄 开源协议

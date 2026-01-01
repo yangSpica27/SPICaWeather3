@@ -234,7 +234,7 @@ dataStoreUtil.updateCardsOrder(reorderedCards)
 - **minSdk**: 31
 - **targetSdk/compileSdk**: 36
 - **Java版本**: 11
-- **AGP**: 8.13.0
+- **AGP**: 8.13.2
 - **Kotlin**: 2.2.21
 - **KSP**: 用于 Room 注解处理 (2.2.21-2.0.4)
 - **签名配置**: debug/release 使用同一签名 (key.jks，密钥: SPICa27)
@@ -499,7 +499,7 @@ val data by viewModel.data.collectAsStateWithLifecycle()
 - **app/proguard-rules.pro**: ProGuard 混淆规则
 
 ### API 文档
-- **和风天气 API**: 主要天气数据来源 (https://n85egdbbrr.re.qweaterapi.com/)
+- **和风天气 API**: 主要天气数据来源 (https://n85egdbbrr.re.qweatherapi.com/)
 - **私有天气服务**: 补充天气接口 (http://106.54.25.152:4040/api/weather/all)
 - API 密钥配置在 `network/HefengConfig.kt`
 

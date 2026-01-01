@@ -4,13 +4,13 @@ import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.LocalRippleConfiguration
-import androidx.compose.material3.RippleConfiguration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -18,7 +18,7 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -35,6 +35,8 @@ import me.spica.spicaweather3.ui.main.MainScreen
 import me.spica.spicaweather3.ui.main.WeatherViewModel
 import me.spica.spicaweather3.ui.weather_list.WeatherListScreen
 import me.spica.spicaweather3.ui.widget.BottomSheetMenu
+import me.spica.spicaweather3.ui.widget.DropdownMenuOverlay
+import me.spica.spicaweather3.ui.widget.LocalDropdownMenuController
 import me.spica.spicaweather3.ui.widget.LocalMenuState
 import me.spica.spicaweather3.utils.DataStoreUtil
 import me.spica.spicaweather3.utils.LocationHelper
@@ -104,6 +106,12 @@ fun AppMain() {
     }
   }
 
+  val blurRadius2 = animateDpAsState(
+    targetValue = if (LocalDropdownMenuController.current.state.isVisible) 4.dp else 0.dp,
+    label = "DropdownMenuBlur",
+    animationSpec = tween(550)
+  )
+
   MiuixTheme(
     controller = themeController
   ) {
@@ -111,21 +119,18 @@ fun AppMain() {
       Box(
         modifier = Modifier
           .fillMaxSize()
-//          .hazeEffect {
-//            this.blurRadius = blurRadius
-//          }
           .background(MiuixTheme.colorScheme.surface)
       ) {
         CompositionLocalProvider(
           LocalSharedTransitionScope provides this@SharedTransitionLayout,
-          LocalNavController provides navController,
-          LocalRippleConfiguration provides RippleConfiguration(color = Color.Transparent)
+          LocalNavController provides navController
         ) {
           NavHost(
             startDestination = Routes.Main,
             navController = navController,
             modifier = Modifier
               .fillMaxSize()
+              .blur(blurRadius2.value)
               .background(
                 MiuixTheme.colorScheme.surface
               ),
@@ -164,6 +169,8 @@ fun AppMain() {
           state = LocalMenuState.current,
           modifier = Modifier.align(Alignment.BottomCenter),
         )
+        // 下拉菜单叠加层
+        DropdownMenuOverlay()
       }
     }
   }
