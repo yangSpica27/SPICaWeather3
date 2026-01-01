@@ -205,9 +205,10 @@ dataStoreUtil.updateCardVisibility(WeatherCardType.HOURLY, false)
 
 ### 天气卡片系统
 **核心组件** (`common/WeatherCardType.kt`):
-- `WeatherCardType` 枚举: 定义所有卡片类型（NOW, ALERT, HOURLY, DAILY, UV, AQI 等）
+- `WeatherCardType` 枚举: 定义所有卡片类型（NOW, ALERT, MINUTELY, HOURLY, DAILY, UV, AQI 等）
 - `WeatherCardConfig`: 卡片配置数据类，包含类型、可见性、排序
 - NOW 和 ALERT 卡片不可移除，其他卡片可自定义显示
+- 每个卡片定义包括: `key`, `displayName`, `description`, `isRemovable`, `defaultOrder`, `spanSize`
 
 **卡片管理方法**:
 ```kotlin
@@ -225,18 +226,20 @@ dataStoreUtil.updateCardVisibility(cardType, isVisible)
 dataStoreUtil.updateCardsOrder(reorderedCards)
 ```
 实现位置: `common/WeatherCardType.kt`  
-使用示例: 参考项目根目录的 `WEATHER_CARD_REFACTOR_README.md`
+配置保存: DataStore 中使用 Kotlinx Serialization 序列化为 JSON
 
 ## 项目特殊配置
 
 ### 构建配置
-- **minSdk**: 31 (注意: README 显示为 33，但实际配置是 31)
+- **minSdk**: 31
 - **targetSdk/compileSdk**: 36
 - **Java版本**: 11
-- **Gradle**: 8.13+
+- **AGP**: 8.13.0
+- **Kotlin**: 2.2.21
 - **KSP**: 用于 Room 注解处理 (2.2.21-2.0.4)
 - **签名配置**: debug/release 使用同一签名 (key.jks，密钥: SPICa27)
 - **JBox2D 模块**: 独立子项目 (`jbox2d/`) 用于物理引擎，需在 settings.gradle.kts 包含
+- **ABI过滤**: 仅支持 arm64-v8a 架构
 
 ### ProGuard 混淆规则
 关键保留规则 (在 `app/proguard-rules.pro`):
@@ -270,12 +273,14 @@ retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit
 
 ### 关键依赖
 - **Compose BOM**: 统一 Compose 版本 (2025.12.01)
-- **Haze**: 实现毛玻璃模糊效果 (`dev.chrisbanes.haze`)
 - **MiuiX**: MIUI 风格组件库 (`top.yukonga.miuix.kmp.theme`)
+- **Backdrop**: 毛玻璃模糊和背景效果 (`io.github.kyant0:backdrop`)
+- **Capsule**: UI 组件库 (`io.github.kyant0:capsule`)
 - **Baidu Location**: 百度定位服务，需在 `App.onCreate()` 调用 `LocationClient.setAgreePrivacy(true)`
 - **Sandwich**: Retrofit 响应封装 (`com.skydoves.sandwich`)
 - **AndroidAutoSize**: 屏幕适配库 (`com.github.JessYanCoding:AndroidAutoSize`)
 - **Reorderable**: 列表拖拽排序 (`sh.calvin.reorderable`)
+- **Accompanist**: 权限管理和系统 UI 控制器 (`com.google.accompanist`)
 
 ### 必须的初始化顺序
 `App.onCreate()` 中:
@@ -420,7 +425,9 @@ object NewWeatherType : WeatherAnimType(
 
 ### 调试网络请求
 - 查看 OkHttp 日志: 已配置 `HttpLoggingInterceptor.Level.BODY`
-- 超时配置在 `InjectModules.networkModule` 中 (连接 1.5s, 读写 3s)
+- 超时配置在 `InjectModules.networkModule` 中:
+  - 连接超时: 3.5s
+  - 读写/调用超时: 3s
 - API 基础 URL: `https://n85egdbbrr.re.qweatherapi.com/`
 - 私有天气服务: `http://106.54.25.152:4040/api/weather/all`
 
@@ -488,7 +495,6 @@ val data by viewModel.data.collectAsStateWithLifecycle()
 
 ### 重要文档
 - **README.md**: 项目概述、技术栈说明、架构图
-- **WEATHER_CARD_REFACTOR_README.md**: 天气卡片拖拽排序功能详细文档
 - **gradle/libs.versions.toml**: 所有依赖版本的集中管理
 - **app/proguard-rules.pro**: ProGuard 混淆规则
 
@@ -500,5 +506,5 @@ val data by viewModel.data.collectAsStateWithLifecycle()
 ### 关键实现参考
 - **共享元素转场**: `ui/AppMain.kt` 中的 `SharedTransitionLayout` 集成
 - **天气动画系统**: `ui/widget/WeatherBackground.kt` 渐变背景 + 各动画组件
-- **卡片拖拽**: 参考 `WEATHER_CARD_REFACTOR_README.md` 实现指南
+- **卡片拖拽**: `common/WeatherCardType.kt` 天气卡片系统实现
 - **物理引擎动画**: `ui/widget/haze/HazeView.kt` JBox2D 集成示例

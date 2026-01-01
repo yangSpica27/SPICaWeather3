@@ -107,4 +107,12 @@
   <string name="pollutant_sulfur_dioxide">二氧化硫</string>
   <string name="pollutant_nitrogen_dioxide">二氧化氮</string>
   <string name="air_quality_please_use_menu">敬请期待</string>
+
+  <!-- Widget -->
+  <string name="widget_today_info_description">显示今日天气信息</string>
+  <string name="widget_next_days_description">显示未来几天天气预报</string>
+  <string name="widget_refresh_description">手动刷新天气数据</string>
+  <string name="widget_open_app_description">打开柠檬天气Ⅲ应用</string>
+  <string name="widget_provider_name">柠檬天气Ⅲ</string>
+  <string name="widget_no_data">没有数据</string>
 </resources>

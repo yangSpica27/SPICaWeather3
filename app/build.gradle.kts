@@ -113,4 +113,6 @@ dependencies {
   implementation(libs.baidumapsdk.location)
   val accompanistVersion = "0.37.3"
   implementation(libs.accompanist.permissions)
+  implementation(libs.androidx.glance)
+  implementation(libs.androidx.glance.appwidget)
 }

@@ -51,6 +51,19 @@
       </intent-filter>
     </activity>
     <service android:name="com.baidu.location.f" android:enabled="true" android:process=":remote"> </service>
+
+    <!-- 今日天气信息小组件 -->
+    <receiver
+        android:name=".ui.app_widget.TodayInfoAppWidgetReceiver"
+        android:exported="true">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+      </intent-filter>
+      <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/today_info_widget_info" />
+    </receiver>
+
   </application>
 
 </manifest>

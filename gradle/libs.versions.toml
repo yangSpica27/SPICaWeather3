@@ -7,6 +7,7 @@ backdrop = "1.0.4"
 baidumapsdk_location = "9.6.6"
 capsule = "2.1.2"
 converterMoshi = "3.0.0"
+glance = "1.2.0-rc01"
 gson = "2.13.2"
 haze = "1.7.1"
 kotlin = "2.2.21"
@@ -37,6 +38,8 @@ ksp = "2.2.21-2.0.4"
 [libraries]
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistVersion" }
 androidautosize = { module = "com.github.JessYanCoding:AndroidAutoSize", version.ref = "androidautosize" }
+androidx-glance = { module = "androidx.glance:glance", version.ref = "glance" }
+androidx-glance-appwidget = { module = "androidx.glance:glance-appwidget", version.ref = "glance" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomVersion" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomVersion" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomVersion" }

@@ -9,9 +9,16 @@ import org.koin.core.context.GlobalContext.startKoin
 
 class App : Application() {
 
+
+  companion object {
+    lateinit var instance: App
+      private set
+  }
+
   override fun onCreate() {
     super.onCreate()
     initKoin()
+    instance = this
   }
 
 

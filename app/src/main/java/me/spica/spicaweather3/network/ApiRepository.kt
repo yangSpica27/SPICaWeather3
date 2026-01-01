@@ -7,9 +7,11 @@ import com.skydoves.sandwich.onSuccess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
+import me.spica.spicaweather3.App
 import me.spica.spicaweather3.R
 import me.spica.spicaweather3.db.dao.CityDao
 import me.spica.spicaweather3.network.model.Location
+import me.spica.spicaweather3.ui.app_widget.WidgetUpdateHelper
 import me.spica.spicaweather3.utils.StringProvider
 
 
@@ -36,6 +38,7 @@ class ApiRepository(
     }
     if (!isActive) return@withContext
     cityDao.insertAll(cities)
+    WidgetUpdateHelper.updateTodayInfoWidgets(App.instance)
     onSucceed.invoke()
   }
 
