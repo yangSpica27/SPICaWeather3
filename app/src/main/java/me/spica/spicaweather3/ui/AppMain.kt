@@ -19,7 +19,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
@@ -31,6 +30,7 @@ import me.spica.spicaweather3.route.LocalNavController
 import me.spica.spicaweather3.route.Routes
 import me.spica.spicaweather3.ui.air_quality.AirQualityScreen
 import me.spica.spicaweather3.ui.city_selector.CitySelectorScreen
+import me.spica.spicaweather3.ui.landscape.LandscapeMainScreen
 import me.spica.spicaweather3.ui.main.MainScreen
 import me.spica.spicaweather3.ui.main.WeatherViewModel
 import me.spica.spicaweather3.ui.weather_list.WeatherListScreen
@@ -40,6 +40,7 @@ import me.spica.spicaweather3.ui.widget.LocalDropdownMenuController
 import me.spica.spicaweather3.ui.widget.LocalMenuState
 import me.spica.spicaweather3.utils.DataStoreUtil
 import me.spica.spicaweather3.utils.LocationHelper
+import me.spica.spicaweather3.utils.isLandscape
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinActivityViewModel
 import top.yukonga.miuix.kmp.theme.ColorSchemeMode
@@ -61,12 +62,6 @@ val LocalAnimatedContentScope = compositionLocalOf<AnimatedContentScope> {
 fun AppMain() {
 
   val navController = rememberNavController()
-
-  val menuState = LocalMenuState.current
-
-  val blurRadius: Dp = remember(menuState.expandProgress) {
-    (menuState.expandProgress * 12).dp
-  }
 
   val locationHelper = koinInject<LocationHelper>()
 
@@ -91,6 +86,9 @@ fun AppMain() {
 
   val themeController = remember { ThemeController(ColorSchemeMode.System) }
 
+  // 缓存屏幕方向状态，减少重组
+  val isLandscapeMode = isLandscape()
+
   LaunchedEffect(locationPermissionState.allPermissionsGranted) {
     if (locationPermissionState.allPermissionsGranted){
       locationHelper.fetchLocation(
@@ -106,73 +104,102 @@ fun AppMain() {
     }
   }
 
+  val menuState = LocalMenuState.current
+
+  val dropdownMenuController = LocalDropdownMenuController.current
+
+  MiuixTheme(
+    controller = themeController
+  ) {
+    // 使用已缓存的屏幕方向状态
+    LaunchedEffect(isLandscapeMode) {
+      menuState.dismiss()
+      dropdownMenuController.dismiss()
+    }
+
+    if (isLandscapeMode) {
+      // 横屏模式 - 双栏布局
+      LandscapeMainScreen()
+    } else {
+      // 竖屏模式 - 原有导航布局
+      PortraitMainScreen(navController = navController)
+    }
+  }
+
+}
+
+/**
+ * 竖屏主界面布局
+ * 包含导航、底部菜单、下拉菜单等
+ */
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+private fun PortraitMainScreen(
+  navController: androidx.navigation.NavHostController
+) {
+
   val blurRadius2 = animateDpAsState(
     targetValue = if (LocalDropdownMenuController.current.state.isVisible) 4.dp else 0.dp,
     label = "DropdownMenuBlur",
     animationSpec = tween(550)
   )
 
-  MiuixTheme(
-    controller = themeController
-  ) {
-    SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
-      Box(
-        modifier = Modifier
-          .fillMaxSize()
-          .background(MiuixTheme.colorScheme.surface)
+  SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
+    Box(
+      modifier = Modifier
+        .fillMaxSize()
+        .background(MiuixTheme.colorScheme.surface)
+    ) {
+      CompositionLocalProvider(
+        LocalSharedTransitionScope provides this@SharedTransitionLayout,
+        LocalNavController provides navController
       ) {
-        CompositionLocalProvider(
-          LocalSharedTransitionScope provides this@SharedTransitionLayout,
-          LocalNavController provides navController
+        NavHost(
+          startDestination = Routes.Main,
+          navController = navController,
+          modifier = Modifier
+            .fillMaxSize()
+            .blur(blurRadius2.value)
+            .background(
+              MiuixTheme.colorScheme.surface
+            ),
+          enterTransition = {
+            slideInHorizontally { i -> i }
+          },
+          exitTransition = {
+            slideOutHorizontally { i -> -i }
+          },
         ) {
-          NavHost(
-            startDestination = Routes.Main,
-            navController = navController,
-            modifier = Modifier
-              .fillMaxSize()
-              .blur(blurRadius2.value)
-              .background(
-                MiuixTheme.colorScheme.surface
-              ),
-            enterTransition = {
-              slideInHorizontally { i -> i }
-            },
-            exitTransition = {
-              slideOutHorizontally { i -> -i }
-            },
-          ) {
-            composable<Routes.Main> {
-              CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-                MainScreen()
-              }
+          composable<Routes.Main> {
+            CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+              MainScreen()
             }
+          }
 
-            composable<Routes.CitySelect> {
-              CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-                CitySelectorScreen()
-              }
+          composable<Routes.CitySelect> {
+            CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+              CitySelectorScreen()
             }
+          }
 
-            composable<Routes.WeatherList> {
-              CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-                WeatherListScreen()
-              }
+          composable<Routes.WeatherList> {
+            CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+              WeatherListScreen()
             }
-            composable<Routes.AirQuality> {
-              CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-                AirQualityScreen()
-              }
+          }
+          composable<Routes.AirQuality> {
+            CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+              AirQualityScreen()
             }
           }
         }
-        BottomSheetMenu(
-          state = LocalMenuState.current,
-          modifier = Modifier.align(Alignment.BottomCenter),
-        )
-        // 下拉菜单叠加层
-        DropdownMenuOverlay()
       }
+      BottomSheetMenu(
+        state = LocalMenuState.current,
+        modifier = Modifier.align(Alignment.BottomCenter),
+      )
+      // 下拉菜单叠加层
+      DropdownMenuOverlay()
     }
   }
-
 }

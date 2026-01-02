@@ -228,6 +228,45 @@ dataStoreUtil.updateCardsOrder(reorderedCards)
 实现位置: `common/WeatherCardType.kt`  
 配置保存: DataStore 中使用 Kotlinx Serialization 序列化为 JSON
 
+### 桌面小组件系统 (Glance)
+项目实现了两个桌面小组件，基于 Jetpack Glance 框架:
+- **TodayInfoAppWidget**: 今日天气信息小组件
+- **WeeklyWeatherAppWidget**: 7天天气预报小组件
+
+**关键实现模式**:
+```kotlin
+// Widget 实现类继承 GlanceAppWidget
+class TodayInfoAppWidget : GlanceAppWidget() {
+  override suspend fun provideGlance(context: Context, id: GlanceId) {
+    provideContent {
+      // 使用 Glance 组件构建 UI (与 Compose 类似但有限制)
+      Box(modifier = GlanceModifier.fillMaxSize()) {
+        // 小组件内容
+      }
+    }
+  }
+}
+
+// Receiver 类继承 GlanceAppWidgetReceiver
+class TodayInfoAppWidgetReceiver : GlanceAppWidgetReceiver() {
+  override val glanceAppWidget: GlanceAppWidget = TodayInfoAppWidget()
+}
+```
+
+**更新机制**:
+- 使用 `WidgetUpdateHelper` 统一管理小组件更新
+- 调用 `updateAll()` 更新所有实例: `TodayInfoAppWidget().updateAll(context)`
+- 在天气数据刷新后自动触发小组件更新
+
+**Glance vs Compose 差异**:
+- 使用 `GlanceModifier` 而非 `Modifier`
+- 组件有限 (Box, Row, Column, Text 等基础组件)
+- 不支持复杂动画和交互
+- 使用 `ColorProvider` 而非直接使用 Color
+- 样式通过 `TextStyle` 配置 (fontSize 使用 `sp`, padding 使用 `dp`)
+
+实现位置: `ui/app_widget/` (TodayInfoAppWidget.kt, WeeklyWeatherAppWidget.kt, WidgetUpdateHelper.kt)
+
 ## 项目特殊配置
 
 ### 构建配置
@@ -276,6 +315,7 @@ retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit
 - **MiuiX**: MIUI 风格组件库 (`top.yukonga.miuix.kmp.theme`)
 - **Backdrop**: 毛玻璃模糊和背景效果 (`io.github.kyant0:backdrop`)
 - **Capsule**: UI 组件库 (`io.github.kyant0:capsule`)
+- **Glance**: 桌面小组件框架 (`androidx.glance:glance-appwidget`)
 - **Baidu Location**: 百度定位服务，需在 `App.onCreate()` 调用 `LocationClient.setAgreePrivacy(true)`
 - **Sandwich**: Retrofit 响应封装 (`com.skydoves.sandwich`)
 - **AndroidAutoSize**: 屏幕适配库 (`com.github.JessYanCoding:AndroidAutoSize`)
@@ -373,6 +413,7 @@ retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit
   - `city_selector/`: 城市选择器
   - `weather_list/`: 天气列表
   - `air_quality/`: 空气质量详情
+  - `app_widget/`: 桌面小组件 (基于 Glance)
   - `widget/`: 可复用的自定义 Compose 组件
     - `rain/`, `cloud/`, `sun/`, `galaxy/`, `wind/`, `haze/`: 天气动画组件
 - `utils/`: 工具类 (DataStoreUtil, LocationHelper, RainDropManager)
@@ -430,6 +471,37 @@ object NewWeatherType : WeatherAnimType(
   - 读写/调用超时: 3s
 - API 基础 URL: `https://n85egdbbrr.re.qweatherapi.com/`
 - 私有天气服务: `http://106.54.25.152:4040/api/weather/all`
+
+### 添加或修改桌面小组件
+```kotlin
+// 1. 创建 Widget 类 (继承 GlanceAppWidget)
+class NewAppWidget : GlanceAppWidget() {
+  override suspend fun provideGlance(context: Context, id: GlanceId) {
+    provideContent {
+      // 使用 Glance 组件构建 UI
+    }
+  }
+}
+
+// 2. 创建 Receiver 类
+class NewAppWidgetReceiver : GlanceAppWidgetReceiver() {
+  override val glanceAppWidget: GlanceAppWidget = NewAppWidget()
+}
+
+// 3. 在 AndroidManifest.xml 注册 Receiver
+<receiver android:name=".ui.app_widget.NewAppWidgetReceiver" android:exported="true">
+  <intent-filter>
+    <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+  </intent-filter>
+  <meta-data android:name="android.appwidget.provider" 
+             android:resource="@xml/new_widget_info" />
+</receiver>
+
+// 4. 在 WidgetUpdateHelper.kt 中添加更新方法
+suspend fun updateNewWidget(context: Context) {
+  NewAppWidget().updateAll(context)
+}
+```
 
 ## 常见陷阱与最佳实践
 
@@ -508,3 +580,4 @@ val data by viewModel.data.collectAsStateWithLifecycle()
 - **天气动画系统**: `ui/widget/WeatherBackground.kt` 渐变背景 + 各动画组件
 - **卡片拖拽**: `common/WeatherCardType.kt` 天气卡片系统实现
 - **物理引擎动画**: `ui/widget/haze/HazeView.kt` JBox2D 集成示例
+- **桌面小组件**: `ui/app_widget/` Glance 框架小组件实现
