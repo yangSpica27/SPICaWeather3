@@ -95,8 +95,8 @@ fun HumidityCard(modifier: Modifier = Modifier, humidity: Int = 55, startAnim: B
       )
 
       // 标题文字（渐显和向上平移动画）
-        Text(
-          modifier = Modifier.graphicsLayer {
+      Text(
+        modifier = Modifier.graphicsLayer {
           alpha = textAnimValue1
           translationY = -12.dp.toPx() * (1f - textAnimValue1)
         },

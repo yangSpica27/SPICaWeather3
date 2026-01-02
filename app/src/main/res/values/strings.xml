@@ -42,7 +42,7 @@
   <string name="alert_more_count">还有%1$d条预警</string>
   <string name="hourly_info_title">小时级别信息</string>
   <string name="hourly_tab_temperature">气温</string>
-  <string name="hourly_tab_wind">风力</string>
+  <string name="hourly_tab_wind">风力信息</string>
   <string name="feel_temp_title">体感温度</string>
   <string name="feel_temp_extremely_hot">炎热</string>
   <string name="feel_temp_hot">热</string>

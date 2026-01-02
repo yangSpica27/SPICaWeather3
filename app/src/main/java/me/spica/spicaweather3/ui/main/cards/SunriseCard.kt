@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -149,6 +150,7 @@ fun SunriseCard(weatherEntity: WeatherData, startAnim: Boolean) {
   Column(
     modifier = Modifier
       .fillMaxSize()
+      .aspectRatio(1f)
       .padding(
         horizontal = 16.dp,
         vertical = 12.dp
@@ -187,8 +189,7 @@ fun SunriseCard(weatherEntity: WeatherData, startAnim: Boolean) {
     Box(
       modifier = Modifier
         .fillMaxWidth()
-        .height(130.dp)
-        .padding(horizontal = 32.dp)
+        .weight(1f)
         .drawWithCache {
           // 路径测量工具，用于计算路径上的点
           val pathMeasure = PathMeasure()
@@ -259,9 +260,10 @@ fun SunriseCard(weatherEntity: WeatherData, startAnim: Boolean) {
 
 
     // 底部日出日落时间显示
-    Row(
+    Column (
       modifier = Modifier.fillMaxWidth(),
-      horizontalArrangement = Arrangement.SpaceBetween
+      horizontalAlignment = Alignment.CenterHorizontally,
+      verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
       // 左侧：日出时间
       Text(
@@ -269,7 +271,7 @@ fun SunriseCard(weatherEntity: WeatherData, startAnim: Boolean) {
           R.string.sunrise_label,
           weatherEntity.dailyWeather[0].sunriseDate
         ),
-        style = MiuixTheme.textStyles.title4,
+        style = MiuixTheme.textStyles.footnote1,
         color = MiuixTheme.colorScheme.onSurface,
         fontWeight = FontWeight.Bold
       )
@@ -279,7 +281,7 @@ fun SunriseCard(weatherEntity: WeatherData, startAnim: Boolean) {
           R.string.sunset_label,
           weatherEntity.dailyWeather[0].sunsetDate
         ),
-        style = MiuixTheme.textStyles.title4,
+        style = MiuixTheme.textStyles.footnote1,
         color = MiuixTheme.colorScheme.onSurface,
         fontWeight = FontWeight.Bold
       )

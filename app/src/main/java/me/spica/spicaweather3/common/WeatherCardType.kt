@@ -133,7 +133,16 @@ enum class WeatherCardType(
     description = "今日日出日落时间",
     isRemovable = true,
     defaultOrder = 9,
-    spanSize = 2
+    spanSize = 1
+  ),
+
+  WIND(
+    key = "wind",
+    displayName = "风力风向",
+    description = "当前风力风向信息",
+    isRemovable = true,
+    defaultOrder = 10,
+    spanSize = 1
   ),
 
   /**
@@ -144,7 +153,7 @@ enum class WeatherCardType(
     displayName = "空气质量",
     description = "空气质量指数详情",
     isRemovable = true,
-    defaultOrder = 10,
+    defaultOrder = 11,
     spanSize = 2
   );
 

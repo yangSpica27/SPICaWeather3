@@ -61,6 +61,7 @@ import me.spica.spicaweather3.ui.main.cards.NowCard
 import me.spica.spicaweather3.ui.main.cards.PrecipitationCard
 import me.spica.spicaweather3.ui.main.cards.SunriseCard
 import me.spica.spicaweather3.ui.main.cards.UVCard
+import me.spica.spicaweather3.ui.main.cards.WindCard
 import me.spica.spicaweather3.ui.widget.AnimateOnEnter
 import me.spica.spicaweather3.ui.widget.LocalMenuState
 import org.koin.compose.koinInject
@@ -265,6 +266,11 @@ private fun DataPage(
 
                 WeatherCardType.SUNRISE -> SunriseCard(
                   weatherEntity = weatherEntity, startAnim = isAnimEnd
+                )
+
+                WeatherCardType.WIND -> WindCard(
+                   startAnim = isAnimEnd,
+                  weatherEntity = weatherEntity
                 )
 
                 WeatherCardType.AQI -> AqiCard(

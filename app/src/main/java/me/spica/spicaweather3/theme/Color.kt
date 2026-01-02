@@ -10,6 +10,8 @@ val Purple40 = Color(0xFF6650a4)
 val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
+val PrecipitationCardColor = Color(0xff1677ff)
+
 val COLOR_WHITE_100 = Color.White
 val COLOR_WHITE_90 = Color.White.copy(alpha = .9f)
 val COLOR_WHITE_80 = Color.White.copy(alpha = .8f)

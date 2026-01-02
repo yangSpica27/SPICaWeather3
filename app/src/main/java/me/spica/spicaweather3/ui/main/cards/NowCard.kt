@@ -80,7 +80,7 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: 
   // 使用 Box 叠加布局：底层为天气背景动画，上层为天气信息文字
   Box(
     modifier = modifier
-      .aspectRatio(1.15f) // 宽高比 1.15:1，保持卡片比例
+      .aspectRatio(1.21f) // 宽高比 1.21:1，保持卡片比例
   ) {
     // 动态天气背景（晴天、雨天、雪天等不同动画效果）
     WeatherBackground(
