@@ -2,29 +2,29 @@ apply plugin: 'com.android.library'
 
 android {
     namespace 'org.jbox2d'
-    compileSdkVersion 33
+    compileSdk 36
 
     defaultConfig {
-        minSdkVersion 15
-        targetSdkVersion 33
+        minSdk 31
+        
+        // 保留 JBox2D 库的完整类名（防止主应用混淆破坏反射）
+        consumerProguardFiles 'consumer-rules.pro'
     }
+    
     compileOptions {
-        targetCompatibility JavaVersion.VERSION_1_8
-        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_11
+        sourceCompatibility JavaVersion.VERSION_11
     }
+    
     buildTypes {
         release {
-            postprocessing {
-                removeUnusedCode false
-                removeUnusedResources false
-                obfuscate false
-                optimizeCode false
-                proguardFile 'proguard-rules.pro'
-            }
+            // 库模块不应处理混淆，由主应用统一管理
+            minifyEnabled false
         }
     }
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    // 如果 libs 目录有 jar 文件，保留此行；否则可删除
+    // implementation fileTree(dir: 'libs', include: ['*.jar'])
 }
