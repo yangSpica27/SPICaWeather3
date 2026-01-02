@@ -18,8 +18,8 @@ android {
     applicationId = "me.spica.spicaweather3"
     minSdk = 31
     targetSdk = 36
-    versionCode = 1
-    versionName = "1.0_preview"
+    versionCode = 2
+    versionName = "1.0_preview2"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     ndk {
@@ -39,9 +39,13 @@ android {
 
   buildTypes {
     release {
-      isMinifyEnabled = false
+      isMinifyEnabled = true
+      isShrinkResources = true
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
       signingConfig = signingConfigs.getByName("signingConfig")
+      ndk {
+        debugSymbolLevel = "SYMBOL_TABLE"
+      }
     }
     debug {
       isMinifyEnabled = false
@@ -54,10 +58,30 @@ android {
   }
   kotlinOptions {
     jvmTarget = "11"
-    freeCompilerArgs = listOf("-XXLanguage:+PropertyParamAnnotationDefaultTargetMode")
+    freeCompilerArgs = listOf(
+      "-XXLanguage:+PropertyParamAnnotationDefaultTargetMode",
+      "-opt-in=kotlin.RequiresOptIn"
+    )
   }
   buildFeatures {
     compose = true
+  }
+  
+  packaging {
+    resources {
+      excludes += setOf(
+        "META-INF/DEPENDENCIES",
+        "META-INF/LICENSE",
+        "META-INF/LICENSE.txt",
+        "META-INF/license.txt",
+        "META-INF/NOTICE",
+        "META-INF/NOTICE.txt",
+        "META-INF/notice.txt",
+        "META-INF/*.kotlin_module",
+        "META-INF/AL2.0",
+        "META-INF/LGPL2.1"
+      )
+    }
   }
 }
 
