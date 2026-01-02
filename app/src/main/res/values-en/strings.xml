@@ -94,4 +94,5 @@
 
   <!-- Widget -->
   <string name="widget_today_info_description">Display today\'s weather information</string>
+  <string name="weekly_weather_widget_description">Display weekly weather forecast</string>
 </resources>

@@ -1,5 +1,6 @@
 package me.spica.spicaweather3.ui.app_widget
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
 import androidx.compose.ui.unit.dp
@@ -34,6 +35,7 @@ import me.spica.spicaweather3.theme.COLOR_WHITE_40
  */
 class TodayInfoAppWidget : GlanceAppWidget() {
 
+  @SuppressLint("RestrictedApi")
   override suspend fun provideGlance(
     context: Context,
     id: GlanceId

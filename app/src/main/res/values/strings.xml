@@ -115,4 +115,5 @@
   <string name="widget_open_app_description">打开柠檬天气Ⅲ应用</string>
   <string name="widget_provider_name">柠檬天气Ⅲ</string>
   <string name="widget_no_data">没有数据</string>
+  <string name="weekly_weather_widget_description">显示一周天气预报</string>
 </resources>
