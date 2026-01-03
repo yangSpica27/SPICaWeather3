@@ -45,24 +45,19 @@ fun HumidityCard(modifier: Modifier = Modifier, humidity: Int = 55, startAnim: B
     if (startAnim) 1f else 0f, animationSpec = tween(durationMillis = 1050, 0)
   ).value
 
-  // 标题和图标动画（延迟130ms，持续140ms）
+  // 标题和图标动画（持续140ms）
   val textAnimValue1 = animateFloatAsState(
-    if (startAnim) 1f else 0f, animationSpec = tween(durationMillis = 140, 130)
+    if (startAnim) 1f else 0f, animationSpec = tween(durationMillis = 140, 0)
   ).value
 
-  // 湿度数字缩放渐显动画（延迟150ms，持续230ms）
+  // 湿度数字缩放渐显动画（持续230ms）
   val textAnimValue2 = animateFloatAsState(
-    if (startAnim) 1f else 0f, animationSpec = tween(durationMillis = 230, 150)
+    if (startAnim) 1f else 0f, animationSpec = tween(durationMillis = 230, 50)
   ).value
 
-  // 百分号平移渐显动画（延迟170ms，持续320ms）
+  // 百分号平移渐显动画（持续320ms）
   val textAnimValue3 = animateFloatAsState(
-    if (startAnim) 1f else 0f, animationSpec = tween(durationMillis = 320, 170)
-  ).value
-
-  // 备用动画值（延迟170ms，持续1720ms）
-  val textAnimValue4 = animateFloatAsState(
-    if (startAnim) 1f else 0f, animationSpec = tween(durationMillis = 1720, 170)
+    if (startAnim) 1f else 0f, animationSpec = tween(durationMillis = 320, 70)
   ).value
 
   // 根据湿度值计算健康提示

@@ -2,10 +2,9 @@ package me.spica.spicaweather3.ui.widget
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,7 +31,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
@@ -66,15 +65,13 @@ data class DropdownMenuItem(
 
 /**
  * 下拉菜单状态数据类
- *
- * @param isVisible 是否可见
  * @param targetBitmap 目标组件的截图
  * @param targetOffset 目标组件在窗口中的偏移位置
  * @param targetSize 目标组件的尺寸
  * @param menuItems 菜单项列表
  */
+@Immutable
 data class DropdownMenuState(
-  val isVisible: Boolean = false,
   val targetBitmap: ImageBitmap? = null,
   val targetOffset: Offset = Offset.Zero,
   val targetSize: IntSize = IntSize.Zero,
@@ -87,6 +84,9 @@ data class DropdownMenuState(
  */
 class DropdownMenuController {
   var state by mutableStateOf(DropdownMenuState())
+    private set
+
+  var isVisible by mutableStateOf(false)
     private set
 
   /**
@@ -104,19 +104,19 @@ class DropdownMenuController {
     items: List<DropdownMenuItem>
   ) {
     state = DropdownMenuState(
-      isVisible = true,
       targetBitmap = bitmap,
       targetOffset = offset,
       targetSize = size,
       menuItems = items
     )
+    isVisible = true
   }
 
   /**
    * 隐藏下拉菜单
    */
   fun dismiss() {
-    state = DropdownMenuState()
+    isVisible = false
   }
 }
 
@@ -138,15 +138,16 @@ fun DropdownMenuOverlay() {
   val controller = LocalDropdownMenuController.current
   val state = controller.state
   val density = LocalDensity.current
+  val isVisible = controller.isVisible
 
-  BackHandler(state.isVisible) {
+  BackHandler(isVisible) {
     controller.dismiss()
   }
 
   AnimatedVisibility(
-    visible = state.isVisible,
+    visible = isVisible,
     enter = fadeIn(),
-    exit = fadeOut()
+    exit = fadeOut(animationSpec = tween(durationMillis = 50, delayMillis = 500))
   ) {
     Box(
       modifier = Modifier
@@ -200,7 +201,7 @@ fun DropdownMenuOverlay() {
             .zIndex(1002f)
         ) {
           ShowOnIdleContent (
-            visible = true,
+            visible = isVisible,
             enter = materialSharedAxisYIn(true),
             exit = materialSharedAxisYOut(true)
           ) {

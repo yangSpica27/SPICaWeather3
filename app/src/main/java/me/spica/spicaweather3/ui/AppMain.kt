@@ -139,7 +139,7 @@ private fun PortraitMainScreen(
 ) {
 
   val blurRadius2 = animateDpAsState(
-    targetValue = if (LocalDropdownMenuController.current.state.isVisible) 4.dp else 0.dp,
+    targetValue = if (LocalDropdownMenuController.current.isVisible) 10.dp else 0.dp,
     label = "DropdownMenuBlur",
     animationSpec = tween(550)
   )

@@ -325,15 +325,12 @@ fun WeatherListScreen() {
                 .padding(horizontal = 22.dp)
                 .animateItem()
                 // 点击显示删除对话框
-                .captureToDropdownMenu(
-                  enabled = index != 0, items = listOf(
-                    DropdownMenuItem(
-                      text = "删除", icon = Icons.Default.Delete
-                    ) {
-                      selectedCity = item.cityEntity
-                      showDialog.value = true
-                    })
-                )
+                .noRippleClickable{
+                  if (!item.cityEntity.isUserLoc){
+                    selectedCity = item.cityEntity
+                    showDialog.value = true
+                  }
+                }
                 // 长按拖拽排序（首个 item 禁用拖拽）
                 .longPressDraggableHandle(enabled = index != 0, onDragStarted = {
                   isDrag = true
@@ -413,8 +410,8 @@ fun WeatherItem(
           color = MiuixTheme.colorScheme.surface,
           textAlign = TextAlign.Start,
           style = MiuixTheme.textStyles.title2,
-          fontWeight = FontWeight.W600,
-          fontSize = 24.sp
+          fontWeight = FontWeight.SemiBold,
+          fontSize = 22.sp
         )
         if (isUserLoc){
           Icon(
@@ -431,8 +428,8 @@ fun WeatherItem(
         color = MiuixTheme.colorScheme.surface,
         textAlign = TextAlign.Start,
         style = MiuixTheme.textStyles.body2,
-        fontWeight = FontWeight.W500,
-        fontSize = 18.sp
+        fontWeight = FontWeight.Normal,
+        fontSize = 16.sp
       )
     }
     // 温度或加载动画，根据数据状态切换
@@ -451,11 +448,11 @@ fun WeatherItem(
             Text(
               buildAnnotatedString {
                 // 温度数字部分（大字体）
-                withStyle(style = SpanStyle(fontSize = 40.sp)) {
+                withStyle(style = SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Light)) {
                   append("${cityData.cityEntity.weather?.todayWeather?.temp}")
                 }
                 // 摄氏度符号（小字体）
-                withStyle(style = SpanStyle(fontSize = 32.sp)) {
+                withStyle(style = SpanStyle(fontSize = 32.sp,fontWeight = FontWeight.Light)) {
                   append("℃")
                 }
               },
@@ -463,7 +460,7 @@ fun WeatherItem(
               style = MiuixTheme.textStyles.main.copy(
                 fontSize = 32.sp
               ),
-              fontWeight = FontWeight.W900,
+              fontWeight = FontWeight.Light,
               textAlign = TextAlign.Center,
               modifier = Modifier
                 .fillMaxHeight(),

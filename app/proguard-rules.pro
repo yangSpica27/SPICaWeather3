@@ -60,24 +60,15 @@
 -keep class me.spica.spicaweather3.common.** { *;}
 
 # 保留第三方 UI 库
--keep class com.kyant.** { *;}
--keep class top.yukonga.miuix.** { *;}
 -keep class org.jbox2d.** { *;}
 
 # Kotlin 优化
 -dontwarn kotlin.**
--keep class kotlin.** { *; }
--keep class kotlin.Metadata { *; }
 -keepclassmembers class **$WhenMappings {
     <fields>;
 }
 
 # Kotlin 协程
--keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}
--keepnames class kotlinx.coroutines.CoroutineExceptionHandler {}
--keepclassmembers class kotlinx.coroutines.** {
-    volatile <fields>;
-}
 
 # Kotlin Serialization
 -keepattributes *Annotation*, InnerClasses
@@ -114,7 +105,3 @@
 -keepclassmembers class **$WhenMappings {
     <fields>;
 }
-
-# Compose优化
--keep class androidx.compose.** { *; }
--dontwarn androidx.compose.**

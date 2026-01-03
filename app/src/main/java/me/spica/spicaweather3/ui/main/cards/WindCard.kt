@@ -57,25 +57,25 @@ fun WindCard(weatherEntity: WeatherData, startAnim: Boolean) {
   // 动画配置
   val textAnimValue1 = animateFloatAsState(
     if (startAnim) 1f else 0f,
-    animationSpec = tween(durationMillis = 450, 150),
+    animationSpec = tween(durationMillis = 450, 0),
     label = "text1"
   ).value
 
   val textAnimValue2 = animateFloatAsState(
     if (startAnim) 1f else 0f,
-    animationSpec = tween(durationMillis = 550, 250),
+    animationSpec = tween(durationMillis = 550, 150),
     label = "text2"
   ).value
 
   val textAnimValue3 = animateFloatAsState(
     if (startAnim) 1f else 0f,
-    animationSpec = tween(durationMillis = 750, 350),
+    animationSpec = tween(durationMillis = 750, 250),
     label = "text3"
   ).value
 
   val iconRotationAnim = animateFloatAsState(
     if (startAnim) currentWind360 + 45f + 180f else 0f,
-    animationSpec = tween(durationMillis = 800),
+    animationSpec = tween(durationMillis = 550),
     label = "iconRotation"
   ).value
 
@@ -94,7 +94,10 @@ fun WindCard(weatherEntity: WeatherData, startAnim: Boolean) {
       verticalAlignment = Alignment.CenterVertically
     ) {
       Icon(
-        painter = painterResource(id = R.drawable.material_symbols_outlined_wind_power),
+        modifier = Modifier.size(24.dp).graphicsLayer{
+          alpha = textAnimValue1
+        },
+        painter = painterResource(id = R.drawable.material_symbols_outlined_stream),
         contentDescription = null,
         tint = MiuixTheme.colorScheme.onSurface
       )

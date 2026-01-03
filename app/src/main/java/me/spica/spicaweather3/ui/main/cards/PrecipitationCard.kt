@@ -39,19 +39,19 @@ fun PrecipitationCard(
   ).value
 
   val textAnimValue1 = animateFloatAsState(
-    if (startAnim) 1f else 0f, animationSpec = tween(durationMillis = 140, 330)
+    if (startAnim) 1f else 0f, animationSpec = tween(durationMillis = 140, 0)
   ).value
 
   val textAnimValue2 = animateFloatAsState(
-    if (startAnim) 1f else 0f, animationSpec = tween(durationMillis = 230, 450)
+    if (startAnim) 1f else 0f, animationSpec = tween(durationMillis = 230, 50)
   ).value
 
   val textAnimValue3 = animateFloatAsState(
-    if (startAnim) 1f else 0f, animationSpec = tween(durationMillis = 320, 570)
+    if (startAnim) 1f else 0f, animationSpec = tween(durationMillis = 320, 70)
   ).value
 
   val textAnimValue4 = animateFloatAsState(
-    if (startAnim) 1f else 0f, animationSpec = tween(durationMillis = 520, 670)
+    if (startAnim) 1f else 0f, animationSpec = tween(durationMillis = 520, 170)
   ).value
 
   Column(
