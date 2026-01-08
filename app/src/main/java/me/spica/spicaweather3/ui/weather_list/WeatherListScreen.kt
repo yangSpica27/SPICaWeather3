@@ -67,6 +67,7 @@ import me.spica.spicaweather3.ui.LocalSharedTransitionScope
 import me.spica.spicaweather3.ui.main.WeatherViewModel
 import me.spica.spicaweather3.ui.main.weather.WeatherPageState
 import me.spica.spicaweather3.ui.widget.MainTopBar
+import me.spica.spicaweather3.ui.widget.particle.ThanosDisintegrateContainer
 import me.spica.spicaweather3.utils.noRippleClickable
 import org.koin.compose.viewmodel.koinActivityViewModel
 import sh.calvin.reorderable.ReorderableItem
@@ -114,6 +115,9 @@ fun WeatherListScreen() {
 
   // 当前选中要删除的城市
   var selectedCity by remember { mutableStateOf<CityEntity?>(null) }
+
+  // 正在消散的城市ID（用于灭霸效果）
+  var disintegratingCityId by remember { mutableStateOf<Long?>(null) }
 
   // 监听城市列表变化，非拖拽状态时同步到临时列表
   LaunchedEffect(trackedCities) {
@@ -204,7 +208,8 @@ fun WeatherListScreen() {
         text = stringResource(R.string.action_confirm),
         onClick = {
           selectedCity?.let { c ->
-            viewModel.deleteCity(c)
+            // 触发灭霸消散效果
+            disintegratingCityId = c.id.hashCode().toLong()
           }
           showDialog.value = false
         },
@@ -303,13 +308,32 @@ fun WeatherListScreen() {
             // 判断是否应该显示抖动效果：有拖拽发生且当前 item 未被拖拽
             val shouldShake = isDrag && !isDragging
 
-            WeatherItem(
+            // 判断当前卡片是否正在消散
+            val isThisCardDisintegrating = disintegratingCityId == item.cityEntity.id.hashCode().toLong()
+
+            // 消散完成后标记，用于隐藏卡片防止闪烁
+            var hasDisintegrated by remember { mutableStateOf(false) }
+
+            ThanosDisintegrateContainer(
+              isDisintegrating = isThisCardDisintegrating,
+              onDisintegrationComplete = {
+                // 先标记已消散，隐藏卡片
+                hasDisintegrated = true
+                // 消散完成后执行实际删除
+                selectedCity?.let { city ->
+                  viewModel.deleteCity(city)
+                }
+                disintegratingCityId = null
+                selectedCity = null
+              },
               modifier = Modifier
                 .fillMaxSize()
                 .graphicsLayer {
                   scaleX = scale * progress
                   scaleY = scale * progress
                   translationY = (1f - progress) * 36.dp.toPx()
+                  // 消散完成后设置透明度为0，避免列表动画导致的闪烁
+                  alpha = if (hasDisintegrated) 0f else 1f
                   // 应用细微的抖动效果
                   if (shouldShake && index != 0) {
                     rotationZ = shakeOffset * 0.5f  // 轻微旋转
@@ -320,29 +344,37 @@ fun WeatherListScreen() {
                   top = if (index != 0) 12.dp else 0.dp
                 )
                 .padding(horizontal = 22.dp)
-                .animateItem()
-                // 点击显示删除对话框
-                .noRippleClickable {
-                  if (!item.cityEntity.isUserLoc) {
-                    selectedCity = item.cityEntity
-                    showDialog.value = true
-                  }
-                }
-                // 长按拖拽排序（首个 item 禁用拖拽）
-                .longPressDraggableHandle(enabled = index != 0, onDragStarted = {
-                  isDrag = true
-                }, onDragStopped = {
-                  isDrag = false
-                })
-                .shadow(
-                  elevation = elevation,
-                  shape = ContinuousRoundedRectangle(12.dp),
+                // 对于已消散的项，禁用动画以避免闪烁
+                .then(
+                  if (hasDisintegrated) Modifier else Modifier.animateItem()
                 )
-                .clip(
-                  ContinuousRoundedRectangle(12.dp)
-                ),
-              cityData = item,
-            )
+            ) {
+              WeatherItem(
+                modifier = Modifier
+                  .fillMaxSize()
+                  // 点击显示删除对话框
+                  .noRippleClickable {
+                    if (!item.cityEntity.isUserLoc && disintegratingCityId == null) {
+                      selectedCity = item.cityEntity
+                      showDialog.value = true
+                    }
+                  }
+                  // 长按拖拽排序（首个 item 禁用拖拽）
+                  .longPressDraggableHandle(enabled = index != 0, onDragStarted = {
+                    isDrag = true
+                  }, onDragStopped = {
+                    isDrag = false
+                  })
+                  .shadow(
+                    elevation = elevation,
+                    shape = ContinuousRoundedRectangle(12.dp),
+                  )
+                  .clip(
+                    ContinuousRoundedRectangle(12.dp)
+                  ),
+                cityData = item,
+              )
+            }
 
           }
         }
