@@ -5,11 +5,11 @@ import com.skydoves.sandwich.message
 import com.skydoves.sandwich.onFailure
 import com.skydoves.sandwich.onSuccess
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import me.spica.spicaweather3.App
 import me.spica.spicaweather3.R
 import me.spica.spicaweather3.db.dao.CityDao
+import me.spica.spicaweather3.network.model.BatchWeatherRequest
 import me.spica.spicaweather3.network.model.Location
 import me.spica.spicaweather3.ui.app_widget.WidgetUpdateHelper
 import me.spica.spicaweather3.utils.StringProvider
@@ -27,16 +27,28 @@ class ApiRepository(
     onSucceed: () -> Unit
   ) = withContext(Dispatchers.IO) {
     val cities = cityDao.getAll()
-    cities.forEach { item ->
-      val response = apiService.getWeather("${item.lon},${item.lat}").getOrNull()
-      if (response == null || response.code != 200) {
-        cityDao.insertAll(cities)
-        onError(stringProvider.getString(R.string.error_request_failed))
-        return@withContext
-      }
-      item.weather = response.data
+
+    val response =
+      apiService.getWeather(BatchWeatherRequest(cities.map { it.toWeatherRequestLocation() }))
+        .getOrNull()
+
+    if (response == null) {
+      onError(stringProvider.getString(R.string.error_request_failed))
+      return@withContext
     }
-    if (!isActive) return@withContext
+
+    if (response.code != 200 || response.data == null) {
+      onError(stringProvider.getString(R.string.error_request_failed))
+      return@withContext
+    }
+
+    cities.forEach { city ->
+      val weatherData = response.data.results.find { it.locationId == city.id }
+      if (weatherData != null && weatherData.success) {
+        city.weather = weatherData.data
+      }
+    }
+
     cityDao.insertAll(cities)
     WidgetUpdateHelper.updateTodayInfoWidgets(App.instance)
     onSucceed.invoke()

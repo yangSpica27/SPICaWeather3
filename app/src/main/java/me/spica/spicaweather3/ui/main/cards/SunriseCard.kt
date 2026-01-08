@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import me.spica.spicaweather3.R
-import me.spica.spicaweather3.network.model.weather.WeatherData
+import me.spica.spicaweather3.network.model.weather.AggregatedWeatherData
 import me.spica.spicaweather3.theme.WIDGET_CARD_TITLE_TEXT_STYLE
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -55,7 +55,7 @@ import java.util.*
  * @param startAnim 是否开始播放动画
  */
 @Composable
-fun SunriseCard(weatherEntity: WeatherData, startAnim: Boolean) {
+fun SunriseCard(weatherEntity: AggregatedWeatherData, startAnim: Boolean) {
 
   // ==================== 动画配置 ====================
   // 图标缩放动画（230ms）
@@ -75,7 +75,7 @@ fun SunriseCard(weatherEntity: WeatherData, startAnim: Boolean) {
 
   // ==================== 数据验证 ====================
   // 如果没有天气数据，显示空状态
-  if (weatherEntity.dailyWeather.isEmpty()) {
+  if (weatherEntity.forecast.next7Days.isEmpty()) {
 
     Box(
       modifier = Modifier
@@ -95,18 +95,18 @@ fun SunriseCard(weatherEntity: WeatherData, startAnim: Boolean) {
 
   // ==================== 时间计算 ====================
   // 解析日出时间（HH:mm 格式）
-  val sunrise = remember(weatherEntity.dailyWeather[0].sunriseDate) {
+  val sunrise = remember(weatherEntity.forecast.today.sunrise) {
     Date().apply {
-      hours = weatherEntity.dailyWeather[0].sunriseDate.split(":")[0].toInt()
-      minutes = weatherEntity.dailyWeather[0].sunriseDate.split(":")[1].toInt()
+      hours = weatherEntity.forecast.today.sunrise.split(":")[0].toInt()
+      minutes = weatherEntity.forecast.today.sunrise.split(":")[1].toInt()
     }
   }
 
   // 解析日落时间（HH:mm 格式）
-  val sunset = remember(weatherEntity.dailyWeather[0].sunsetDate) {
+  val sunset = remember(weatherEntity.forecast.today.sunset) {
     Date().apply {
-      hours = weatherEntity.dailyWeather[0].sunsetDate.split(":")[0].toInt()
-      minutes = weatherEntity.dailyWeather[0].sunsetDate.split(":")[1].toInt()
+      hours = weatherEntity.forecast.today.sunset.split(":")[0].toInt()
+      minutes = weatherEntity.forecast.today.sunset.split(":")[1].toInt()
     }
   }
 
@@ -193,7 +193,7 @@ fun SunriseCard(weatherEntity: WeatherData, startAnim: Boolean) {
         .drawWithCache {
           // 路径测量工具，用于计算路径上的点
           val pathMeasure = PathMeasure()
-          
+
           // 创建太阳运动轨迹（使用三次贝塞尔曲线绘制弧线）
           val sunMovePath = Path().apply {
             moveTo(0f, size.height * 1f) // 起点：左下角
@@ -212,7 +212,7 @@ fun SunriseCard(weatherEntity: WeatherData, startAnim: Boolean) {
           val movePath = Path()
           // 获取从起点到当前进度的路径段
           pathMeasure.getSegment(0f, pathMeasure.length * progress.value, movePath, true)
-          
+
           onDrawWithContent {
             // 绘制背景轨迹线（灰色）
             drawPath(
@@ -269,7 +269,7 @@ fun SunriseCard(weatherEntity: WeatherData, startAnim: Boolean) {
       Text(
         text = stringResource(
           R.string.sunrise_label,
-          weatherEntity.dailyWeather[0].sunriseDate
+          weatherEntity.forecast.today.sunrise
         ),
         style = MiuixTheme.textStyles.footnote1,
         color = MiuixTheme.colorScheme.onSurface,
@@ -279,7 +279,7 @@ fun SunriseCard(weatherEntity: WeatherData, startAnim: Boolean) {
       Text(
         text = stringResource(
           R.string.sunset_label,
-          weatherEntity.dailyWeather[0].sunsetDate
+          weatherEntity.forecast.today.sunset
         ),
         style = MiuixTheme.textStyles.footnote1,
         color = MiuixTheme.colorScheme.onSurface,

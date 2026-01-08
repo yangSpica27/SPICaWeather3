@@ -46,7 +46,7 @@ import me.spica.spicaweather3.R
 import me.spica.spicaweather3.common.WeatherAnimType
 import me.spica.spicaweather3.common.WeatherCardConfig
 import me.spica.spicaweather3.common.WeatherCardType
-import me.spica.spicaweather3.network.model.weather.WeatherData
+import me.spica.spicaweather3.network.model.weather.AggregatedWeatherData
 import me.spica.spicaweather3.theme.COLOR_WHITE_100
 import me.spica.spicaweather3.theme.WIDGET_CARD_CORNER_SHAPE
 import me.spica.spicaweather3.ui.main.WeatherViewModel
@@ -99,7 +99,7 @@ fun WeatherPage(
 
 @Composable
 private fun DataPage(
-  weatherEntity: WeatherData, scrollBehavior: ScrollBehavior
+  weatherEntity: AggregatedWeatherData, scrollBehavior: ScrollBehavior
 ) {
 
   val viewModel = koinInject<WeatherViewModel>()
@@ -108,7 +108,7 @@ private fun DataPage(
 
   val currentAnimType = remember(weatherEntity) {
     derivedStateOf {
-      WeatherAnimType.getAnimType(weatherEntity.todayWeather.iconId.toString())
+      WeatherAnimType.getAnimType(weatherEntity.current.icon)
     }
   }.value
 
@@ -139,7 +139,7 @@ private fun DataPage(
         if (!currentAnimType.showRain && cardsConfig.cardType == WeatherCardType.MINUTELY) {
           include = false
         }
-        if (cardsConfig.cardType == WeatherCardType.ALERT && weatherEntity.warnings.isEmpty()) {
+        if (cardsConfig.cardType == WeatherCardType.ALERT && weatherEntity.weatherAlerts.isNullOrEmpty()) {
           include = false
         }
         return@filter include
@@ -247,21 +247,21 @@ private fun DataPage(
 
                 WeatherCardType.DAILY -> DailyCard(data = weatherEntity)
                 WeatherCardType.UV -> UVCard(
-                  weatherEntity.dailyWeather.firstOrNull()?.uv?.toIntOrNull() ?: 0, isAnimEnd
+                  weatherEntity.forecast.today.uvIndex, isAnimEnd
                 )
 
                 WeatherCardType.FEEL_TEMP -> FeelTempCard(
-                  feelTemp = weatherEntity.todayWeather.feelTemp, startAnim = isAnimEnd
+                  feelTemp = weatherEntity.current.feelsLike, startAnim = isAnimEnd
                 )
 
                 WeatherCardType.PRECIPITATION -> PrecipitationCard(
-                  precipitation = weatherEntity.dailyWeather.firstOrNull()?.precip?.toInt() ?: 0,
-                  pop = weatherEntity.hourlyWeather.firstOrNull()?.pop ?: 0,
+                  precipitation = weatherEntity.current.precipitation.toInt(),
+                  pop = weatherEntity.forecast.next24Hours?.firstOrNull()?.pop?.toInt() ?: 0,
                   startAnim = isAnimEnd
                 )
 
                 WeatherCardType.HUMIDITY -> HumidityCard(
-                  humidity = weatherEntity.todayWeather.water, startAnim = isAnimEnd
+                  humidity = weatherEntity.current.humidity, startAnim = isAnimEnd
                 )
 
                 WeatherCardType.SUNRISE -> SunriseCard(
@@ -274,7 +274,7 @@ private fun DataPage(
                 )
 
                 WeatherCardType.AQI -> AqiCard(
-                  weatherData = weatherEntity,
+                  airQualitySummary = weatherEntity.airQuality,
                   startAnim = isAnimEnd
                 )
               }

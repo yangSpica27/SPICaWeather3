@@ -162,9 +162,9 @@ private fun CityListItem(
     }
 
     // 温度显示
-    weather?.todayWeather?.let { todayWeather ->
+    weather?.current?.let { todayWeather ->
       Text(
-        text = "${todayWeather.temp}°",
+        text = "${todayWeather.temperature}°",
         fontSize = 24.sp,
         fontWeight = FontWeight.Light,
         color = contentColor

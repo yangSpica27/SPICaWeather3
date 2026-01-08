@@ -4,7 +4,7 @@ import androidx.annotation.Keep
 import androidx.room.TypeConverter
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
-import me.spica.spicaweather3.network.model.weather.WeatherData
+import me.spica.spicaweather3.network.model.weather.AggregatedWeatherData
 
 @Keep
 @Suppress("unused")
@@ -14,15 +14,18 @@ class RoomTypeConverters {
 
 
   @TypeConverter
-  fun nowToString(data: WeatherData?): String? {
+  fun nowToString(data: AggregatedWeatherData?): String? {
     if (data == null) return ""
     return gson.toJson(data)
   }
 
   @TypeConverter
-  fun stringToNow(json: String?): WeatherData? {
+  fun stringToNow(json: String?): AggregatedWeatherData? {
     if (json.isNullOrEmpty()) return null
-    return gson.fromJson<WeatherData?>(json, object : TypeToken<WeatherData?>() {}.type)
+    return gson.fromJson<AggregatedWeatherData?>(
+      json,
+      object : TypeToken<AggregatedWeatherData?>() {}.type
+    )
   }
 
 }

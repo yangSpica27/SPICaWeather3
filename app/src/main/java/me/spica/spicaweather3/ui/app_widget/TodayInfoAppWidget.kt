@@ -86,9 +86,9 @@ class TodayInfoAppWidget : GlanceAppWidget() {
                 modifier = GlanceModifier
                   .height(4.dp)
               )
-              Row() {
+              Row {
                 Text(
-                  text = "${weatherData.todayWeather.temp}",
+                  text = "${weatherData.current.temperature}",
                   modifier = GlanceModifier,
                   style = TextStyle(
                     fontSize = 54.sp,
@@ -109,7 +109,7 @@ class TodayInfoAppWidget : GlanceAppWidget() {
                   .height(4.dp)
               )
               Text(
-                text = "${weatherData.todayWeather.weatherName} 风速${weatherData.todayWeather.windSpeed}公里/小时",
+                text = "${weatherData.current.condition} 风速${weatherData.current.windSpeed}公里/小时",
                 modifier = GlanceModifier,
                 style = TextStyle(
                   fontSize = 14.sp,

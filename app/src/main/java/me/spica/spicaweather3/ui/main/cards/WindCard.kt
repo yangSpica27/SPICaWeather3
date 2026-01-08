@@ -29,7 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import me.spica.spicaweather3.R
-import me.spica.spicaweather3.network.model.weather.WeatherData
+import me.spica.spicaweather3.network.model.weather.AggregatedWeatherData
 import me.spica.spicaweather3.theme.WIDGET_CARD_PADDING
 import me.spica.spicaweather3.theme.WIDGET_CARD_TITLE_TEXT_STYLE
 import top.yukonga.miuix.kmp.basic.Text
@@ -40,18 +40,18 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
  * 显示当前风力信息、风向、风速，以及未来24小时风力趋势图
  */
 @Composable
-fun WindCard(weatherEntity: WeatherData, startAnim: Boolean) {
-  val todayWeather = weatherEntity.todayWeather
-  val hourlyWeather = weatherEntity.hourlyWeather.take(24)
+fun WindCard(weatherEntity: AggregatedWeatherData, startAnim: Boolean) {
+  val todayWeather = weatherEntity.current
+  val hourlyWeather = weatherEntity.forecast.next24Hours ?: emptyList()
 
   // 获取当前风向描述
   val currentWindDir = remember(hourlyWeather) {
-    if (hourlyWeather.isNotEmpty()) hourlyWeather.first().windDir else "北风"
+    if (hourlyWeather.isNotEmpty()) hourlyWeather.first().windDirection else "北风"
   }
 
   // 获取当前风力角度
   val currentWind360 = remember(hourlyWeather) {
-    if (hourlyWeather.isNotEmpty()) hourlyWeather.first().wind360.toFloatOrNull() ?: 0f else 0f
+    if (hourlyWeather.isNotEmpty()) hourlyWeather.first().wind360.toFloat() else 0f
   }
 
   // 动画配置
@@ -94,9 +94,11 @@ fun WindCard(weatherEntity: WeatherData, startAnim: Boolean) {
       verticalAlignment = Alignment.CenterVertically
     ) {
       Icon(
-        modifier = Modifier.size(24.dp).graphicsLayer{
-          alpha = textAnimValue1
-        },
+        modifier = Modifier
+          .size(24.dp)
+          .graphicsLayer {
+            alpha = textAnimValue1
+          },
         painter = painterResource(id = R.drawable.material_symbols_outlined_stream),
         contentDescription = null,
         tint = MiuixTheme.colorScheme.onSurface
@@ -145,7 +147,7 @@ fun WindCard(weatherEntity: WeatherData, startAnim: Boolean) {
           tint = MiuixTheme.colorScheme.primary,
           modifier = Modifier
             .size(40.dp)
-            .graphicsLayer{
+            .graphicsLayer {
               transformOrigin = TransformOrigin(0.5f, 0.5f)
               rotationZ = iconRotationAnim
             }

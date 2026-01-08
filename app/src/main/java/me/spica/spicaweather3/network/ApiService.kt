@@ -3,11 +3,15 @@ package me.spica.spicaweather3.network
 import androidx.annotation.Keep
 import com.skydoves.sandwich.ApiResponse
 import me.spica.spicaweather3.common.HefengConfig
+import me.spica.spicaweather3.network.model.BatchWeatherRequest
 import me.spica.spicaweather3.network.model.LookUpResponse
 import me.spica.spicaweather3.network.model.TopCityResponse
-import me.spica.spicaweather3.network.model.weather.WeatherResponse
+import me.spica.spicaweather3.network.model.weather.BaseResponse
+import me.spica.spicaweather3.network.model.weather.BatchWeatherList
+import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Headers
+import retrofit2.http.POST
 import retrofit2.http.Query
 
 @Keep
@@ -24,7 +28,7 @@ interface ApiService {
   suspend fun topCity(): ApiResponse<TopCityResponse>
 
 
-  @GET("http://106.54.25.152:4040/api/weather/all")
-  suspend fun getWeather(@Query("location") location: String): ApiResponse<WeatherResponse>
+  @POST("http://106.54.25.152:4141/api/weather/batch")
+  suspend fun getWeather(@Body req: BatchWeatherRequest): ApiResponse<BaseResponse<BatchWeatherList>>
 
 }

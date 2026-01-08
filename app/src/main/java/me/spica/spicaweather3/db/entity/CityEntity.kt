@@ -1,11 +1,11 @@
 package me.spica.spicaweather3.db.entity
 
-import android.R.attr.name
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
 import me.spica.spicaweather3.db.type_converter.RoomTypeConverters
-import me.spica.spicaweather3.network.model.weather.WeatherData
+import me.spica.spicaweather3.network.model.LocationRequest
+import me.spica.spicaweather3.network.model.weather.AggregatedWeatherData
 import me.spica.spicaweather3.ui.main.weather.WeatherPageState
 import java.util.*
 
@@ -21,9 +21,16 @@ data class CityEntity(
   var adm2: String,
   var sort: Long = System.currentTimeMillis(),
   var isUserLoc: Boolean = false,
-  var weather: WeatherData? = null
+  var weather: AggregatedWeatherData? = null
 ) {
 
+  fun toWeatherRequestLocation() =
+    LocationRequest(
+      locationId = id,
+      longitude = lon,
+      latitude = lat,
+      name = name
+    )
 
   fun toWeatherData(): WeatherPageState {
     if (weather == null) return WeatherPageState.Empty(this)

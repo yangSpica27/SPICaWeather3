@@ -23,7 +23,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastCoerceAtLeast
 import me.spica.spicaweather3.R
-import me.spica.spicaweather3.network.model.weather.WeatherData
+import me.spica.spicaweather3.network.model.weather.AggregatedWeatherData
 import me.spica.spicaweather3.theme.WIDGET_CARD_PADDING
 import me.spica.spicaweather3.theme.WIDGET_CARD_TITLE_TEXT_STYLE
 import top.yukonga.miuix.kmp.basic.Text
@@ -32,7 +32,7 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
 fun MinutelyCard(
-  weatherData: WeatherData,
+  weatherData: AggregatedWeatherData,
   modifier: Modifier = Modifier
 ) {
 
@@ -62,7 +62,7 @@ fun MinutelyCard(
 
     val rainLineColor = MiuixTheme.colorScheme.primary
 
-    val rainData = weatherData.minutely
+    val rainData = weatherData.minutelyPrecip ?: return
 
     // 缓存 Paint 对象，避免重复创建
     val linePaint = remember {
@@ -137,7 +137,7 @@ fun MinutelyCard(
           )
 
           // 计算每个数据点的宽度
-          val dataSize = rainData.size.fastCoerceAtLeast(1)
+          val dataSize = rainData.next2Hours.size.fastCoerceAtLeast(1)
           val itemWidth = size.width / dataSize
           val oneHourX = itemWidth * 6f
           onDrawWithContent {
@@ -182,7 +182,6 @@ fun MinutelyCard(
               )
 
               // 绘制一小时参考下
-              val centerX = size.width / 2f
               nativeCanvas.drawLine(
                 oneHourX,
                 0f,
@@ -200,8 +199,8 @@ fun MinutelyCard(
               )
 
               // 绘制降雨数据线条
-              for ((index, minutely) in rainData.withIndex()) {
-                val precip = (minutely.precip.toFloatOrNull() ?: 0f).coerceIn(0f, 1f)
+              for ((index, minutely) in rainData.next2Hours.withIndex()) {
+                val precip = (minutely.precipitation.toFloat()).coerceIn(0f, 1f)
                 val x = itemWidth * index + itemWidth / 2f
                 nativeCanvas.drawLine(
                   x,

@@ -22,13 +22,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kyant.backdrop.backdrops.rememberLayerBackdrop
-import com.kyant.backdrop.drawPlainBackdrop
-import com.kyant.backdrop.effects.blur
 import com.kyant.capsule.ContinuousRoundedRectangle
 import me.spica.spicaweather3.R
 import me.spica.spicaweather3.common.WeatherAnimType
-import me.spica.spicaweather3.network.model.weather.WeatherData
+import me.spica.spicaweather3.network.model.weather.AggregatedWeatherData
 import me.spica.spicaweather3.ui.widget.WeatherBackground
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
@@ -47,13 +44,13 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
  * @param startAnim 是否开始播放动画
  */
 @Composable
-fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: Boolean) {
+fun NowCard(modifier: Modifier = Modifier, weatherData: AggregatedWeatherData, startAnim: Boolean) {
 
 
   // 根据天气图标ID计算对应的天气动画类型（晴天、雨天、雪天等）
   val currentWeatherAnimType = remember(weatherData) {
     WeatherAnimType.getAnimType(
-      weatherData.todayWeather.iconId.toString(),
+      weatherData.current.icon,
     )
   }
 
@@ -115,7 +112,7 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: 
               fontWeight = FontWeight.W800
             )
           ) {
-            append(weatherData.todayWeather.temp.toString())
+            append(weatherData.current.temperature.toString())
           }
           // 温度单位（45sp 较小字体）
           withStyle(
@@ -134,8 +131,8 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: 
       Text(
         text = stringResource(
           R.string.now_card_condition,
-          weatherData.todayWeather.weatherName,
-          weatherData.todayWeather.feelTemp
+          weatherData.current.condition,
+          weatherData.current.feelsLike
         ),
         style = MiuixTheme.textStyles.body1,
         color = MiuixTheme.colorScheme.surface,
@@ -152,7 +149,7 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: 
       Text(
         text = stringResource(
           R.string.now_card_humidity,
-          weatherData.todayWeather.water
+          weatherData.current.humidity
         ),
         style = MiuixTheme.textStyles.body2,
         color = MiuixTheme.colorScheme.surface,

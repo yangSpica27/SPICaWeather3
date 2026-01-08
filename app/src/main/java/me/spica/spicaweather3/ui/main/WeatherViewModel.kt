@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import me.spica.spicaweather3.common.WeatherAnimType
 import me.spica.spicaweather3.common.WeatherCardConfig
@@ -117,30 +118,26 @@ class WeatherViewModel(
     }
   }
 
-  private var refreshJob: kotlinx.coroutines.Job? = null
-
   fun refresh() {
     val currentTime = System.currentTimeMillis()
     val currentCityIds = weatherPageStates.value.map { it.cityEntity.id }
-
     // 如果城市列表没有变化，且距离上次刷新不超过3秒，跳过刷新
     if (currentCityIds == lastRefreshedCityIds &&
       currentTime - lastRefreshTime < REFRESH_INTERVAL_MS
     ) {
-      _isRefreshing.value = false
+      _isRefreshing.update { false }
       return
     }
-    _isRefreshing.value = true
-    refreshJob?.cancel(java.util.concurrent.CancellationException())
-    refreshJob = viewModelScope.launch {
+    _isRefreshing.update { true }
+    viewModelScope.launch {
       apiRepository.fetchWeather(
         onError = {
           _error.value = it
-          _isRefreshing.value = false
+          _isRefreshing.update { false }
         },
         onSucceed = {
-          _isRefreshing.value = false
           _error.value = null
+          _isRefreshing.update { false }
           // 刷新成功后更新时间戳和城市列表快照
           lastRefreshTime = System.currentTimeMillis()
           lastRefreshedCityIds = weatherPageStates.value.map { it.cityEntity.id }

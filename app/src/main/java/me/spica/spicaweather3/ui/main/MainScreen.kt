@@ -116,7 +116,7 @@ fun MainScreen() {
   LaunchedEffect(currentPageData.value) {
     val pageData = currentPageData.value
     if (pageData is WeatherPageState.Data) {
-      val iconId = pageData.cityEntity.weather?.todayWeather?.iconId.toString()
+      val iconId = pageData.cityEntity.weather?.current?.icon?:"100"
       viewModel.weatherAnimType.value = WeatherAnimType.getAnimType(iconId)
     }
   }

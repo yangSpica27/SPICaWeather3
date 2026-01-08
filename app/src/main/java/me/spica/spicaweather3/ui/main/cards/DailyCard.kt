@@ -34,12 +34,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import me.spica.spicaweather3.R
-import me.spica.spicaweather3.network.model.weather.DailyWeather
-import me.spica.spicaweather3.network.model.weather.WeatherData
+import me.spica.spicaweather3.network.model.weather.AggregatedWeatherData
+import me.spica.spicaweather3.network.model.weather.DailyForecast
 import me.spica.spicaweather3.theme.COLOR_BLACK_10
-import me.spica.spicaweather3.theme.COLOR_BLACK_20
-import me.spica.spicaweather3.theme.COLOR_WHITE_10
-import me.spica.spicaweather3.theme.COLOR_WHITE_100
 import me.spica.spicaweather3.theme.WIDGET_CARD_CORNER_SHAPE
 import me.spica.spicaweather3.theme.WIDGET_CARD_TITLE_TEXT_STYLE
 import me.spica.spicaweather3.utils.noRippleClickable
@@ -55,10 +52,10 @@ import top.yukonga.miuix.kmp.utils.pressable
  * @param data 天气数据，包含多日预报信息
  */
 @Composable
-fun DailyCard(data: WeatherData) {
+fun DailyCard(data: AggregatedWeatherData) {
   // 计算所有天气数据中的最低和最高温度，用于温度进度条的比例计算
-  val limitLow = remember(data) { data.dailyWeather.minOf { it.minTemp } }
-  val limitHigh = remember(data) { data.dailyWeather.maxOf { it.maxTemp } }
+  val limitLow = remember(data) { data.forecast.next7Days.minOf { it.tempMin } }
+  val limitHigh = remember(data) { data.forecast.next7Days.maxOf { it.tempMax } }
 
   Column(
     modifier = Modifier
@@ -87,7 +84,7 @@ fun DailyCard(data: WeatherData) {
       )
     }
     // 遍历展示每天的天气信息
-    data.dailyWeather.forEach { item ->
+    data.forecast.next7Days.forEach { item ->
       DailyItem(item, limitLow = limitLow, limitHigh = limitHigh)
     }
   }
@@ -102,7 +99,7 @@ fun DailyCard(data: WeatherData) {
  * @param limitHigh 本周期内的最高温度，用于温度条比例计算
  */
 @Composable
-private fun DailyItem(item: DailyWeather, limitLow: Int, limitHigh: Int) {
+private fun DailyItem(item: DailyForecast, limitLow: Int, limitHigh: Int) {
   // 控制详细信息面板的展开/收起状态
   var showExtraPanel by rememberSaveable { mutableStateOf(false) }
 
@@ -135,14 +132,14 @@ private fun DailyItem(item: DailyWeather, limitLow: Int, limitHigh: Int) {
         fontWeight = FontWeight.W800,
       )
       Text(
-        item.weatherNameDay,
+        item.dayCondition,
         style = MiuixTheme.textStyles.title4,
         color = MiuixTheme.colorScheme.onSurfaceContainer,
         modifier = Modifier.weight(1f),
         textAlign = TextAlign.Center
       )
       Text(
-        "${item.minTemp}℃",
+        "${item.tempMin}℃",
         style = MiuixTheme.textStyles.title4,
         color = MiuixTheme.colorScheme.onSurfaceContainer,
         modifier = Modifier.width(50.dp),
@@ -157,7 +154,7 @@ private fun DailyItem(item: DailyWeather, limitLow: Int, limitHigh: Int) {
         limitHigh = limitHigh
       )
       Text(
-        "${item.maxTemp}℃",
+        "${item.tempMax}℃",
         style = MiuixTheme.textStyles.title4,
         color = MiuixTheme.colorScheme.onSurfaceContainer,
         modifier = Modifier.width(50.dp),
@@ -182,7 +179,7 @@ private fun DailyItem(item: DailyWeather, limitLow: Int, limitHigh: Int) {
           ItemInfo(
             modifier = Modifier.weight(1f),
             title = stringResource(R.string.daily_info_humidity),
-            value = stringResource(R.string.daily_humidity_value, item.water),
+            value = stringResource(R.string.daily_humidity_value, item.humidity),
           ) {
             Icon(
               painter = painterResource(id = R.drawable.material_symbols_outlined_humidity_mid),
@@ -193,7 +190,7 @@ private fun DailyItem(item: DailyWeather, limitLow: Int, limitHigh: Int) {
           ItemInfo(
             modifier = Modifier.weight(1f),
             title = stringResource(R.string.daily_info_uv_level),
-            value = item.uv,
+            value = "${item.uvIndex}",
           ) {
             Icon(
               painter = painterResource(id = R.drawable.material_symbols_outlined_smart_outlet),
@@ -222,7 +219,7 @@ private fun DailyItem(item: DailyWeather, limitLow: Int, limitHigh: Int) {
           ItemInfo(
             modifier = Modifier.weight(1f),
             title = stringResource(R.string.daily_info_precipitation),
-            value = stringResource(R.string.daily_precipitation_value, item.precip),
+            value = stringResource(R.string.daily_precipitation_value, item.precipitation),
           ) {
             Icon(
               painter = painterResource(id = R.drawable.material_symbols_outlined_grain),
@@ -240,7 +237,7 @@ private fun DailyItem(item: DailyWeather, limitLow: Int, limitHigh: Int) {
           ItemInfo(
             modifier = Modifier.weight(1f),
             title = stringResource(R.string.daily_info_wind_speed),
-            value = stringResource(R.string.daily_wind_speed_value, item.winSpeed),
+            value = stringResource(R.string.daily_wind_speed_value, item.windSpeedDay),
           ) {
             Icon(
               painter = painterResource(id = R.drawable.material_symbols_outlined_wind_power),
@@ -325,7 +322,12 @@ fun ItemInfo(
  * @param limitHigh 本周期内的最高温度
  */
 @Composable
-fun TempProgress(modifier: Modifier = Modifier, data: DailyWeather, limitLow: Int, limitHigh: Int) {
+fun TempProgress(
+  modifier: Modifier = Modifier,
+  data: DailyForecast,
+  limitLow: Int,
+  limitHigh: Int
+) {
 
   Log.d("TempProgress", "limitLow: $limitLow, limitHigh: $limitHigh")
 
@@ -356,13 +358,13 @@ fun TempProgress(modifier: Modifier = Modifier, data: DailyWeather, limitLow: In
         // 计算当天最低温度在进度条上的起始位置
         val startOffset =
           Offset(
-            size.width * ((data.minTemp - limitLow) * 1f / (limitHigh - limitLow)),
+            size.width * ((data.tempMin - limitLow) * 1f / (limitHigh - limitLow)),
             size.height / 2
           )
         // 计算当天最高温度在进度条上的结束位置
         val endOffset =
           Offset(
-            size.width * ((data.maxTemp - limitLow) * 1f / (limitHigh - limitLow)),
+            size.width * ((data.tempMax - limitLow) * 1f / (limitHigh - limitLow)),
             size.height / 2
           )
 

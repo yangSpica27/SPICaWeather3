@@ -88,7 +88,7 @@ class WeeklyWeatherAppWidget : GlanceAppWidget() {
                 Spacer(modifier = GlanceModifier.height(2.dp))
                 Row {
                   Text(
-                    text = "${weatherData.todayWeather.temp}",
+                    text = "${weatherData.current.temperature}",
                     style = TextStyle(
                       fontSize = 32.sp,
                       color = ColorProvider(COLOR_WHITE_100)
@@ -108,7 +108,7 @@ class WeeklyWeatherAppWidget : GlanceAppWidget() {
             Spacer(modifier = GlanceModifier.height(12.dp))
 
             // 一周天气列表
-            val weeklyWeather = weatherData.dailyWeather.take(7)
+            val weeklyWeather = weatherData.forecast.next7Days.take(7)
             
             if (weeklyWeather.isNotEmpty()) {
               Column(
@@ -127,7 +127,8 @@ class WeeklyWeatherAppWidget : GlanceAppWidget() {
                     val dayLabel = try {
                       if (day.isToday()) "今天" else day.getDayOfWeekLabel()
                     } catch (e: Exception) {
-                      day.fxTime.substring(5, 10)
+                      e.printStackTrace()
+                      day.date
                     }
                     
                     Box(
@@ -149,7 +150,7 @@ class WeeklyWeatherAppWidget : GlanceAppWidget() {
                       contentAlignment = Alignment.CenterStart
                     ) {
                       Text(
-                        text = day.getWeatherText(),
+                        text = day.dayCondition,
                         style = TextStyle(
                           fontSize = 12.sp,
                           color = ColorProvider(COLOR_WHITE_40)
@@ -163,7 +164,7 @@ class WeeklyWeatherAppWidget : GlanceAppWidget() {
                       contentAlignment = Alignment.CenterEnd
                     ) {
                       Text(
-                        text = "${day.maxTemp}° / ${day.minTemp}°",
+                        text = "${day.tempMax}° / ${day.tempMin}°",
                         style = TextStyle(
                           fontSize = 12.sp,
                           color = ColorProvider(COLOR_WHITE_100)

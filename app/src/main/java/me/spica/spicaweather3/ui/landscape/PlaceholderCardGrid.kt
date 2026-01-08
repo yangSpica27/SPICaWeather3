@@ -82,9 +82,9 @@ fun PlaceholderCardGrid(
         )
         
         // 副标题 - 天气描述
-        cityState.cityEntity.weather?.todayWeather?.let { today ->
+        cityState.cityEntity.weather?.current?.let { today ->
             Text(
-                text = "${today.temp}°",
+                text = "${today.temperature}°",
                 fontSize = 16.sp,
                 color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)

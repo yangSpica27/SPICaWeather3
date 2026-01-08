@@ -36,9 +36,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.util.fastRoundToInt
 import com.kyant.capsule.ContinuousRoundedRectangle
 import me.spica.spicaweather3.R
-import me.spica.spicaweather3.network.model.weather.WeatherData
+import me.spica.spicaweather3.network.model.weather.AggregatedWeatherData
 import me.spica.spicaweather3.theme.WIDGET_CARD_CORNER_SHAPE
 import me.spica.spicaweather3.theme.WIDGET_CARD_PADDING
 import me.spica.spicaweather3.theme.WIDGET_CARD_TITLE_TEXT_STYLE
@@ -49,13 +50,12 @@ import me.spica.spicaweather3.ui.main.WindChart
 import me.spica.spicaweather3.ui.widget.materialSharedAxisZIn
 import me.spica.spicaweather3.ui.widget.materialSharedAxisZOut
 import me.spica.spicaweather3.utils.noRippleClickable
-import top.yukonga.miuix.kmp.basic.TabRowWithContour
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.pressable
 
 @Composable
-fun HourlyCard(modifier: Modifier = Modifier, weatherData: WeatherData) {
+fun HourlyCard(modifier: Modifier = Modifier, weatherData: AggregatedWeatherData) {
   Column(
     modifier = modifier
       .padding(WIDGET_CARD_PADDING),
@@ -105,30 +105,30 @@ fun HourlyCard(modifier: Modifier = Modifier, weatherData: WeatherData) {
 
       if (index == 0) {
         val sampleData = remember(weatherData) {
-          weatherData.hourlyWeather.map { hourlyWeather ->
+          weatherData.forecast.next24Hours?.map { hourlyWeather ->
             TempLineItem(
-              maxTemp = hourlyWeather.temp.toDouble(),
-              minTemp = hourlyWeather.temp.toDouble(),
-              date = "${hourlyWeather.fxTime().hours}:00",
-              weatherType = hourlyWeather.weatherName,
-              wind360 = hourlyWeather.wind360.toIntOrNull() ?: 0,
-              windDirection = hourlyWeather.windDir,
+              maxTemp = hourlyWeather.temperature.toDouble(),
+              minTemp = hourlyWeather.temperature.toDouble(),
+              date = "${hourlyWeather.getTimeAsLocalDateTime().hour}:00",
+              weatherType = hourlyWeather.condition,
+              wind360 = hourlyWeather.wind360.fastRoundToInt(),
+              windDirection = hourlyWeather.windDirection,
               probabilityOfPrecipitation = hourlyWeather.pop.toDouble(),
-              iconId = hourlyWeather.iconId.toString()
+              iconId = hourlyWeather.icon
             )
-          }
+          } ?: emptyList()
         }
         DailyTempLineView(data = sampleData)
       } else {
         val sampleData = remember(weatherData) {
-          weatherData.hourlyWeather.map { hourlyWeather ->
+          weatherData.forecast.next24Hours?.map { hourlyWeather ->
             ItemWindData(
-              date = "${hourlyWeather.fxTime().hours}:00",
-              windDirection = hourlyWeather.windDir,
-              windSpeed = hourlyWeather.windSpeed,
-              wind360 = hourlyWeather.wind360.toIntOrNull() ?: 0,
+              date = "${hourlyWeather.getTimeAsLocalDateTime().hour}:00",
+              windDirection = hourlyWeather.windDirection,
+              windSpeed = hourlyWeather.windSpeed.fastRoundToInt(),
+              wind360 = hourlyWeather.wind360.fastRoundToInt()
             )
-          }
+          } ?: emptyList()
         }
         WindChart(data = sampleData, modifier = Modifier.fillMaxWidth())
       }

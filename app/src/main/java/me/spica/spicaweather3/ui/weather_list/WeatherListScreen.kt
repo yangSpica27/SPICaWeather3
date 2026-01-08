@@ -30,7 +30,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -67,9 +66,7 @@ import me.spica.spicaweather3.ui.LocalAnimatedContentScope
 import me.spica.spicaweather3.ui.LocalSharedTransitionScope
 import me.spica.spicaweather3.ui.main.WeatherViewModel
 import me.spica.spicaweather3.ui.main.weather.WeatherPageState
-import me.spica.spicaweather3.ui.widget.DropdownMenuItem
 import me.spica.spicaweather3.ui.widget.MainTopBar
-import me.spica.spicaweather3.ui.widget.captureToDropdownMenu
 import me.spica.spicaweather3.utils.noRippleClickable
 import org.koin.compose.viewmodel.koinActivityViewModel
 import sh.calvin.reorderable.ReorderableItem
@@ -325,8 +322,8 @@ fun WeatherListScreen() {
                 .padding(horizontal = 22.dp)
                 .animateItem()
                 // 点击显示删除对话框
-                .noRippleClickable{
-                  if (!item.cityEntity.isUserLoc){
+                .noRippleClickable {
+                  if (!item.cityEntity.isUserLoc) {
                     selectedCity = item.cityEntity
                     showDialog.value = true
                   }
@@ -379,7 +376,7 @@ fun WeatherItem(
   // 根据天气数据动画更新卡片背景色
   LaunchedEffect(cityData) {
     if (cityData is WeatherPageState.Data) {
-      val iconId = cityEntity.weather?.todayWeather?.iconId?.toString() ?: ""
+      val iconId = cityEntity.weather?.current?.icon ?: "100"
       cardColor.animateTo(WeatherAnimType.getAnimType(iconId).topColor)
     } else {
       cardColor.animateTo(initColor)
@@ -449,7 +446,7 @@ fun WeatherItem(
               buildAnnotatedString {
                 // 温度数字部分（大字体）
                 withStyle(style = SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Light)) {
-                  append("${cityData.cityEntity.weather?.todayWeather?.temp}")
+                  append("${cityData.cityEntity.weather?.current?.temperature}")
                 }
                 // 摄氏度符号（小字体）
                 withStyle(style = SpanStyle(fontSize = 32.sp,fontWeight = FontWeight.Light)) {
