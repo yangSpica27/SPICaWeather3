@@ -57,6 +57,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kyant.capsule.ContinuousRoundedRectangle
+import dev.chrisbanes.haze.HazeProgressive
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.materials.HazeMaterials
+import dev.chrisbanes.haze.rememberHazeState
 import me.spica.spicaweather3.R
 import me.spica.spicaweather3.common.WeatherAnimType
 import me.spica.spicaweather3.db.entity.CityEntity
@@ -126,9 +131,19 @@ fun WeatherListScreen() {
     }
   }
 
+  val listHazeState = rememberHazeState()
+
   Scaffold(
     topBar = {
       MainTopBar(
+        modifier = Modifier.hazeEffect(
+          state = listHazeState,
+          style = HazeMaterials.ultraThin(
+            MiuixTheme.colorScheme.surface
+          )
+        ){
+          progressive = HazeProgressive.verticalGradient(startIntensity = 1f, endIntensity = 0f)
+        },
         scrollBehavior = scrollBehavior,
         title = {
           Text(
@@ -249,8 +264,9 @@ fun WeatherListScreen() {
       state = listState,
       modifier =
         Modifier
-          .padding(it)
+          .hazeSource(listHazeState)
           .fillMaxSize()
+          .padding(it)
           .nestedScroll(scrollBehavior.nestedScrollConnection)
           .overScrollVertical(),
       contentPadding = PaddingValues(top = 12.dp, bottom = 48.dp),

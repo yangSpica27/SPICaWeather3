@@ -18,6 +18,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
@@ -29,6 +30,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -37,6 +39,7 @@ import com.kyant.backdrop.backdrops.LayerBackdrop
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import com.kyant.backdrop.drawBackdrop
+import com.kyant.backdrop.drawPlainBackdrop
 import com.kyant.backdrop.effects.blur
 import com.kyant.backdrop.effects.colorControls
 import com.kyant.backdrop.effects.lens
@@ -153,7 +156,20 @@ fun MainScreen() {
       // 顶部标题栏
       topBar = {
         MainTopBar(
-          modifier = Modifier.fillMaxWidth(),
+          modifier = Modifier
+            .drawPlainBackdrop(
+              backdrop = backdrop,
+              shape = { RoundedCornerShape(0.dp) },
+              effects = {
+                vibrancy()
+                blur(8.dp.toPx())
+                this.colorControls(
+                  saturation = 1.6f,
+                  brightness = 0.3f
+                )
+              },
+            )
+            .fillMaxWidth(),
           scrollBehavior = scrollBehavior,
           // 大标题（展开状态）
           largeTitle = {
@@ -182,8 +198,8 @@ fun MainScreen() {
       // 主内容区域
       Box(
         modifier = Modifier
-          .fillMaxSize()
           .layerBackdrop(backdrop) // 毛玻璃效果源
+          .fillMaxSize()
       ) {
         // 下拉刷新容器
         PullToRefresh(
@@ -238,8 +254,8 @@ private fun AddCityButton(
            vibrancy()
            blur(8.dp.toPx())
            this.colorControls(
-              saturation = 1.6f,
-              brightness = 0.3f
+             saturation = 1.6f,
+             brightness = 0.3f
            )
            lens(
              12f.dp.toPx(),

@@ -117,12 +117,12 @@ dependencies {
 //  implementation(libs.miuix.android.icon)
   implementation(libs.backdrop)
   implementation(libs.capsule)
-//  implementation(libs.haze.materials)
+  implementation(libs.haze.materials)
   implementation(libs.accompanist.systemuicontroller)
   // define a BOM and its version
   implementation(platform(libs.okhttp.bom))
   // define any required OkHttp artifacts without version
-//  implementation(libs.haze)
+  implementation(libs.haze)
   implementation(libs.okhttp)
   implementation(libs.logging.interceptor)
   implementation(libs.retrofit)

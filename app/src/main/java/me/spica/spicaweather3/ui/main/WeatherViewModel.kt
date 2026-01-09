@@ -119,15 +119,6 @@ class WeatherViewModel(
   }
 
   fun refresh() {
-    val currentTime = System.currentTimeMillis()
-    val currentCityIds = weatherPageStates.value.map { it.cityEntity.id }
-    // 如果城市列表没有变化，且距离上次刷新不超过3秒，跳过刷新
-    if (currentCityIds == lastRefreshedCityIds &&
-      currentTime - lastRefreshTime < REFRESH_INTERVAL_MS
-    ) {
-      _isRefreshing.update { false }
-      return
-    }
     _isRefreshing.update { true }
     viewModelScope.launch {
       apiRepository.fetchWeather(
