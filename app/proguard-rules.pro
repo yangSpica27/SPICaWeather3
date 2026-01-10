@@ -34,41 +34,28 @@
     public static *** w(...);
 }
 
+# Sandwich - API 响应封装
 -keep,allowobfuscation,allowshrinking interface com.skydoves.sandwich.ApiResponse
--keep class me.spica.spicaweather3.network.** { *;}
--keep class com.skydoves.sandwich.** { *;}
--keep,allowobfuscation,allowshrinking interface com.skydoves.sandwich.ApiResponse
+-keep class com.skydoves.sandwich.** { *; }
 
-# Koin - 保留所有 ViewModel 和依赖注入相关类
+# 网络层数据模型 (防止 JSON 反序列化失败)
+-keep class me.spica.spicaweather3.data.remote.api.model.** { *; }
+
+# Koin 依赖注入
 -keep class org.koin.core.annotation.** { *; }
 -keep @org.koin.core.annotation.* class * { *; }
--keep class org.koin.** { *; }
--keepnames class org.koin.** { *; }
 
-# 保留所有 ViewModel 类（防止 Koin 实例化失败）
--keep class * extends androidx.lifecycle.ViewModel { *; }
--keep class me.spica.spicaweather3.ui.**.*ViewModel { *; }
+# 百度定位 SDK
+-keep class com.baidu.location.** { *; }
 
-# 保留所有被 Koin 注入的类（Repository, Helper, Util 等）
--keep class me.spica.spicaweather3.db.** { *; }
--keep class me.spica.spicaweather3.utils.** { *; }
-
-# 保留百度定位
--keep class com.baidu.location.** {*;}
-
-# 保留通用模型和常量
--keep class me.spica.spicaweather3.common.** { *;}
-
-# 保留第三方 UI 库
--keep class org.jbox2d.** { *;}
+# JBox2D 物理引擎
+-keep class org.jbox2d.** { *; }
 
 # Kotlin 优化
 -dontwarn kotlin.**
 -keepclassmembers class **$WhenMappings {
     <fields>;
 }
-
-# Kotlin 协程
 
 # Kotlin Serialization
 -keepattributes *Annotation*, InnerClasses
@@ -87,7 +74,7 @@
     kotlinx.serialization.KSerializer serializer(...);
 }
 
-# Retrofit 和 OkHttp
+# Retrofit
 -keepattributes Signature, InnerClasses, EnclosingMethod
 -keepattributes RuntimeVisibleAnnotations, RuntimeVisibleParameterAnnotations
 -keepattributes AnnotationDefault
@@ -96,13 +83,7 @@
 }
 -dontwarn org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 -dontwarn javax.annotation.**
--dontwarn kotlin.Unit
 -dontwarn retrofit2.KotlinExtensions
 -dontwarn retrofit2.KotlinExtensions$*
 -if interface * { @retrofit2.http.* <methods>; }
--keep class me.spica.spicaweather3.data.** { *;}
 -keep,allowobfuscation interface <1>
--dontwarn kotlinx.**
--keepclassmembers class **$WhenMappings {
-    <fields>;
-}

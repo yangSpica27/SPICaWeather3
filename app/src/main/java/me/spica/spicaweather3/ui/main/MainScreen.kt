@@ -47,12 +47,14 @@ import com.kyant.backdrop.effects.vibrancy
 import com.kyant.backdrop.highlight.Highlight
 import me.spica.spicaweather3.R
 import me.spica.spicaweather3.common.type.WeatherAnimType
+import me.spica.spicaweather3.core.constants.MainScreenConstants
 import me.spica.spicaweather3.route.LocalNavController
 import me.spica.spicaweather3.route.Routes
 import me.spica.spicaweather3.presentation.theme.MAIN_PLUS_BUTTON_SIZE
 import me.spica.spicaweather3.ui.LocalSharedTransitionScope
 import me.spica.spicaweather3.ui.main.weather.WeatherPage
 import me.spica.spicaweather3.ui.main.weather.WeatherPageState
+import me.spica.spicaweather3.ui.widget.BackdropEffects.standardGlassEffect
 import me.spica.spicaweather3.ui.widget.MainTopBar
 import me.spica.spicaweather3.ui.widget.ShowOnIdleContent
 import me.spica.spicaweather3.ui.widget.materialSharedAxisXIn
@@ -160,14 +162,7 @@ fun MainScreen() {
             .drawPlainBackdrop(
               backdrop = backdrop,
               shape = { RoundedCornerShape(0.dp) },
-              effects = {
-                vibrancy()
-                blur(8.dp.toPx())
-                this.colorControls(
-                  saturation = 1.6f,
-                  brightness = 0.3f
-                )
-              },
+              effects = { standardGlassEffect() }
             )
             .fillMaxWidth(),
           scrollBehavior = scrollBehavior,
@@ -205,7 +200,7 @@ fun MainScreen() {
         PullToRefresh(
           isRefreshing = isRefreshing.value,
           onRefresh = { viewModel.refresh() },
-          contentPadding = PaddingValues(top = 120.dp),
+          contentPadding = PaddingValues(top = MainScreenConstants.PULL_REFRESH_TOP_PADDING),
           color = MiuixTheme.colorScheme.onSurface,
           topAppBarScrollBehavior = scrollBehavior,
           refreshTexts = refreshTexts
@@ -239,9 +234,7 @@ private fun AddCityButton(
        .noRippleClickable(onClick = onClick)
        .clip(CircleShape)
        .drawBackdrop(
-         highlight = {
-           Highlight.Plain
-         },
+         highlight = { Highlight.Plain },
          backdrop = backdrop,
          shape = { CircleShape },
          onDrawSurface = {
@@ -251,12 +244,7 @@ private fun AddCityButton(
            )
          },
          effects = {
-           vibrancy()
-           blur(8.dp.toPx())
-           this.colorControls(
-             saturation = 1.6f,
-             brightness = 0.3f
-           )
+           standardGlassEffect()
            lens(
              12f.dp.toPx(),
              22f.dp.toPx(),
@@ -319,7 +307,7 @@ private fun WeatherPager(
   HorizontalPager(
     state = pagerState,
     modifier = Modifier.fillMaxSize(),
-    beyondViewportPageCount = 0,
+    beyondViewportPageCount = MainScreenConstants.PAGER_BEYOND_VIEWPORT_PAGE_COUNT,
     pageContent = { currentIndex ->
       // 仅在目标页面时显示内容，优化性能
       if (weatherPageStates.isNotEmpty()) {

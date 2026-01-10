@@ -17,7 +17,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import me.spica.spicaweather3.common.type.WeatherAnimType
 import me.spica.spicaweather3.common.model.WeatherCardConfig
+import me.spica.spicaweather3.common.model.WeatherCardType
+import me.spica.spicaweather3.core.constants.MainScreenConstants
 import me.spica.spicaweather3.data.local.db.entity.CityEntity
+import me.spica.spicaweather3.data.remote.api.model.weather.AggregatedWeatherData
 import me.spica.spicaweather3.domain.usecase.GetAllCitiesUseCase
 import me.spica.spicaweather3.domain.usecase.LocationUseCase
 import me.spica.spicaweather3.domain.usecase.ManageCitiesUseCase
@@ -38,11 +41,6 @@ class WeatherViewModel(
 
   // 上次刷新时的城市列表快照（使用城市ID列表进行比较）
   private var lastRefreshedCityIds: List<String> = emptyList()
-
-  // 刷新间隔阈值（毫秒）
-  private companion object {
-    const val REFRESH_INTERVAL_MS = 3000L
-  }
 
   private val _dataFlow = getAllCitiesUseCase()
 
@@ -134,6 +132,42 @@ class WeatherViewModel(
           lastRefreshedCityIds = weatherPageStates.value.map { it.cityEntity.id }
         }
       )
+    }
+  }
+
+  /**
+   * 根据天气数据过滤可显示的卡片
+   * 
+   * @param configs 所有卡片配置
+   * @param weatherData 天气数据
+   * @param animType 当前天气动画类型
+   * @return 过滤后的可显示卡片列表
+   */
+  fun getFilteredCardsForWeather(
+    configs: List<WeatherCardConfig>,
+    weatherData: AggregatedWeatherData,
+    animType: WeatherAnimType
+  ): List<WeatherCardConfig> {
+    return configs.filter { config ->
+      when (config.cardType) {
+        // 分钟级降水预报仅在有雨的场景下显示
+        WeatherCardType.MINUTELY -> animType.showRain
+        // 天气预警仅在有预警数据时显示
+        WeatherCardType.ALERT -> !weatherData.weatherAlerts.isNullOrEmpty()
+        // 其他卡片默认显示
+        else -> true
+      }
+    }
+  }
+
+  /**
+   * 更新卡片顺序
+   * 
+   * @param reorderedCards 重新排序后的卡片列表
+   */
+  fun reorderCards(reorderedCards: List<WeatherCardConfig>) {
+    viewModelScope.launch(Dispatchers.IO) {
+      dataStoreUtil.updateCardsOrder(reorderedCards)
     }
   }
 
