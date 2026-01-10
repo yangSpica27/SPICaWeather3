@@ -43,9 +43,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.spica.spicaweather3.R
-import me.spica.spicaweather3.common.WeatherAnimType
-import me.spica.spicaweather3.common.WeatherCardConfig
-import me.spica.spicaweather3.common.WeatherCardType
+import me.spica.spicaweather3.common.type.WeatherAnimType
+import me.spica.spicaweather3.common.model.WeatherCardConfig
+import me.spica.spicaweather3.common.model.WeatherCardType
 import me.spica.spicaweather3.network.model.weather.AggregatedWeatherData
 import me.spica.spicaweather3.theme.COLOR_WHITE_100
 import me.spica.spicaweather3.theme.WIDGET_CARD_CORNER_SHAPE

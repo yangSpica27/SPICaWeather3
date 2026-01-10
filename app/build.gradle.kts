@@ -1,4 +1,6 @@
 import org.gradle.kotlin.dsl.implementation
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
   alias(libs.plugins.android.application)
@@ -26,6 +28,15 @@ android {
       //armeabi armeabi-v7a arm64-v8a x86 x86_64
       abiFilters.add("arm64-v8a")
     }
+
+    // 从 local.properties 读取 API 配置
+    val properties = Properties()
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+      properties.load(localPropertiesFile.inputStream())
+    }
+    buildConfigField("String", "HEFENG_API_KEY", "\"${properties.getProperty("HEFENG_API_KEY", "")}\"")
+    buildConfigField("String", "HEFENG_API_ID", "\"${properties.getProperty("HEFENG_API_ID", "")}\"")
   }
 
   signingConfigs {
@@ -56,15 +67,20 @@ android {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
   }
-  kotlinOptions {
-    jvmTarget = "11"
-    freeCompilerArgs = listOf(
-      "-XXLanguage:+PropertyParamAnnotationDefaultTargetMode",
-      "-opt-in=kotlin.RequiresOptIn"
-    )
+  
+  kotlin {
+    compilerOptions {
+      jvmTarget.set(JvmTarget.JVM_11)
+      freeCompilerArgs.addAll(
+        "-XXLanguage:+PropertyParamAnnotationDefaultTargetMode",
+        "-opt-in=kotlin.RequiresOptIn"
+      )
+    }
   }
+  
   buildFeatures {
     compose = true
+    buildConfig = true  // 启用 BuildConfig
   }
   
   packaging {
@@ -135,7 +151,6 @@ dependencies {
   implementation(libs.reorderable)
   implementation(libs.androidautosize)
   implementation(libs.baidumapsdk.location)
-  val accompanistVersion = "0.37.3"
   implementation(libs.accompanist.permissions)
   implementation(libs.androidx.glance)
   implementation(libs.androidx.glance.appwidget)

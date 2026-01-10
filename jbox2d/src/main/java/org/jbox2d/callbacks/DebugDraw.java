@@ -207,6 +207,7 @@ public abstract class DebugDraw {
      * @param scale
      * @deprecated use the viewport transform in {@link #getViewportTranform()}
      */
+    @Deprecated
     public void setCamera(float x, float y, float scale) {
         viewportTransform.setCamera(x, y, scale);
     }

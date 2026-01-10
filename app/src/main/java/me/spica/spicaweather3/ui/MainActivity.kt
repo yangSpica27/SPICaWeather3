@@ -1,4 +1,4 @@
-package me.spica.spicaweather3
+package me.spica.spicaweather3.ui
 
 import android.content.res.Configuration
 import android.os.Bundle
@@ -6,16 +6,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import me.jessyan.autosize.internal.CustomAdapt
-import me.spica.spicaweather3.ui.AppMain
 
 class MainActivity : ComponentActivity(), CustomAdapt {
-  
+
   /**
    * 是否为横屏模式
    */
   private val isLandscape: Boolean
     get() = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-  
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     enableEdgeToEdge()

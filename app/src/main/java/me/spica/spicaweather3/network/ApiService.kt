@@ -2,7 +2,7 @@ package me.spica.spicaweather3.network
 
 import androidx.annotation.Keep
 import com.skydoves.sandwich.ApiResponse
-import me.spica.spicaweather3.common.HefengConfig
+import me.spica.spicaweather3.common.config.HefengConfig
 import me.spica.spicaweather3.network.model.BatchWeatherRequest
 import me.spica.spicaweather3.network.model.LookUpResponse
 import me.spica.spicaweather3.network.model.TopCityResponse

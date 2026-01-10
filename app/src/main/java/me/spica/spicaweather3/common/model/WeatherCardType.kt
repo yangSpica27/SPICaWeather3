@@ -1,4 +1,4 @@
-package me.spica.spicaweather3.common
+package me.spica.spicaweather3.common.model
 
 import kotlinx.serialization.Serializable
 

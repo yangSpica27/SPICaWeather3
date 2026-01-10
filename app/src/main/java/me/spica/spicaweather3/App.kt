@@ -2,7 +2,10 @@ package me.spica.spicaweather3
 
 import android.app.Application
 import com.baidu.location.LocationClient
-import me.spica.spicaweather3.module.InjectModules
+import me.spica.spicaweather3.module.networkModule
+import me.spica.spicaweather3.module.persistenceModule
+import me.spica.spicaweather3.module.utilsModule
+import me.spica.spicaweather3.module.viewModelModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.GlobalContext.startKoin
@@ -23,15 +26,16 @@ class App : Application() {
 
 
   private fun initKoin() {
-    LocationClient.setAgreePrivacy(true);
+    // 必须先设置百度定位隐私同意，再初始化 Koin
+    LocationClient.setAgreePrivacy(true)
     startKoin {
       androidLogger()
       androidContext(this@App)
       modules(
-        InjectModules.networkModule,
-        InjectModules.viewModelModules,
-        InjectModules.persistenceModule,
-        InjectModules.utilsModule
+        networkModule,
+        persistenceModule,
+        viewModelModule,
+        utilsModule
       )
     }
   }

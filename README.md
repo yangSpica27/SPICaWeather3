@@ -137,9 +137,43 @@ app/src/main/java/me/spica/spicaweather3/
 
 ### 环境要求
 - Android Studio Ladybug 或更高版本
-- JDK 11 或更高版本
+- JDK 17 或更高版本
 - Android SDK 33+
 - Gradle 8.13+
+
+### 配置步骤
+
+#### 1. 获取和风天气 API Key
+
+本项目使用和风天气 API 获取天气数据，你需要：
+
+1. 访问 [和风天气开发平台](https://dev.qweather.com/)
+2. 注册并登录账号
+3. 创建应用获取 **API Key** 和 **API ID**
+
+#### 2. 配置 local.properties
+
+在项目根目录下创建或编辑 `local.properties` 文件，添加以下内容：
+
+```properties
+# Android SDK 路径（通常由 Android Studio 自动生成）
+sdk.dir=/path/to/your/android/sdk
+
+# 和风天气 API 配置
+HEFENG_API_KEY=your_api_key_here
+HEFENG_API_ID=your_api_id_here
+```
+
+#### 3. 构建运行
+
+配置完成后，即可构建并运行项目：
+
+```bash
+./gradlew assembleDebug
+./gradlew installDebug
+```
+
+或直接在 Android Studio 中点击运行按钮。
 
 
 ## 🌟 核心功能
@@ -163,7 +197,7 @@ app/src/main/java/me/spica/spicaweather3/
 
 ## 🙏 致谢
 
-- [和风天气](https://www.qweather.com/) - 提供稳定可靠的天气数据服务
+- [和风天气](https://www.qweather.com/) - 提供稳定可靠的天气数据服务（[如何配置 API Key](#2-配置-localproperties)）
 - [Jetpack Compose](https://developer.android.com/jetpack/compose) - Google 官方现代 UI 工具包
 - [MiuiX](https://github.com/miuix-kotlin-multiplatform/miuix) - MIUI 风格组件库
 - 所有为本项目做出贡献的开发者

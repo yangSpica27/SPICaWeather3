@@ -1,4 +1,4 @@
-package me.spica.spicaweather3.common
+package me.spica.spicaweather3.common.type
 
 object SharedContentKey {
 

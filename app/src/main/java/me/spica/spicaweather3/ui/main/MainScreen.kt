@@ -46,7 +46,7 @@ import com.kyant.backdrop.effects.lens
 import com.kyant.backdrop.effects.vibrancy
 import com.kyant.backdrop.highlight.Highlight
 import me.spica.spicaweather3.R
-import me.spica.spicaweather3.common.WeatherAnimType
+import me.spica.spicaweather3.common.type.WeatherAnimType
 import me.spica.spicaweather3.route.LocalNavController
 import me.spica.spicaweather3.route.Routes
 import me.spica.spicaweather3.theme.MAIN_PLUS_BUTTON_SIZE

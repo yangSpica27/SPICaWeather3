@@ -13,8 +13,8 @@ import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import me.spica.spicaweather3.common.WeatherCardConfig
-import me.spica.spicaweather3.common.WeatherCardType
+import me.spica.spicaweather3.common.model.WeatherCardConfig
+import me.spica.spicaweather3.common.model.WeatherCardType
 
 // 字典工具类
 class DataStoreUtil(

@@ -1,4 +1,4 @@
-package me.spica.spicaweather3.common
+package me.spica.spicaweather3.common.type
 
 import androidx.compose.ui.graphics.Color
 import me.spica.spicaweather3.R

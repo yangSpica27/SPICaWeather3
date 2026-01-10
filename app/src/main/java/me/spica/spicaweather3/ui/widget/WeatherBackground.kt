@@ -11,7 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import kotlinx.coroutines.launch
-import me.spica.spicaweather3.common.WeatherAnimType
+import me.spica.spicaweather3.common.type.WeatherAnimType
 import me.spica.spicaweather3.ui.widget.cloud.CloudView
 import me.spica.spicaweather3.ui.widget.galaxy.GalaxyView
 import me.spica.spicaweather3.ui.widget.haze.HazeView

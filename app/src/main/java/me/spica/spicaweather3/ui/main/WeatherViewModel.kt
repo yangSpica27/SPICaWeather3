@@ -15,8 +15,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import me.spica.spicaweather3.common.WeatherAnimType
-import me.spica.spicaweather3.common.WeatherCardConfig
+import me.spica.spicaweather3.common.type.WeatherAnimType
+import me.spica.spicaweather3.common.model.WeatherCardConfig
 import me.spica.spicaweather3.db.PersistenceRepository
 import me.spica.spicaweather3.db.entity.CityEntity
 import me.spica.spicaweather3.network.ApiRepository

@@ -37,7 +37,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import me.spica.spicaweather3.common.WeatherAnimType
+import me.spica.spicaweather3.common.type.WeatherAnimType
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 
