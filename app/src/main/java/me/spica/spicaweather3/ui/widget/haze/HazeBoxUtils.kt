@@ -5,8 +5,8 @@ import android.graphics.RadialGradient
 import android.graphics.Shader
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.toArgb
-import me.spica.spicaweather3.theme.COLOR_WHITE_10
-import me.spica.spicaweather3.theme.COLOR_WHITE_30
+import me.spica.spicaweather3.presentation.theme.COLOR_WHITE_10
+import me.spica.spicaweather3.presentation.theme.COLOR_WHITE_30
 import org.jbox2d.common.Vec2
 import org.jbox2d.dynamics.World
 import org.jbox2d.particle.ParticleGroup

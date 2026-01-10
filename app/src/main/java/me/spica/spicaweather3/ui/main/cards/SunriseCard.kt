@@ -35,8 +35,8 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import me.spica.spicaweather3.R
-import me.spica.spicaweather3.network.model.weather.AggregatedWeatherData
-import me.spica.spicaweather3.theme.WIDGET_CARD_TITLE_TEXT_STYLE
+import me.spica.spicaweather3.data.remote.api.model.weather.AggregatedWeatherData
+import me.spica.spicaweather3.presentation.theme.WIDGET_CARD_TITLE_TEXT_STYLE
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import java.util.*

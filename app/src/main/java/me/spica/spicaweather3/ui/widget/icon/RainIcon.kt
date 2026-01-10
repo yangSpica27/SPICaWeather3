@@ -21,7 +21,7 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import me.spica.spicaweather3.theme.COLOR_WHITE_100
+import me.spica.spicaweather3.presentation.theme.COLOR_WHITE_100
 import kotlin.math.PI
 import kotlin.math.sin
 

@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import me.spica.spicaweather3.theme.COLOR_WHITE_100
+import me.spica.spicaweather3.presentation.theme.COLOR_WHITE_100
 
 
 @Composable

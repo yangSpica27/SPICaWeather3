@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.kyant.capsule.ContinuousRoundedRectangle
 import me.spica.spicaweather3.R
 import me.spica.spicaweather3.common.type.WeatherAnimType
-import me.spica.spicaweather3.network.model.weather.AggregatedWeatherData
+import me.spica.spicaweather3.data.remote.api.model.weather.AggregatedWeatherData
 import me.spica.spicaweather3.ui.widget.WeatherBackground
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 

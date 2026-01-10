@@ -3,7 +3,7 @@ package me.spica.spicaweather3.ui.widget.rain
 import android.graphics.Canvas
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.StrokeCap
-import me.spica.spicaweather3.theme.COLOR_WHITE_100
+import me.spica.spicaweather3.presentation.theme.COLOR_WHITE_100
 import org.jbox2d.collision.shapes.PolygonShape
 import org.jbox2d.common.Vec2
 import org.jbox2d.dynamics.Body

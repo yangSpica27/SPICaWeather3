@@ -38,8 +38,8 @@ import com.kyant.backdrop.drawPlainBackdrop
 import com.kyant.backdrop.effects.lens
 import com.kyant.capsule.ContinuousRoundedRectangle
 import me.spica.spicaweather3.R
-import me.spica.spicaweather3.theme.WIDGET_CARD_PADDING
-import me.spica.spicaweather3.theme.WIDGET_CARD_TITLE_TEXT_STYLE
+import me.spica.spicaweather3.presentation.theme.WIDGET_CARD_PADDING
+import me.spica.spicaweather3.presentation.theme.WIDGET_CARD_TITLE_TEXT_STYLE
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 

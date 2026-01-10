@@ -24,9 +24,9 @@ import androidx.glance.unit.ColorProvider
 import androidx.room.Room
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import me.spica.spicaweather3.db.AppDatabase
-import me.spica.spicaweather3.theme.COLOR_WHITE_100
-import me.spica.spicaweather3.theme.COLOR_WHITE_40
+import me.spica.spicaweather3.data.local.db.AppDatabase
+import me.spica.spicaweather3.presentation.theme.COLOR_WHITE_100
+import me.spica.spicaweather3.presentation.theme.COLOR_WHITE_40
 
 
 /**

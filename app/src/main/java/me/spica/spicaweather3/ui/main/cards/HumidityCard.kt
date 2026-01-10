@@ -22,8 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastRoundToInt
 import me.spica.spicaweather3.R
-import me.spica.spicaweather3.theme.WIDGET_CARD_PADDING
-import me.spica.spicaweather3.theme.WIDGET_CARD_TITLE_TEXT_STYLE
+import me.spica.spicaweather3.presentation.theme.WIDGET_CARD_PADDING
+import me.spica.spicaweather3.presentation.theme.WIDGET_CARD_TITLE_TEXT_STYLE
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 

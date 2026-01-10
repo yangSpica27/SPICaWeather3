@@ -2,10 +2,10 @@ package me.spica.spicaweather3
 
 import android.app.Application
 import com.baidu.location.LocationClient
-import me.spica.spicaweather3.module.networkModule
-import me.spica.spicaweather3.module.persistenceModule
-import me.spica.spicaweather3.module.utilsModule
-import me.spica.spicaweather3.module.viewModelModule
+import me.spica.spicaweather3.core.di.networkModule
+import me.spica.spicaweather3.core.di.persistenceModule
+import me.spica.spicaweather3.core.di.utilsModule
+import me.spica.spicaweather3.core.di.viewModelModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.GlobalContext.startKoin

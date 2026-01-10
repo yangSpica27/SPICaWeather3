@@ -17,15 +17,19 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import me.spica.spicaweather3.common.type.WeatherAnimType
 import me.spica.spicaweather3.common.model.WeatherCardConfig
-import me.spica.spicaweather3.db.PersistenceRepository
-import me.spica.spicaweather3.db.entity.CityEntity
-import me.spica.spicaweather3.network.ApiRepository
+import me.spica.spicaweather3.data.local.db.entity.CityEntity
+import me.spica.spicaweather3.domain.usecase.GetAllCitiesUseCase
+import me.spica.spicaweather3.domain.usecase.LocationUseCase
+import me.spica.spicaweather3.domain.usecase.ManageCitiesUseCase
+import me.spica.spicaweather3.domain.usecase.RefreshWeatherUseCase
 import me.spica.spicaweather3.ui.main.weather.WeatherPageState
 import me.spica.spicaweather3.utils.DataStoreUtil
 
 class WeatherViewModel(
-  private val apiRepository: ApiRepository,
-  private val persistenceRepository: PersistenceRepository,
+  private val getAllCitiesUseCase: GetAllCitiesUseCase,
+  private val refreshWeatherUseCase: RefreshWeatherUseCase,
+  private val manageCitiesUseCase: ManageCitiesUseCase,
+  private val locationUseCase: LocationUseCase,
   val dataStoreUtil: DataStoreUtil
 ) : ViewModel() {
 
@@ -40,7 +44,7 @@ class WeatherViewModel(
     const val REFRESH_INTERVAL_MS = 3000L
   }
 
-  private val _dataFlow = persistenceRepository.getAllCitiesFlow()
+  private val _dataFlow = getAllCitiesUseCase()
 
   @OptIn(FlowPreview::class)
   val weatherPageStates: StateFlow<List<WeatherPageState>> = _dataFlow
@@ -68,14 +72,15 @@ class WeatherViewModel(
 
   fun swapSort(city1: CityEntity, city2: CityEntity) {
     viewModelScope.launch(context = Dispatchers.IO) {
-      persistenceRepository.swapSort(city1, city2)
+      manageCitiesUseCase.swapCityOrder(city1, city2)
     }
   }
 
   fun insertUserLoc(bdLocation: BDLocation?, shouldRefresh: Boolean = false) {
     viewModelScope.launch(Dispatchers.IO) {
-      val userLoc = persistenceRepository.getUserLoc()
-      if (userLoc == null) {
+      val userLoc = locationUseCase.getUserLocationCity()
+      if (userLoc == null && bdLocation == null) {
+        // 默认北京
         val city = CityEntity(
           name = "北京",
           lat = "39.90498",
@@ -85,24 +90,17 @@ class WeatherViewModel(
           sort = -1,
           isUserLoc = true
         )
-        persistenceRepository.insertUserLoc(cityEntity = city)
+        manageCitiesUseCase.addCity(city)
         if (shouldRefresh) {
           refresh()
         }
       } else if (bdLocation != null) {
-        val city = CityEntity(
-          name = "${bdLocation.street}",
-          lat = "%.2f".format(bdLocation.latitude),
-          lon = "%.2f".format(bdLocation.longitude),
-          adm1 = bdLocation.city,
-          adm2 = "${bdLocation.street}",
-          sort = -1,
-          isUserLoc = true
+        locationUseCase.saveUserLocation(
+          bdLocation = bdLocation,
+          shouldRefresh = shouldRefresh,
+          onError = { _error.value = it },
+          onSucceed = { if (!shouldRefresh) _error.value = null }
         )
-        persistenceRepository.insertUserLoc(cityEntity = city)
-        if (shouldRefresh) {
-          refresh()
-        }
       }
     }
   }
@@ -113,15 +111,17 @@ class WeatherViewModel(
     onSuccess: () -> Unit = {}
   ) {
     viewModelScope.launch(context = Dispatchers.IO) {
-      persistenceRepository.deleteCity(cityEntity = city)
+      manageCitiesUseCase.deleteCity(city)
       onSuccess()
     }
   }
 
   fun refresh() {
     _isRefreshing.update { true }
-    viewModelScope.launch {
-      apiRepository.fetchWeather(
+    viewModelScope.launch(Dispatchers.IO) {
+      val cities = locationUseCase.getAllCitiesFlow()
+      refreshWeatherUseCase.refreshAllCities(
+        cities = cities,
         onError = {
           _error.value = it
           _isRefreshing.update { false }

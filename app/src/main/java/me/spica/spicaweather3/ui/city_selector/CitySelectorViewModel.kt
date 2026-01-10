@@ -8,13 +8,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import me.spica.spicaweather3.db.PersistenceRepository
-import me.spica.spicaweather3.network.ApiRepository
-import me.spica.spicaweather3.network.model.Location
+import me.spica.spicaweather3.data.remote.api.model.Location
+import me.spica.spicaweather3.domain.usecase.ManageCitiesUseCase
+import me.spica.spicaweather3.domain.usecase.SearchCityUseCase
 
 class CitySelectorViewModel(
-  private val apiRepository: ApiRepository,
-  private val persistenceRepository: PersistenceRepository
+  private val searchCityUseCase: SearchCityUseCase,
+  private val manageCitiesUseCase: ManageCitiesUseCase
 ) : ViewModel() {
 
   // 用于持有当前城市搜索请求的 Job
@@ -34,7 +34,7 @@ class CitySelectorViewModel(
 
   init {
     topsTopJob = viewModelScope.launch(Dispatchers.IO) {
-      apiRepository.fetchTop(
+      searchCityUseCase.getTopCities(
         onError = {
           _errorMessage.value = it
         },
@@ -48,7 +48,7 @@ class CitySelectorViewModel(
   fun saveLocation(location: Location,
                    onSucceed: () -> Unit) {
     viewModelScope.launch(Dispatchers.IO) {
-      persistenceRepository.insertCity(location.toCity())
+      manageCitiesUseCase.addCity(location.toCity())
       withContext(Dispatchers.Main){
         onSucceed()
       }
@@ -62,11 +62,15 @@ class CitySelectorViewModel(
       return
     }
     searchJob = viewModelScope.launch(Dispatchers.IO) {
-      apiRepository.fetchCity(query, onError = {
-        _errorMessage.value = it
-      }, onSucceed = {
-        _searchResult.value = it
-      })
+      searchCityUseCase(
+        keyword = query,
+        onError = {
+          _errorMessage.value = it
+        },
+        onSucceed = {
+          _searchResult.value = it
+        }
+      )
     }
   }
 

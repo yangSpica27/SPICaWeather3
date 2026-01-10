@@ -39,10 +39,10 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastRoundToInt
 import com.kyant.capsule.ContinuousRoundedRectangle
 import me.spica.spicaweather3.R
-import me.spica.spicaweather3.network.model.weather.AggregatedWeatherData
-import me.spica.spicaweather3.theme.WIDGET_CARD_CORNER_SHAPE
-import me.spica.spicaweather3.theme.WIDGET_CARD_PADDING
-import me.spica.spicaweather3.theme.WIDGET_CARD_TITLE_TEXT_STYLE
+import me.spica.spicaweather3.data.remote.api.model.weather.AggregatedWeatherData
+import me.spica.spicaweather3.presentation.theme.WIDGET_CARD_CORNER_SHAPE
+import me.spica.spicaweather3.presentation.theme.WIDGET_CARD_PADDING
+import me.spica.spicaweather3.presentation.theme.WIDGET_CARD_TITLE_TEXT_STYLE
 import me.spica.spicaweather3.ui.main.DailyTempLineView
 import me.spica.spicaweather3.ui.main.ItemWindData
 import me.spica.spicaweather3.ui.main.TempLineItem

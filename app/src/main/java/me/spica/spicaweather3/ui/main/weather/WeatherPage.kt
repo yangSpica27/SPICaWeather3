@@ -46,9 +46,9 @@ import me.spica.spicaweather3.R
 import me.spica.spicaweather3.common.type.WeatherAnimType
 import me.spica.spicaweather3.common.model.WeatherCardConfig
 import me.spica.spicaweather3.common.model.WeatherCardType
-import me.spica.spicaweather3.network.model.weather.AggregatedWeatherData
-import me.spica.spicaweather3.theme.COLOR_WHITE_100
-import me.spica.spicaweather3.theme.WIDGET_CARD_CORNER_SHAPE
+import me.spica.spicaweather3.data.remote.api.model.weather.AggregatedWeatherData
+import me.spica.spicaweather3.presentation.theme.COLOR_WHITE_100
+import me.spica.spicaweather3.presentation.theme.WIDGET_CARD_CORNER_SHAPE
 import me.spica.spicaweather3.ui.main.WeatherViewModel
 import me.spica.spicaweather3.ui.main.cards.AlertCard
 import me.spica.spicaweather3.ui.main.cards.AqiCard

@@ -28,7 +28,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
-import me.spica.spicaweather3.theme.COLOR_BLACK_50
+import me.spica.spicaweather3.presentation.theme.COLOR_BLACK_50
 import me.spica.spicaweather3.ui.widget.ShowOnIdleContent
 
 @Composable

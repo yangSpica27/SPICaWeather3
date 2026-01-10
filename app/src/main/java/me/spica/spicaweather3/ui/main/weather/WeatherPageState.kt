@@ -1,6 +1,6 @@
 package me.spica.spicaweather3.ui.main.weather
 
-import me.spica.spicaweather3.db.entity.CityEntity
+import me.spica.spicaweather3.data.local.db.entity.CityEntity
 
 sealed class WeatherPageState(
   val cityEntity: CityEntity

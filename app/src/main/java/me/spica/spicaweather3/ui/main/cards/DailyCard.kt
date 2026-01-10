@@ -34,11 +34,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import me.spica.spicaweather3.R
-import me.spica.spicaweather3.network.model.weather.AggregatedWeatherData
-import me.spica.spicaweather3.network.model.weather.DailyForecast
-import me.spica.spicaweather3.theme.COLOR_BLACK_10
-import me.spica.spicaweather3.theme.WIDGET_CARD_CORNER_SHAPE
-import me.spica.spicaweather3.theme.WIDGET_CARD_TITLE_TEXT_STYLE
+import me.spica.spicaweather3.data.remote.api.model.weather.AggregatedWeatherData
+import me.spica.spicaweather3.data.remote.api.model.weather.DailyForecast
+import me.spica.spicaweather3.presentation.theme.COLOR_BLACK_10
+import me.spica.spicaweather3.presentation.theme.WIDGET_CARD_CORNER_SHAPE
+import me.spica.spicaweather3.presentation.theme.WIDGET_CARD_TITLE_TEXT_STYLE
 import me.spica.spicaweather3.utils.noRippleClickable
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme

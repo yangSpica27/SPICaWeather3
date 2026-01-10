@@ -64,7 +64,7 @@ import dev.chrisbanes.haze.materials.HazeMaterials
 import dev.chrisbanes.haze.rememberHazeState
 import me.spica.spicaweather3.R
 import me.spica.spicaweather3.common.type.WeatherAnimType
-import me.spica.spicaweather3.db.entity.CityEntity
+import me.spica.spicaweather3.data.local.db.entity.CityEntity
 import me.spica.spicaweather3.route.LocalNavController
 import me.spica.spicaweather3.route.Routes
 import me.spica.spicaweather3.ui.LocalAnimatedContentScope
