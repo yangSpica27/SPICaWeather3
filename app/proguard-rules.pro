@@ -100,6 +100,7 @@
 -dontwarn retrofit2.KotlinExtensions
 -dontwarn retrofit2.KotlinExtensions$*
 -if interface * { @retrofit2.http.* <methods>; }
+-keep class me.spica.spicaweather3.data.** { *;}
 -keep,allowobfuscation interface <1>
 -dontwarn kotlinx.**
 -keepclassmembers class **$WhenMappings {
