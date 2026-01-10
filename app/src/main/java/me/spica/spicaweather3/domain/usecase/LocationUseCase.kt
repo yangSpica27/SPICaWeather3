@@ -34,7 +34,7 @@ class LocationUseCase(
         onSucceed: () -> Unit = {}
     ) {
         val city = CityEntity(
-            name = bdLocation.city ?: bdLocation.district ?: "未知",
+            name = bdLocation.street ?: bdLocation.district ?: "NA",
             lat = bdLocation.latitude.toString(),
             lon = bdLocation.longitude.toString(),
             adm1 = bdLocation.province ?: "",
