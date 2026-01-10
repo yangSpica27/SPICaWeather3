@@ -74,6 +74,29 @@
     kotlinx.serialization.KSerializer serializer(...);
 }
 
+# 保护所有枚举类（防止枚举值被混淆导致 NPE）
+-keepclassmembers enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+    **[] $VALUES;
+    public *;
+}
+
+# 保护所有 sealed class 和其子类
+-keep class * extends me.spica.spicaweather3.common.type.WeatherAnimType { *; }
+-keep class * extends me.spica.spicaweather3.ui.main.weather.WeatherPageState { *; }
+-keep class * extends me.spica.spicaweather3.common.result.Result { *; }
+
+# 保护所有带 @Serializable 注解的类和枚举
+-keep @kotlinx.serialization.Serializable class * { *; }
+-keep @kotlinx.serialization.Serializable enum * { *; }
+-keepclassmembers @kotlinx.serialization.Serializable class * {
+    *;
+}
+-keepclassmembers @kotlinx.serialization.Serializable enum * {
+    *;
+}
+
 # Retrofit
 -keepattributes Signature, InnerClasses, EnclosingMethod
 -keepattributes RuntimeVisibleAnnotations, RuntimeVisibleParameterAnnotations
