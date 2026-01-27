@@ -50,81 +50,81 @@ import top.yukonga.miuix.kmp.theme.ThemeController
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 val LocalSharedTransitionScope = compositionLocalOf<SharedTransitionScope> {
-  error("LocalSharedTransitionScope not provided")
+    error("LocalSharedTransitionScope not provided")
 }
 
 val LocalAnimatedContentScope = compositionLocalOf<AnimatedContentScope> {
-  error("LocalAnimatedContentScope not provided")
+    error("LocalAnimatedContentScope not provided")
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalPermissionsApi::class)
 @Composable
 fun AppMain() {
 
-  val navController = rememberNavController()
+    val navController = rememberNavController()
 
-  val locationHelper = koinInject<LocationHelper>()
+    val locationHelper = koinInject<LocationHelper>()
 
-  val dataStoreUtil = koinInject<DataStoreUtil>()
+    val dataStoreUtil = koinInject<DataStoreUtil>()
 
-  val locationPermissionState = rememberMultiplePermissionsState(
-    permissions = listOf(
-      android.Manifest.permission.ACCESS_COARSE_LOCATION,
-      android.Manifest.permission.ACCESS_FINE_LOCATION
+    val locationPermissionState = rememberMultiplePermissionsState(
+        permissions = listOf(
+            android.Manifest.permission.ACCESS_COARSE_LOCATION,
+            android.Manifest.permission.ACCESS_FINE_LOCATION
+        )
     )
-  )
 
-  val isFirstLaunch = dataStoreUtil.getIsFirstLaunch().collectAsStateWithLifecycle(false).value
+    val isFirstLaunch = dataStoreUtil.getIsFirstLaunch().collectAsStateWithLifecycle(false).value
 
-  LaunchedEffect(isFirstLaunch, locationPermissionState) {
-    if (!locationPermissionState.allPermissionsGranted) {
-      locationPermissionState.launchMultiplePermissionRequest()
-    }
-  }
-
-  val weatherViewModel = koinActivityViewModel<WeatherViewModel>()
-
-  val themeController = remember { ThemeController(ColorSchemeMode.System) }
-
-  // 缓存屏幕方向状态，减少重组
-  val isLandscapeMode = isLandscape()
-
-  LaunchedEffect(locationPermissionState.allPermissionsGranted) {
-    if (locationPermissionState.allPermissionsGranted){
-      locationHelper.fetchLocation(
-        onSuccess = { loc -> 
-          weatherViewModel.insertUserLoc(loc, shouldRefresh = true)
-        },
-        onFailure = { 
-          weatherViewModel.insertUserLoc(null, shouldRefresh = true)
+    LaunchedEffect(isFirstLaunch, locationPermissionState) {
+        if (!locationPermissionState.allPermissionsGranted) {
+            locationPermissionState.launchMultiplePermissionRequest()
         }
-      )
-    }else{
-      weatherViewModel.insertUserLoc(null, shouldRefresh = true)
-    }
-  }
-
-  val menuState = LocalMenuState.current
-
-  val dropdownMenuController = LocalDropdownMenuController.current
-
-  MiuixTheme(
-    controller = themeController
-  ) {
-    // 使用已缓存的屏幕方向状态
-    LaunchedEffect(isLandscapeMode) {
-      menuState.dismiss()
-      dropdownMenuController.dismiss()
     }
 
-    if (isLandscapeMode) {
-      // 横屏模式 - 双栏布局
-      LandscapeMainScreen()
-    } else {
-      // 竖屏模式 - 原有导航布局
-      PortraitMainScreen(navController = navController)
+    val weatherViewModel = koinActivityViewModel<WeatherViewModel>()
+
+    val themeController = remember { ThemeController(ColorSchemeMode.System) }
+
+    // 缓存屏幕方向状态，减少重组
+    val isLandscapeMode = isLandscape()
+
+    LaunchedEffect(locationPermissionState.allPermissionsGranted) {
+        if (locationPermissionState.allPermissionsGranted) {
+            locationHelper.fetchLocation(
+                onSuccess = { loc ->
+                    weatherViewModel.insertUserLoc(loc, shouldRefresh = true)
+                },
+                onFailure = {
+                    weatherViewModel.insertUserLoc(null, shouldRefresh = true)
+                }
+            )
+        } else {
+            weatherViewModel.insertUserLoc(null, shouldRefresh = true)
+        }
     }
-  }
+
+    val menuState = LocalMenuState.current
+
+    val dropdownMenuController = LocalDropdownMenuController.current
+
+    MiuixTheme(
+        controller = themeController
+    ) {
+        // 使用已缓存的屏幕方向状态
+        LaunchedEffect(isLandscapeMode) {
+            menuState.dismiss()
+            dropdownMenuController.dismiss()
+        }
+
+        if (isLandscapeMode) {
+            // 横屏模式 - 双栏布局
+            LandscapeMainScreen()
+        } else {
+            // 竖屏模式 - 原有导航布局
+            PortraitMainScreen(navController = navController)
+        }
+    }
 
 }
 
@@ -135,71 +135,77 @@ fun AppMain() {
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun PortraitMainScreen(
-  navController: androidx.navigation.NavHostController
+    navController: androidx.navigation.NavHostController
 ) {
 
-  val blurRadius2 = animateDpAsState(
-    targetValue = if (LocalDropdownMenuController.current.isVisible) 10.dp else 0.dp,
-    label = "DropdownMenuBlur",
-    animationSpec = tween(550)
-  )
+    val blurRadius2 = animateDpAsState(
+        targetValue = if (LocalDropdownMenuController.current.isVisible) 10.dp else 0.dp,
+        label = "DropdownMenuBlur",
+        animationSpec = tween(550)
+    )
 
-  SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
-    Box(
-      modifier = Modifier
-        .fillMaxSize()
-        .background(MiuixTheme.colorScheme.surface)
-    ) {
-      CompositionLocalProvider(
-        LocalSharedTransitionScope provides this@SharedTransitionLayout,
-        LocalNavController provides navController
-      ) {
-        NavHost(
-          startDestination = Routes.Main,
-          navController = navController,
-          modifier = Modifier
-            .fillMaxSize()
-            .blur(blurRadius2.value)
-            .background(
-              MiuixTheme.colorScheme.surface
-            ),
-          enterTransition = {
-            slideInHorizontally { i -> i }
-          },
-          exitTransition = {
-            slideOutHorizontally { i -> -i }
-          },
+    SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MiuixTheme.colorScheme.surface)
         ) {
-          composable<Routes.Main> {
-            CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-              MainScreen()
-            }
-          }
+            CompositionLocalProvider(
+                LocalSharedTransitionScope provides this@SharedTransitionLayout,
+                LocalNavController provides navController
+            ) {
+                NavHost(
+                    startDestination = Routes.Main,
+                    navController = navController,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .blur(blurRadius2.value)
+                        .background(
+                            MiuixTheme.colorScheme.surface
+                        ),
+                    enterTransition = {
+                        slideInHorizontally { i -> i }
+                    },
+                    exitTransition = {
+                        slideOutHorizontally { i -> -i }
+                    },
+                    popEnterTransition = {
+                        slideInHorizontally { i -> -i }
+                    },
+                    popExitTransition = {
+                        slideOutHorizontally { i -> i }
+                    }
+                ) {
+                    composable<Routes.Main> {
+                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                            MainScreen()
+                        }
+                    }
 
-          composable<Routes.CitySelect> {
-            CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-              CitySelectorScreen()
-            }
-          }
+                    composable<Routes.CitySelect> {
+                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                            CitySelectorScreen()
+                        }
+                    }
 
-          composable<Routes.WeatherList> {
-            CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-              WeatherListScreen()
+                    composable<Routes.WeatherList> {
+                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                            WeatherListScreen()
+                        }
+                    }
+                    composable<Routes.AirQuality> {
+                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                            AirQualityScreen()
+                        }
+                    }
+                }
             }
-          }
-          composable<Routes.AirQuality> {
-            CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-              AirQualityScreen()
-            }
-          }
+            BottomSheetMenu(
+                state = LocalMenuState.current,
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
+            // 下拉菜单叠加层
+            DropdownMenuOverlay()
         }
-      }
-      BottomSheetMenu(
-        state = LocalMenuState.current,
-        modifier = Modifier.align(Alignment.BottomCenter),
-      )
-      // 下拉菜单叠加层
-      DropdownMenuOverlay()
     }
-  }
 }

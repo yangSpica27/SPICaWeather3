@@ -9,7 +9,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -20,7 +19,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -30,6 +28,7 @@ import me.spica.spicaweather3.data.remote.api.model.weather.AggregatedWeatherDat
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyGridState
 import top.yukonga.miuix.kmp.basic.ScrollBehavior
+import top.yukonga.miuix.kmp.utils.overScrollOutOfBound
 import kotlin.random.Random
 
 /**
@@ -88,8 +87,9 @@ fun WeatherCardsGrid(
 
   LazyVerticalGrid(
     modifier = modifier
-      .fillMaxSize()
-      .nestedScroll(scrollBehavior.nestedScrollConnection),
+        .fillMaxSize()
+        .overScrollOutOfBound()
+        .nestedScroll(scrollBehavior.nestedScrollConnection),
     columns = GridCells.Fixed(2),
     horizontalArrangement = Arrangement.spacedBy(12.dp),
     verticalArrangement = Arrangement.spacedBy(12.dp),
