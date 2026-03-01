@@ -99,7 +99,7 @@ class DataStoreUtil(
             if (list.isEmpty()) {
               return@map getDefaultWeatherCardsConfig()
             } else {
-              return@map list
+              return@map list.sortedBy { it.order }
             }
           } catch (e: Exception) {
             // 解析失败，返回默认配置
