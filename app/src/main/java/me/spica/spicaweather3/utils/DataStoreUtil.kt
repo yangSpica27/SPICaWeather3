@@ -145,15 +145,35 @@ class DataStoreUtil(
 
   /**
    * 更新卡片顺序
-   * @param reorderedCards 重新排序后的卡片列表
+   * 仅更新传入（当前可见）卡片的 order 值，不可见卡片（如晴天时的分钟级降水）
+   * 保持其原有 order，避免天气切换后被排到末尾
+   * @param reorderedCards 当前可见且已重新排序的卡片列表
    */
   suspend fun updateCardsOrder(reorderedCards: List<WeatherCardConfig>) =
     withContext(Dispatchers.IO) {
       context.dataStore.edit { preferences ->
-        // 重新分配 order 值
-        val updatedConfigs = reorderedCards.mapIndexed { index, config ->
-          config.copy(order = index)
+        val jsonString = preferences[KEY_WEATHER_CARDS_CONFIG]
+        val currentConfigs = if (jsonString.isNullOrEmpty()) {
+          getDefaultWeatherCardsConfig()
+        } else {
+          try {
+            gson.fromJson(jsonString, Array<WeatherCardConfig>::class.java).toList()
+          } catch (e: Exception) {
+            getDefaultWeatherCardsConfig()
+          }
         }
+
+        // 构建可见卡片的新顺序映射
+        val newOrderMap = reorderedCards.mapIndexed { index, config ->
+          config.cardType to index
+        }.toMap()
+
+        // 可见卡片按新顺序更新，不可见卡片（未参与此次排序）保持原有 order 不变
+        val updatedConfigs = currentConfigs.map { config ->
+          val newOrder = newOrderMap[config.cardType]
+          if (newOrder != null) config.copy(order = newOrder) else config
+        }
+
         preferences[KEY_WEATHER_CARDS_CONFIG] = gson.toJson(updatedConfigs)
       }
     }

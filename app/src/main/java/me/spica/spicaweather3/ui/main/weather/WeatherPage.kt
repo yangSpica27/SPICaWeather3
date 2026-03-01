@@ -108,21 +108,9 @@ private fun DataPage(
     cards = filteredCards,
     weatherData = weatherData,
     onReorder = { reorderedCards ->
-      // 需要更新原始配置列表中的顺序
-      val originalList = allCardsConfigs.toMutableList()
-      
-      // 按照重新排序后的顺序更新原始列表
-      reorderedCards.forEachIndexed { newIndex, reorderedCard ->
-        val originalIndex = originalList.indexOfFirst { 
-          it.cardType == reorderedCard.cardType 
-        }
-        if (originalIndex != -1) {
-          val item = originalList.removeAt(originalIndex)
-          originalList.add(newIndex.coerceAtMost(originalList.size), item)
-        }
-      }
-      
-      viewModel.reorderCards(originalList)
+      // 仅传递当前可见的已排序卡片，由 DataStore 层负责与不可见卡片合并
+      // 避免不可见卡片（如晴天时的 MINUTELY）被挤到末尾
+      viewModel.reorderCards(reorderedCards)
     },
     scrollBehavior = scrollBehavior
   )
