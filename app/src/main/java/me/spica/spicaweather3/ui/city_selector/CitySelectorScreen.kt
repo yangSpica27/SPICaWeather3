@@ -153,7 +153,7 @@ private fun ListSelector() {
           .noRippleClickable {
             viewModel.saveLocation(item, onSucceed = {
               weatherViewModel.refresh()
-              navController.popBackStack()
+              navController.removeLastOrNull()
             })
           }
       ) {
@@ -232,7 +232,7 @@ private fun TopCities(modifier: Modifier = Modifier) {
             .noRippleClickable {
               viewModel.saveLocation(location = location, onSucceed = {
                 weatherViewModel.refresh()
-                navController.popBackStack()
+                navController.removeLastOrNull()
               })
             }
             .padding(

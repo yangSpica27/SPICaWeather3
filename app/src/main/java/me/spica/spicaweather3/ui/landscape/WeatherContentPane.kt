@@ -3,20 +3,30 @@ package me.spica.spicaweather3.ui.landscape
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.ui.NavDisplay
+import kotlinx.serialization.Serializable
 import me.spica.spicaweather3.ui.main.weather.WeatherPageState
 import me.spica.spicaweather3.ui.widget.materialSharedAxisZIn
 import me.spica.spicaweather3.ui.widget.materialSharedAxisZOut
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+
+@Serializable
+private sealed interface PaneRoute : NavKey {
+    @Serializable data object Cards : PaneRoute
+    @Serializable data class Detail(val cardType: String) : PaneRoute
+}
 
 /**
  * 右栏 - 天气内容区
@@ -27,23 +37,19 @@ fun WeatherContentPane(
     cityState: WeatherPageState?,
     modifier: Modifier = Modifier
 ) {
-    // 右栏内部导航控制器
-    val paneNavController = rememberNavController()
-    
-    // 处理返回键 - 如果在详情页，返回到卡片列表
-    BackHandler(
-        enabled = paneNavController.currentBackStackEntry?.destination?.route?.startsWith("detail") == true
-    ) {
-        paneNavController.popBackStack()
+    val paneBackStack = rememberNavBackStack(PaneRoute.Cards)
+
+    val isOnDetail = remember(paneBackStack.lastOrNull()) { paneBackStack.lastOrNull() is PaneRoute.Detail }
+    BackHandler(enabled = isOnDetail) {
+        paneBackStack.removeLastOrNull()
     }
-    
+
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(MiuixTheme.colorScheme.surface)
     ) {
         if (cityState == null) {
-            // 无数据占位
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -54,34 +60,29 @@ fun WeatherContentPane(
                 )
             }
         } else {
-            // 内部导航
-            NavHost(
-                navController = paneNavController,
-                startDestination = "cards",
+            NavDisplay(
+                backStack = paneBackStack,
                 modifier = Modifier.fillMaxSize(),
-                enterTransition = { materialSharedAxisZIn(true) },
-                exitTransition = { materialSharedAxisZOut(false) },
-            ) {
-                // 卡片列表页
-                composable("cards") {
-                    PlaceholderCardGrid(
-                        cityState = cityState,
-                        onCardClick = { cardType ->
-                            paneNavController.navigate("detail/$cardType")
-                        }
-                    )
+                transitionSpec = { materialSharedAxisZIn(true) togetherWith materialSharedAxisZOut(false) },
+                popTransitionSpec = { materialSharedAxisZIn(false) togetherWith materialSharedAxisZOut(true) },
+                entryProvider = entryProvider<NavKey> {
+                    entry<PaneRoute.Cards> {
+                        PlaceholderCardGrid(
+                            cityState = cityState,
+                            onCardClick = { cardType ->
+                                paneBackStack.add(PaneRoute.Detail(cardType))
+                            }
+                        )
+                    }
+                    entry<PaneRoute.Detail> { detail ->
+                        CardDetailPlaceholder(
+                            cardType = detail.cardType,
+                            cityState = cityState,
+                            onBack = { paneBackStack.removeLastOrNull() }
+                        )
+                    }
                 }
-                
-                // 详情页
-                composable("detail/{cardType}") { backStackEntry ->
-                    val cardType = backStackEntry.arguments?.getString("cardType") ?: ""
-                    CardDetailPlaceholder(
-                        cardType = cardType,
-                        cityState = cityState,
-                        onBack = { paneNavController.popBackStack() }
-                    )
-                }
-            }
+            )
         }
     }
 }

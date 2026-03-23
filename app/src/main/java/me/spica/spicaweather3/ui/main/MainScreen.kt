@@ -152,7 +152,7 @@ fun MainScreen() {
       floatingActionButton = {
         AddCityButton(
           backdrop = backdrop,
-          onClick = { navigator.navigate(Routes.WeatherList) }
+          onClick = { navigator.add(Routes.WeatherList) }
         )
       },
       // 顶部标题栏

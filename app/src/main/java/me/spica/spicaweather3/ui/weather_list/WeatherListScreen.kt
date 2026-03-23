@@ -70,8 +70,8 @@ fun WeatherListScreen() {
       WeatherListTopBar(
         scrollBehavior = scrollBehavior,
         hazeState = listHazeState,
-        onNavigateBack = { navController.popBackStack() },
-        onSearchClick = { navController.navigate(Routes.CitySelect) }
+        onNavigateBack = { navController.removeLastOrNull() },
+        onSearchClick = { navController.add(Routes.CitySelect) }
       )
     }
   ) { paddingValues ->

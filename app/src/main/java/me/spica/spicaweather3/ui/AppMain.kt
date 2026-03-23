@@ -8,6 +8,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,9 +22,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.ui.LocalNavAnimatedContentScope
+import androidx.navigation3.ui.NavDisplay
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import me.spica.spicaweather3.route.LocalNavController
@@ -60,8 +63,6 @@ val LocalAnimatedContentScope = compositionLocalOf<AnimatedContentScope> {
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalPermissionsApi::class)
 @Composable
 fun AppMain() {
-
-    val navController = rememberNavController()
 
     val locationHelper = koinInject<LocationHelper>()
 
@@ -122,7 +123,7 @@ fun AppMain() {
             LandscapeMainScreen()
         } else {
             // 竖屏模式 - 原有导航布局
-            PortraitMainScreen(navController = navController)
+            PortraitMainScreen()
         }
     }
 
@@ -134,9 +135,9 @@ fun AppMain() {
  */
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-private fun PortraitMainScreen(
-    navController: androidx.navigation.NavHostController
-) {
+private fun PortraitMainScreen() {
+
+    val backStack = rememberNavBackStack(Routes.Main)
 
     val blurRadius2 = animateDpAsState(
         targetValue = if (LocalDropdownMenuController.current.isVisible) 10.dp else 0.dp,
@@ -152,53 +153,44 @@ private fun PortraitMainScreen(
         ) {
             CompositionLocalProvider(
                 LocalSharedTransitionScope provides this@SharedTransitionLayout,
-                LocalNavController provides navController
+                LocalNavController provides backStack
             ) {
-                NavHost(
-                    startDestination = Routes.Main,
-                    navController = navController,
+                NavDisplay(
+                    backStack = backStack,
                     modifier = Modifier
                         .fillMaxSize()
                         .blur(blurRadius2.value)
-                        .background(
-                            MiuixTheme.colorScheme.surface
-                        ),
-                    enterTransition = {
-                        slideInHorizontally { i -> i }
+                        .background(MiuixTheme.colorScheme.surface),
+                    sharedTransitionScope = this@SharedTransitionLayout,
+                    transitionSpec = {
+                        slideInHorizontally { i -> i } togetherWith slideOutHorizontally { i -> -i }
                     },
-                    exitTransition = {
-                        slideOutHorizontally { i -> -i }
+                    popTransitionSpec = {
+                        slideInHorizontally { i -> -i } togetherWith slideOutHorizontally { i -> i }
                     },
-                    popEnterTransition = {
-                        slideInHorizontally { i -> -i }
-                    },
-                    popExitTransition = {
-                        slideOutHorizontally { i -> i }
-                    }
-                ) {
-                    composable<Routes.Main> {
-                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-                            MainScreen()
+                    entryProvider = entryProvider<NavKey> {
+                        entry<Routes.Main> {
+                            CompositionLocalProvider(LocalAnimatedContentScope provides LocalNavAnimatedContentScope.current) {
+                                MainScreen()
+                            }
+                        }
+                        entry<Routes.CitySelect> {
+                            CompositionLocalProvider(LocalAnimatedContentScope provides LocalNavAnimatedContentScope.current) {
+                                CitySelectorScreen()
+                            }
+                        }
+                        entry<Routes.WeatherList> {
+                            CompositionLocalProvider(LocalAnimatedContentScope provides LocalNavAnimatedContentScope.current) {
+                                WeatherListScreen()
+                            }
+                        }
+                        entry<Routes.AirQuality> {
+                            CompositionLocalProvider(LocalAnimatedContentScope provides LocalNavAnimatedContentScope.current) {
+                                AirQualityScreen()
+                            }
                         }
                     }
-
-                    composable<Routes.CitySelect> {
-                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-                            CitySelectorScreen()
-                        }
-                    }
-
-                    composable<Routes.WeatherList> {
-                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-                            WeatherListScreen()
-                        }
-                    }
-                    composable<Routes.AirQuality> {
-                        CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-                            AirQualityScreen()
-                        }
-                    }
-                }
+                )
             }
             BottomSheetMenu(
                 state = LocalMenuState.current,
