@@ -41,7 +41,6 @@ fun WeatherBackground(
 
   Box(
     modifier = Modifier
-      .progressiveBlur(fromBottom = true)
       .fillMaxSize()
       .background(
         // 渐变色的绘制视线

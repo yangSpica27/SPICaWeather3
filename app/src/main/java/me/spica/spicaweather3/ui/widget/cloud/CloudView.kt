@@ -1,148 +1,142 @@
 package me.spica.spicaweather3.ui.widget.cloud
 
-import android.graphics.BlurMaskFilter
+import android.content.Context
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.graphics.SurfaceTexture
+import android.os.Handler
+import android.os.HandlerThread
+import android.os.SystemClock
+import android.view.TextureView
 import androidx.compose.animation.core.EaseInOutBounce
-import androidx.compose.animation.core.EaseOutSine
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.unit.dp
-import me.spica.spicaweather3.presentation.theme.COLOR_BLACK_50
+import androidx.compose.ui.viewinterop.AndroidView
 import me.spica.spicaweather3.ui.widget.ShowOnIdleContent
 
 @Composable
 fun CloudView(
-  collapsedFraction: Float, show: Boolean,
+    collapsedFraction: Float,
+    show: Boolean,
 ) {
+    ShowOnIdleContent(
+        show,
+        enter = slideInVertically { -it },
+        exit = slideOutVertically { -it },
+        modifier = Modifier.fillMaxSize()
+    ) {
+        val showProgress by animateFloatAsState(
+            targetValue = if (show) 1f else 0f,
+            animationSpec = spring(dampingRatio = .45f, stiffness = 500f),
+            label = "show_progress"
+        )
+        AndroidView(
+            factory = { ctx -> CloudTextureView(ctx) },
+            update = { view -> view.showProgress = showProgress },
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+                    translationY = -size.height / 20f * EaseInOutBounce.transform(collapsedFraction)
+                }
+        )
+    }
+}
 
+private class CloudTextureView(context: Context) :
+    TextureView(context), TextureView.SurfaceTextureListener {
 
-  ShowOnIdleContent(
-    show, enter = slideInVertically { -it }, exit = slideOutVertically { -it },
-    modifier = Modifier.fillMaxSize()
-  ) {
+    private val density = context.resources.displayMetrics.density
 
-    val cloudPaint = remember { Paint().asFrameworkPaint() }
+    @Volatile var showProgress: Float = 0f
 
+    private var renderThread: HandlerThread? = null
+    private var renderHandler: Handler? = null
+    private val startTime = SystemClock.uptimeMillis()
 
-    val infiniteTransition = rememberInfiniteTransition(label = "infinite")
+    @Volatile private var isRunning = false
 
+    private val paint = Paint().apply { isAntiAlias = true }
 
-    val dist2 = infiniteTransition.animateFloat(
-      0f, 1f, infiniteRepeatable(
-        animation = tween(durationMillis = 1500, easing = LinearEasing),
-        repeatMode = RepeatMode.Reverse
-      )
-    )
-
-    val dist3 = infiniteTransition.animateFloat(
-      0f, 1f, infiniteRepeatable(
-        animation = tween(durationMillis = 2750, easing = LinearEasing),
-        repeatMode = RepeatMode.Reverse
-      )
-    )
-
-    val dist1 = infiniteTransition.animateFloat(
-      0f, 1f, infiniteRepeatable(
-        animation = tween(durationMillis = 3400, easing = EaseOutSine),
-        repeatMode = RepeatMode.Reverse
-      )
-    )
-
-    val showProgress = animateFloatAsState(
-      targetValue = if (show) 1f else 0f, spring(
-        dampingRatio = .45f, stiffness = 500f
-      )
-    )
-
-    Box(
-      modifier = Modifier
-        .fillMaxSize()
-        .graphicsLayer {
-          translationY = -size.height / 20f * EaseInOutBounce.transform(collapsedFraction)
+    private val frameRunnable = object : Runnable {
+        override fun run() {
+            if (!isRunning) return
+            val frameStart = SystemClock.uptimeMillis()
+            renderFrame()
+            val delay = maxOf(1L, 16L - (SystemClock.uptimeMillis() - frameStart))
+            renderHandler?.postDelayed(this, delay)
         }
-        .drawWithCache {
+    }
 
-          val shadowMaskFilter = BlurMaskFilter(40.dp.toPx(), BlurMaskFilter.Blur.OUTER)
+    init {
+        isOpaque = false
+        surfaceTextureListener = this
+    }
 
+    override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
+        isRunning = true
+        renderThread = HandlerThread("CloudRender").apply { start() }
+        renderHandler = Handler(renderThread!!.looper).also { it.post(frameRunnable) }
+    }
 
-          val shadowColor = COLOR_BLACK_50.toArgb()
+    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
+        isRunning = false
+        renderHandler?.removeCallbacksAndMessages(null)
+        renderThread?.quitSafely()
+        renderThread = null
+        renderHandler = null
+        return true
+    }
 
-          val cloudColor2 = Color(0x80FFFFFF).toArgb()
-          val cloudColor = Color(0x26FFFFFF).toArgb()
+    override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {}
+    override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {}
 
+    private fun renderFrame() {
+        val canvas = lockCanvas() ?: return
+        try {
+            canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
 
-          onDrawWithContent {
+            val elapsed = SystemClock.uptimeMillis() - startTime
+            val w = canvas.width.toFloat()
+            val sp = showProgress
+            val step = 16f * density
 
-            scale(
-              showProgress.value, showProgress.value, pivot = Offset(size.width, 0f)
-            ) {
-              drawIntoCanvas { canvas ->
+            val dist1 = smoothWave(elapsed, 5400L)
+            val dist2 = smoothWave(elapsed, 3500L)
+            val dist3 = smoothWave(elapsed, 2750L)
 
-                cloudPaint.color = cloudColor
-                canvas.nativeCanvas.drawCircle(
-                  0f, 0f,
-                  size.width / 5f * showProgress.value + (dist2.value) * 16.dp.toPx(),
-                  cloudPaint
-                )
+            // 与原实现一致：以右上角为轴心缩放（canvas.scale pivot = (w, 0)）
+            canvas.save()
+            canvas.scale(sp, sp, w, 0f)
 
-                cloudPaint.color = cloudColor2
-                canvas.nativeCanvas.drawCircle(
-                  40.dp.toPx(), 0f,
-                  size.width / 3f * showProgress.value + (dist1.value) * 16.dp.toPx(),
-                  cloudPaint
-                )
+            paint.color = Color.argb(0x26, 0xFF, 0xFF, 0xFF)
+            canvas.drawCircle(0f, 0f, w / 5f * sp + dist2 * step, paint)
 
-                cloudPaint.color = cloudColor
-                canvas.nativeCanvas.drawCircle(
-                  size.width / 2, 0f,
-                  size.width / 5f * showProgress.value + (dist1.value) * 16.dp.toPx(),
-                  cloudPaint
-                )
+            paint.color = Color.argb(0x80, 0xFF, 0xFF, 0xFF)
+            canvas.drawCircle(40f * density, 0f, w / 3f * sp + dist1 * step, paint)
 
-                cloudPaint.color = cloudColor2
-                canvas.nativeCanvas.drawCircle(
-                  size.width / 2 + 6.dp.toPx(), 18.dp.toPx(),
-                  size.width / 3f * showProgress.value + (dist3.value) * 16.dp.toPx(),
-                  cloudPaint
-                )
+            paint.color = Color.argb(0x26, 0xFF, 0xFF, 0xFF)
+            canvas.drawCircle(w / 2f, 0f, w / 5f * sp + dist1 * step, paint)
 
-                cloudPaint.color = cloudColor
-                canvas.nativeCanvas.drawCircle(
-                  size.width, -4.dp.toPx(),
-                  size.width / 5f * showProgress.value + (dist1.value) * 16.dp.toPx(),
-                  cloudPaint
-                )
+            paint.color = Color.argb(0x80, 0xFF, 0xFF, 0xFF)
+            canvas.drawCircle(w / 2f + 6f * density, 18f * density, w / 3f * sp + dist3 * step, paint)
 
-                cloudPaint.color = cloudColor2
-                canvas.nativeCanvas.drawCircle(
-                  size.width + 6.dp.toPx(), 8.dp.toPx(),
-                  size.width / 3f * showProgress.value + (dist2.value) * 16.dp.toPx(),
-                  cloudPaint
-                )
-              }
-            }
-          }
-        })
-  }
+            paint.color = Color.argb(0x26, 0xFF, 0xFF, 0xFF)
+            canvas.drawCircle(w, -4f * density, w / 5f * sp + dist1 * step, paint)
+
+            paint.color = Color.argb(0x80, 0xFF, 0xFF, 0xFF)
+            canvas.drawCircle(w + 6f * density, 8f * density, w / 3f * sp + dist2 * step, paint)
+
+            canvas.restore()
+        } finally {
+            unlockCanvasAndPost(canvas)
+        }
+    }
 }
