@@ -92,7 +92,7 @@ fun CitySelectorScreen() {
                         label = stringResource(R.string.city_selector_input_hint),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .navSharedBounds("searchBar"),
+                            .navSharedBounds("search_bar"),
                         query = searchText,
                         onQueryChange = { txt -> searchText = txt },
                         onSearch = {},
