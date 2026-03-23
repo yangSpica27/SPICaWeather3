@@ -22,9 +22,10 @@ import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.materials.HazeMaterials
 import me.spica.spicaweather3.R
-import me.spica.spicaweather3.ui.LocalAnimatedContentScope
 import me.spica.spicaweather3.ui.LocalSharedTransitionScope
 import me.spica.spicaweather3.ui.widget.MainTopBar
+import me.spica.spicaweather3.utils.navSharedBounds
+import me.spica.spicaweather3.utils.navSharedElement
 import me.spica.spicaweather3.utils.noRippleClickable
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
@@ -71,37 +72,32 @@ fun WeatherListTopBar(
           .fillMaxWidth()
           .padding(top = 48.dp)
       ) {
-        with(LocalSharedTransitionScope.current) {
-          Row(
-            modifier = Modifier
-              .fillMaxWidth()
-              // 共享元素动画，与城市选择页面的搜索框联动
-              .sharedBounds(
-                animatedVisibilityScope = LocalAnimatedContentScope.current,
-                sharedContentState = rememberSharedContentState("search_bar"),
-              )
-              .background(
-                MiuixTheme.colorScheme.onSurface.copy(alpha = .1f),
-                ContinuousRoundedRectangle(12.dp)
-              )
-              .noRippleClickable(onClick = onSearchClick)
-              .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-          ) {
-            Icon(
-              Icons.Default.Search,
-              contentDescription = stringResource(R.string.cd_search),
-              tint = MiuixTheme.colorScheme.onSurface
+        Row(
+          modifier = Modifier
+            .fillMaxWidth()
+            // 共享元素动画，与城市选择页面的搜索框联动
+            .navSharedBounds("search_bar")
+            .background(
+              MiuixTheme.colorScheme.onSurface.copy(alpha = .1f),
+              ContinuousRoundedRectangle(12.dp)
             )
+            .noRippleClickable(onClick = onSearchClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+          horizontalArrangement = Arrangement.spacedBy(12.dp),
+          verticalAlignment = Alignment.CenterVertically
+        ) {
+          Icon(
+            Icons.Default.Search,
+            contentDescription = stringResource(R.string.cd_search),
+            tint = MiuixTheme.colorScheme.onSurface
+          )
 
-            Text(
-              stringResource(R.string.weather_list_search_placeholder),
-              style = MiuixTheme.textStyles.subtitle,
-              color = MiuixTheme.colorScheme.onSurface,
-              fontSize = 17.sp
-            )
-          }
+          Text(
+            stringResource(R.string.weather_list_search_placeholder),
+            style = MiuixTheme.textStyles.subtitle,
+            color = MiuixTheme.colorScheme.onSurface,
+            fontSize = 17.sp
+          )
         }
       }
     },

@@ -56,10 +56,6 @@ val LocalSharedTransitionScope = compositionLocalOf<SharedTransitionScope> {
     error("LocalSharedTransitionScope not provided")
 }
 
-val LocalAnimatedContentScope = compositionLocalOf<AnimatedContentScope> {
-    error("LocalAnimatedContentScope not provided")
-}
-
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalPermissionsApi::class)
 @Composable
 fun AppMain() {
@@ -152,8 +148,8 @@ private fun PortraitMainScreen() {
                 .background(MiuixTheme.colorScheme.surface)
         ) {
             CompositionLocalProvider(
+                LocalNavController provides backStack,
                 LocalSharedTransitionScope provides this@SharedTransitionLayout,
-                LocalNavController provides backStack
             ) {
                 NavDisplay(
                     backStack = backStack,
@@ -168,26 +164,18 @@ private fun PortraitMainScreen() {
                     popTransitionSpec = {
                         slideInHorizontally { i -> -i } togetherWith slideOutHorizontally { i -> i }
                     },
-                    entryProvider = entryProvider<NavKey> {
+                    entryProvider = entryProvider {
                         entry<Routes.Main> {
-                            CompositionLocalProvider(LocalAnimatedContentScope provides LocalNavAnimatedContentScope.current) {
-                                MainScreen()
-                            }
+                            MainScreen()
                         }
                         entry<Routes.CitySelect> {
-                            CompositionLocalProvider(LocalAnimatedContentScope provides LocalNavAnimatedContentScope.current) {
-                                CitySelectorScreen()
-                            }
+                            CitySelectorScreen()
                         }
                         entry<Routes.WeatherList> {
-                            CompositionLocalProvider(LocalAnimatedContentScope provides LocalNavAnimatedContentScope.current) {
-                                WeatherListScreen()
-                            }
+                            WeatherListScreen()
                         }
                         entry<Routes.AirQuality> {
-                            CompositionLocalProvider(LocalAnimatedContentScope provides LocalNavAnimatedContentScope.current) {
-                                AirQualityScreen()
-                            }
+                            AirQualityScreen()
                         }
                     }
                 )
