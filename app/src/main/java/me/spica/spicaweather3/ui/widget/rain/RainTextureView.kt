@@ -42,10 +42,22 @@ class RainTextureView(context: Context) : TextureView(context), TextureView.Surf
     // 视口尺寸（@Volatile 保证跨线程可见）
     @Volatile private var surfaceWidth = 1
     @Volatile private var surfaceHeight = 1
+    @Volatile private var pendingRect: FloatArray? = null
 
     init {
         isOpaque = false          // 关键：允许透明通道透过 TextureView
         surfaceTextureListener = this
+    }
+
+    /**
+     * 设置雨滴碰撞矩形（像素坐标），替代原底部地板碰撞
+     */
+    fun setCollisionRect(left: Float, top: Float, right: Float, bottom: Float, cornerRadius: Float = 0f) {
+        val rect = floatArrayOf(left, top, right, bottom, cornerRadius)
+        pendingRect = rect
+        if (::simulation.isInitialized) {
+            simulation.pendingCollisionRect = rect
+        }
     }
 
     // ─────────────────── SurfaceTextureListener ───────────────────
@@ -53,7 +65,10 @@ class RainTextureView(context: Context) : TextureView(context), TextureView.Surf
     override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
         surfaceWidth = width
         surfaceHeight = height
-        simulation = RainSimulation(width, height).also { it.init() }
+        simulation = RainSimulation(width, height).also {
+            it.pendingCollisionRect = pendingRect
+            it.init()
+        }
         startRenderLoop(surface)
     }
 
@@ -93,7 +108,7 @@ class RainTextureView(context: Context) : TextureView(context), TextureView.Surf
                     GLES30.glViewport(0, 0, w, h)
                     GLES30.glClearColor(0f, 0f, 0f, 0f)
                     GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT)
-                    r.draw(simulation, w, h)
+                    r.draw(simulation, w, h, pendingRect)
                     EGL14.eglSwapBuffers(eglDisplay, eglSurface)
 
                     // 控制帧率约 60 fps

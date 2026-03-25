@@ -1,6 +1,7 @@
 package me.spica.spicaweather3.ui.widget.rain
 
 import org.jbox2d.collision.shapes.PolygonShape
+import org.jbox2d.common.Settings
 import org.jbox2d.common.Vec2
 import org.jbox2d.dynamics.Body
 import org.jbox2d.dynamics.BodyDef
@@ -10,6 +11,8 @@ import org.jbox2d.dynamics.World
 import org.jbox2d.particle.ParticleGroup
 import org.jbox2d.particle.ParticleGroupDef
 import org.jbox2d.particle.ParticleType
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlin.random.Random
 
 /**
@@ -42,6 +45,14 @@ class RainSimulation(
 
         /** 粒子组从生成到回收的总生命周期（毫秒） */
         private const val TOTAL_LIFETIME_MS = 4000L
+
+        /** 每个圆角的弧线细分段数，4 个角共 SEGMENTS_PER_CORNER*4 个顶点 */
+        private const val SEGMENTS_PER_CORNER = 4
+
+        init {
+            // 提高 JBox2D 多边形顶点上限以支持更平滑的圆角碰撞体
+            Settings.maxPolygonVertices = SEGMENTS_PER_CORNER * 4
+        }
     }
 
     /** 初始化是否完成 */
@@ -49,13 +60,24 @@ class RainSimulation(
         private set
 
     private lateinit var world: World
-    private lateinit var groundBody: Body
 
     // 当前活跃粒子组列表
     private val groups = ArrayList<ParticleGroup>()
 
     // 用于均匀水平分布的网格列索引
     private var nextGridIndex = 0
+
+    // ────────── 碰撞矩形（替代原底部地板碰撞） ──────────
+
+    /**
+     * 碰撞矩形（像素坐标：left, top, right, bottom）
+     * 由外部设置，在渲染线程 [update] 中同步到物理世界
+     */
+    @Volatile
+    var pendingCollisionRect: FloatArray? = null
+
+    private var appliedCollisionRect: FloatArray? = null
+    private var collisionBody: Body? = null
 
     // ────────── 供渲染器使用的访问器 ──────────
 
@@ -85,23 +107,8 @@ class RainSimulation(
             world.particleRadius  = 6f / proportion
             world.particleMaxCount = MAX_PARTICLES
 
-            // 地板刚体（放置于屏幕下方一倍高度，确保碰撞区域足够宽）
-            val groundDef = BodyDef().apply {
-                type = BodyType.STATIC
-                position.set(0f, height / proportion * 2f)
-            }
-            groundBody = world.createBody(groundDef)
-
-            val fixtureDef = FixtureDef().apply {
-                shape = PolygonShape().also {
-                    it.setAsBox(width * 1f / proportion, height / proportion)
-                }
-                friction    = 1.5f   // 低摩擦：粒子碰撞后保留更多水平动量，向外扩散更充分
-                restitution = 1.55f  // 弹性系数提高：反弹更高，水花效果更明显
-                filter.maskBits  = 0b01
-                filter.groupIndex = 0b01
-            }
-            groundBody.createFixture(fixtureDef)
+            // 同步碰撞体（如果外部已设置碰撞矩形）
+            applyCollisionRect()
 
             // 错时生成各粒子组，避免所有粒子同时出现
             for (i in 0 until MAX_GROUPS) {
@@ -122,6 +129,7 @@ class RainSimulation(
     fun update() {
         if (!initOK) return
         synchronized(this) {
+            applyCollisionRect()
             val now = System.currentTimeMillis()
 
             // 找出生命周期到期的粒子组
@@ -139,6 +147,68 @@ class RainSimulation(
             world.step(1f / 120f, 10, 3)
             world.step(1f / 120f, 10, 3)
         }
+    }
+
+    // ────────── 碰撞矩形同步 ──────────
+
+    /**
+     * 将 [pendingCollisionRect] 同步到物理世界：
+     * 销毁旧碰撞体，在新矩形位置创建静态刚体，替代原底部地板碰撞
+     */
+    private fun applyCollisionRect() {
+        val rect = pendingCollisionRect ?: return
+        if (rect.contentEquals(appliedCollisionRect)) return
+
+        collisionBody?.let { world.destroyBody(it) }
+
+        val left = rect[0] / proportion
+        val top = rect[1] / proportion
+        val right = rect[2] / proportion
+        val bottom = rect[3] / proportion
+        val cx = (left + right) / 2f
+        val cy = (top + bottom) / 2f
+        val hw = (right - left) / 2f
+        val hh = (bottom - top) / 2f
+
+        val bodyDef = BodyDef().apply {
+            type = BodyType.STATIC
+            position.set(cx, cy)
+        }
+        collisionBody = world.createBody(bodyDef)
+        collisionBody!!.createFixture(FixtureDef().apply {
+            val cr = (if (rect.size > 4) rect[4] / proportion else 0f)
+                .coerceAtMost(minOf(hw, hh))
+            shape = PolygonShape().also {
+                if (cr > 0.01f) {
+                    // 每个圆角用 SEGMENTS_PER_CORNER 段弧线近似，共 N*4 个顶点（CCW）
+                    val n = SEGMENTS_PER_CORNER
+                    val verts = ArrayList<Vec2>(n * 4)
+                    val halfPi = (Math.PI / 2.0).toFloat()
+                    for (corner in 0 until 4) {
+                        // 四个角的圆心偏移和起始角度
+                        val (ocx, ocy, startAngle) = when (corner) {
+                            0 -> Triple(hw - cr, -(hh - cr), -halfPi)    // 右下
+                            1 -> Triple(hw - cr, hh - cr, 0f)            // 右上
+                            2 -> Triple(-(hw - cr), hh - cr, halfPi)     // 左上
+                            else -> Triple(-(hw - cr), -(hh - cr), Math.PI.toFloat()) // 左下
+                        }
+                        for (s in 0 until n) {
+                            val angle = startAngle + halfPi * s / n
+                            verts.add(Vec2(ocx + cr * cos(angle), ocy + cr * sin(angle)))
+                        }
+                    }
+                    it.set(verts.toTypedArray(), verts.size)
+                } else {
+                    it.setAsBox(hw, hh)
+                }
+            }
+            friction = 0.8f
+            restitution = 0.5f
+            filter.maskBits = 0b01
+            filter.groupIndex = 0b01
+        })
+
+        appliedCollisionRect = rect.clone()
     }
 
     // ────────── 私有：创建粒子组 ──────────

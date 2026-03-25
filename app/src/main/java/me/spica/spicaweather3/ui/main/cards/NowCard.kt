@@ -11,10 +11,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -47,132 +55,160 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 fun NowCard(modifier: Modifier = Modifier, weatherData: AggregatedWeatherData, startAnim: Boolean) {
 
 
-  // 根据天气图标ID计算对应的天气动画类型（晴天、雨天、雪天等）
-  val currentWeatherAnimType = remember(weatherData) {
-    WeatherAnimType.getAnimType(
-      weatherData.current.icon,
-    )
-  }
-
-  // ==================== 动画配置 ====================
-  // 温度数字动画（无延迟，持续450ms）
-  val textAnimValue1 = animateFloatAsState(
-    if (startAnim) 1f else 0f,
-    animationSpec = tween(durationMillis = 250, 0)
-  ).value
-
-  // 天气状况和体感温度动画（延迟50ms，持续550ms）
-  val textAnimValue2 = animateFloatAsState(
-    if (startAnim) 1f else 0f,
-    animationSpec = tween(durationMillis = 350, 50)
-  ).value
-
-  // 湿度信息动画（延迟150ms，持续750ms）
-  val textAnimValue3 = animateFloatAsState(
-    if (startAnim) 1f else 0f,
-    animationSpec = tween(durationMillis = 550, 150)
-  ).value
-
-  // ==================== 主布局 ====================
-  // 使用 Box 叠加布局：底层为天气背景动画，上层为天气信息文字
-  Box(
-    modifier = modifier
-      .aspectRatio(1.21f) // 宽高比 1.21:1，保持卡片比例
-  ) {
-    // 动态天气背景（晴天、雨天、雪天等不同动画效果）
-    WeatherBackground(
-      currentWeatherType = currentWeatherAnimType,
-      collapsedFraction = 0f, // 0=完全展开，1=完全折叠
-    )
-
-    // 天气信息文字层
-    Column(
-      modifier = Modifier
-        .padding(
-          12.dp
+    // 根据天气图标ID计算对应的天气动画类型（晴天、雨天、雪天等）
+    val currentWeatherAnimType = remember(weatherData) {
+        WeatherAnimType.getAnimType(
+            weatherData.current.icon,
         )
-        .padding(
-          horizontal = 12.dp,
-          vertical = 12.dp
-        ),
-      verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-      // 当前温度（大号显示，带渐显和向上平移动画）
-      Text(
-        modifier = Modifier.graphicsLayer {
-          alpha = textAnimValue1
-          translationY = -12.dp.toPx() * (1f - textAnimValue1)
-        },
-        text = buildAnnotatedString {
-          // 温度数字（94sp 超大字体）
-          withStyle(
-            style = SpanStyle(
-              color = MiuixTheme.colorScheme.surface,
-              fontSize = 94.sp,
-              fontWeight = FontWeight.W800
-            )
-          ) {
-            append(weatherData.current.temperature.toString())
-          }
-          // 温度单位（45sp 较小字体）
-          withStyle(
-            style = SpanStyle(
-              color = MiuixTheme.colorScheme.surface,
-              fontSize = 45.sp,
-              fontWeight = FontWeight.W800
-            )
-          ) {
-            append("°C")
-          }
-        },
-      )
-
-      // 天气状况和体感温度（带延迟渐显和向上平移动画）
-      Text(
-        text = stringResource(
-          R.string.now_card_condition,
-          weatherData.current.condition,
-          weatherData.current.feelsLike
-        ),
-        style = MiuixTheme.textStyles.body1,
-        color = MiuixTheme.colorScheme.surface,
-        fontWeight = FontWeight.W600,
-        modifier = Modifier
-          .graphicsLayer {
-            alpha = textAnimValue2
-            translationY = -12.dp.toPx() * (1f - textAnimValue2)
-          }
-          .padding(start = 12.dp)
-      )
-      
-      // 湿度信息（带毛玻璃背景、延迟渐显和向上平移动画）
-      Text(
-        text = stringResource(
-          R.string.now_card_humidity,
-          weatherData.current.humidity
-        ),
-        style = MiuixTheme.textStyles.body2,
-        color = MiuixTheme.colorScheme.surface,
-        fontWeight = FontWeight.W600,
-        modifier = Modifier
-          .graphicsLayer {
-            alpha = textAnimValue3
-            translationY = -12.dp.toPx() * (1f - textAnimValue3)
-          }
-          .padding(start = 12.dp)
-          .clip(
-            ContinuousRoundedRectangle(12.dp)
-          )
-          // 应用 Cupertino 风格超薄毛玻璃效果
-          .background(
-            MiuixTheme.colorScheme.surface.copy(alpha = 0.2f),
-            CircleShape
-          )
-          .padding(
-            horizontal = 8.dp,
-            vertical = 4.dp
-          )
-      )
     }
-  }
+
+    // ==================== 动画配置 ====================
+    // 温度数字动画（无延迟，持续450ms）
+    val textAnimValue1 = animateFloatAsState(
+        if (startAnim) 1f else 0f,
+        animationSpec = tween(durationMillis = 250, 0)
+    ).value
+
+    // 天气状况和体感温度动画（延迟50ms，持续550ms）
+    val textAnimValue2 = animateFloatAsState(
+        if (startAnim) 1f else 0f,
+        animationSpec = tween(durationMillis = 350, 50)
+    ).value
+
+    // 湿度信息动画（延迟150ms，持续750ms）
+    val textAnimValue3 = animateFloatAsState(
+        if (startAnim) 1f else 0f,
+        animationSpec = tween(durationMillis = 550, 150)
+    ).value
+
+    // ==================== 碰撞矩形追踪 ====================
+    // 追踪 Box 和湿度 Text 的位置，计算相对碰撞矩形供雨滴动画使用
+    var boxRectInRoot by remember { mutableStateOf(Rect.Zero) }
+    var humidityRectInRoot by remember { mutableStateOf(Rect.Zero) }
+    val density = LocalDensity.current
+    val cornerRadiusPx = with(density) { 12.dp.toPx() }
+
+    val collisionRect: Rect? = if (humidityRectInRoot != Rect.Zero && boxRectInRoot != Rect.Zero) {
+        Rect(
+            left = humidityRectInRoot.left - boxRectInRoot.left,
+            top = humidityRectInRoot.top - boxRectInRoot.top,
+            right = humidityRectInRoot.right - boxRectInRoot.left,
+            bottom = humidityRectInRoot.bottom - boxRectInRoot.top
+        )
+    } else null
+
+    // ==================== 主布局 ====================
+    // 使用 Box 叠加布局：底层为天气背景动画，上层为天气信息文字
+    Box(
+        modifier = modifier
+            .aspectRatio(1.21f) // 宽高比 1.21:1，保持卡片比例
+            .onGloballyPositioned { boxRectInRoot = it.boundsInRoot() }
+    ) {
+        // 动态天气背景（晴天、雨天、雪天等不同动画效果）
+        WeatherBackground(
+            currentWeatherType = currentWeatherAnimType,
+            collapsedFraction = 0f, // 0=完全展开，1=完全折叠
+            collisionRect = collisionRect,
+            collisionCornerRadiusPx = cornerRadiusPx,
+        )
+
+        // 天气信息文字层
+        Column(
+            modifier = Modifier
+                .padding(
+                    12.dp
+                )
+                .padding(
+                    horizontal = 12.dp,
+                    vertical = 12.dp
+                ),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            // 当前温度（大号显示，带渐显和向上平移动画）
+            Text(
+                modifier = Modifier.graphicsLayer {
+                    alpha = textAnimValue1
+                    translationY = -12.dp.toPx() * (1f - textAnimValue1)
+                },
+                text = buildAnnotatedString {
+                    // 温度数字（94sp 超大字体）
+                    withStyle(
+                        style = SpanStyle(
+                            color = MiuixTheme.colorScheme.surface,
+                            fontSize = 94.sp,
+                            fontWeight = FontWeight.W800
+                        )
+                    ) {
+                        append(weatherData.current.temperature.toString())
+                    }
+                    // 温度单位（45sp 较小字体）
+                    withStyle(
+                        style = SpanStyle(
+                            color = MiuixTheme.colorScheme.surface,
+                            fontSize = 45.sp,
+                            fontWeight = FontWeight.W800
+                        )
+                    ) {
+                        append("°C")
+                    }
+                },
+            )
+
+            // 天气状况和体感温度（带延迟渐显和向上平移动画）
+            Text(
+                text = stringResource(
+                    R.string.now_card_condition,
+                    weatherData.current.condition,
+                    weatherData.current.feelsLike
+                ),
+                style = MiuixTheme.textStyles.body1,
+                color = MiuixTheme.colorScheme.surface,
+                fontWeight = FontWeight.W600,
+                modifier = Modifier
+                    .graphicsLayer {
+                        alpha = textAnimValue2
+                        translationY = -12.dp.toPx() * (1f - textAnimValue2)
+                    }
+                    .padding(start = 12.dp)
+            )
+
+            // 湿度信息（带毛玻璃背景、延迟渐显和向上平移动画）
+            Text(
+                text = stringResource(
+                    R.string.now_card_humidity,
+                    weatherData.current.humidity
+                ),
+                style = MiuixTheme.textStyles.body2,
+                color = MiuixTheme.colorScheme.surface,
+                fontWeight = FontWeight.W600,
+                modifier = Modifier
+                    .graphicsLayer {
+                        alpha = textAnimValue3
+                        translationY = -12.dp.toPx() * (1f - textAnimValue3)
+                    }
+                    .onGloballyPositioned {
+                        val location = it.boundsInRoot()
+                       with(density){
+                           humidityRectInRoot = location.copy(
+                               left = location.left + 12.dp.toPx(), // 左侧内边距
+                               right = location.right - 12.dp.toPx() // 右侧内边距
+                           )
+                       }
+                    }
+                    .padding(start = 12.dp)
+                    .clip(
+                        ContinuousRoundedRectangle(12.dp)
+                    )
+                    // 应用 Cupertino 风格超薄毛玻璃效果
+                    .background(
+                        MiuixTheme.colorScheme.surface.copy(alpha = 0.2f),
+                        CircleShape
+                    )
+                    .padding(
+                        horizontal = 8.dp,
+                        vertical = 4.dp
+                    )
+            )
+        }
+    }
 }

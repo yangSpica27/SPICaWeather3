@@ -129,7 +129,8 @@ class RainGLRenderer {
 
     // ───────── 每帧绘制 ─────────
 
-    fun draw(simulation: RainSimulation, screenWidth: Int, screenHeight: Int) {
+    fun draw(simulation: RainSimulation, screenWidth: Int, screenHeight: Int,
+             collisionRect: FloatArray? = null) {
         if (!initialized || !simulation.initOK) return
 
         val count    = simulation.particleCount
@@ -143,10 +144,10 @@ class RainGLRenderer {
 
         for (i in 0 until count) {
             val vy = velocities[i].y
+            val xScreen = positions[i].x * prop
             val yScreen = positions[i].y * prop
             val speed = velocityLen(velocities[i])
-            val isSplash = (vy < SPLASH_VY) ||
-                (yScreen > screenHeight * SPLASH_NEAR_GROUND_RATIO && speed in 0.5f..12f)
+            val isSplash = isSplashParticle(vy, xScreen, yScreen, speed, screenHeight, collisionRect)
             if (isSplash) splashCount++ else fallingCount++
         }
 
@@ -159,13 +160,13 @@ class RainGLRenderer {
         // 填充下落雨滴顶点（GL_TRIANGLES 拖尾）
         for (i in 0 until count) {
             val vy = velocities[i].y
+            val xScreen = positions[i].x * prop
             val yScreen = positions[i].y * prop
             val speed = velocityLen(velocities[i])
-            val isSplash = (vy < SPLASH_VY) ||
-                (yScreen > screenHeight * SPLASH_NEAR_GROUND_RATIO && speed in 0.5f..12f)
+            val isSplash = isSplashParticle(vy, xScreen, yScreen, speed, screenHeight, collisionRect)
             if (isSplash) continue
 
-            val px = positions[i].x * prop
+            val px = xScreen
             val py = positions[i].y * prop
             val vx = velocities[i].x
             val vyVal = velocities[i].y
@@ -191,13 +192,13 @@ class RainGLRenderer {
         // 填充水花顶点（GL_POINTS）
         for (i in 0 until count) {
             val vy = velocities[i].y
+            val xScreen = positions[i].x * prop
             val yScreen = positions[i].y * prop
             val speed = velocityLen(velocities[i])
-            val isSplash = (vy < SPLASH_VY) ||
-                (yScreen > screenHeight * SPLASH_NEAR_GROUND_RATIO && speed in 0.5f..12f)
+            val isSplash = isSplashParticle(vy, xScreen, yScreen, speed, screenHeight, collisionRect)
             if (!isSplash) continue
 
-            val px = positions[i].x * prop
+            val px = xScreen
             val py = positions[i].y * prop
             val energy = (speed * prop * 0.00022f).coerceIn(0.25f, 1.0f)
 
@@ -287,6 +288,26 @@ class RainGLRenderer {
 
     private fun velocityLen(v: org.jbox2d.common.Vec2) =
         sqrt(v.x * v.x + v.y * v.y)
+
+    /**
+     * 判断粒子是否为溅落水花：
+     * - 速度向上（反弹）→ 水花
+     * - 在碰撞矩形附近且速度较慢 → 水花
+     */
+    private fun isSplashParticle(
+        vy: Float, xScreen: Float, yScreen: Float, speed: Float,
+        screenHeight: Int, collisionRect: FloatArray?
+    ): Boolean {
+        if (vy < SPLASH_VY) return true
+        return if (collisionRect != null) {
+            val margin = 30f
+            xScreen in (collisionRect[0] - margin)..(collisionRect[2] + margin) &&
+                yScreen in (collisionRect[1] - margin)..(collisionRect[3] + margin) &&
+                speed in 0.5f..12f
+        } else {
+            yScreen > screenHeight * SPLASH_NEAR_GROUND_RATIO && speed in 0.5f..12f
+        }
+    }
 
     private fun setResolution(program: Int, w: Float, h: Float) {
         val loc = GLES30.glGetUniformLocation(program, "u_resolution")

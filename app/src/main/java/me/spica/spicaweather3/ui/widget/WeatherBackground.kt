@@ -11,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import kotlinx.coroutines.launch
+import androidx.compose.ui.geometry.Rect
 import me.spica.spicaweather3.common.type.WeatherAnimType
 import me.spica.spicaweather3.ui.widget.cloud.CloudView
 import me.spica.spicaweather3.ui.widget.galaxy.GalaxyView
@@ -18,13 +19,14 @@ import me.spica.spicaweather3.ui.widget.haze.HazeView
 import me.spica.spicaweather3.ui.widget.rain.RainView
 import me.spica.spicaweather3.ui.widget.snow.SnowView
 import me.spica.spicaweather3.ui.widget.sun.SunView
-import me.spica.spicaweather3.utils.blur.progressiveBlur
 
 
 @Composable
 fun WeatherBackground(
   collapsedFraction: Float,
   currentWeatherType: WeatherAnimType,
+  collisionRect: Rect? = null,
+  collisionCornerRadiusPx: Float = 0f,
 ) {
 
   val currentTopColor = remember { Animatable(WeatherAnimType.RainLight.topColor) }
@@ -56,7 +58,7 @@ fun WeatherBackground(
   ) {
     GalaxyView(collapsedFraction, currentWeatherType.showGalaxy)
     SnowView(show = currentWeatherType.showSnow)
-    RainView(show = currentWeatherType.showRain)
+    RainView(show = currentWeatherType.showRain, collisionRect = collisionRect, collisionCornerRadiusPx = collisionCornerRadiusPx)
     CloudView(collapsedFraction, currentWeatherType.showCloud)
     SunView(collapsedFraction, currentWeatherType.showSun)
     HazeView(show = currentWeatherType.showHaze)

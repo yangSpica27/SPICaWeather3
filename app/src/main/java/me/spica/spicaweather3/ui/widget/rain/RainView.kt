@@ -3,28 +3,30 @@ package me.spica.spicaweather3.ui.widget.rain
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.viewinterop.AndroidView
 import me.spica.spicaweather3.ui.widget.ShowOnIdleContent
 
 /**
  * 雨滴动画组件（TextureView + OpenGL ES 3.0）
  *
- * 使用 GPU 渲染代替原有的 Canvas + JBox2D 方案，改进：
- *  - 每个雨滴绘制为渐变三角形（头部不透明 → 尾部透明），拖尾更自然
- *  - 前景 / 背景双层视差，近大远小增强立体感
- *  - 12° 斜向风角，模拟真实降雨斜度
- *  - 纯运动学模拟，无物理引擎开销，CPU 占用更低
- *
- * @param show 控制雨滴动画是否显示，默认为 true
+ * @param show 控制雨滴动画是否显示
+ * @param collisionRect 碰撞矩形（本地像素坐标），雨滴会与此矩形边缘碰撞溅落
+ * @param collisionCornerRadiusPx 碰撞矩形的圆角半径（像素）
  */
 @Composable
-fun RainView(show: Boolean = true) {
+fun RainView(show: Boolean = true, collisionRect: Rect? = null, collisionCornerRadiusPx: Float = 0f) {
     ShowOnIdleContent(
         visible = show,
         modifier = Modifier.fillMaxSize()
     ) {
         AndroidView(
             factory = { context -> RainTextureView(context) },
+            update = { view ->
+                collisionRect?.let {
+                    view.setCollisionRect(it.left, it.top, it.right, it.bottom, collisionCornerRadiusPx)
+                }
+            },
             modifier = Modifier.fillMaxSize()
         )
     }
