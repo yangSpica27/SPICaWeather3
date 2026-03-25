@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Compose-2025.11.00-brightgreen" alt="Compose">
+  <img src="https://img.shields.io/badge/Compose-2026.03.00-brightgreen" alt="Compose">
   <img src="https://img.shields.io/badge/Kotlin-2.2.21-blue" alt="Kotlin">
   <img src="https://img.shields.io/badge/minSdk-33-orange" alt="minSdk">
   <img src="https://img.shields.io/badge/License-MIT-yellow" alt="License">
