@@ -59,7 +59,7 @@ fun WeatherBackground(
     RainView(show = currentWeatherType.showRain)
     CloudView(collapsedFraction, currentWeatherType.showCloud)
     SunView(collapsedFraction, currentWeatherType.showSun)
-    HazeView(currentWeatherType.showHaze)
+    HazeView(show = currentWeatherType.showHaze)
   }
 
 }
