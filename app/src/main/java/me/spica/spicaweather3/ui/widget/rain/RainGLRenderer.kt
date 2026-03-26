@@ -85,25 +85,12 @@ class RainGLRenderer {
     // ───────── 常量 ─────────
 
     companion object {
-        // 下落雨滴拖尾参数
-        private const val FALL_TRAIL_FACTOR  = 0.045f   // 速度→拖尾长度系数（加长拖尾）
-        private const val FALL_HALF_WIDTH    = 3.5f     // 头部半宽（像素）
-        private const val FALL_MAX_TRAIL     = 220f     // 拖尾最大长度（像素）
-        private const val FALL_ALPHA         = 0.35f    // 下落雨滴头部不透明度
-        private const val TAIL_WIDTH_FRAC    = 0.30f    // 尾端宽度占头部宽度的比例（收窄）
-
-        // 水花检测阈值
-        private const val SPLASH_VY              = -0.5f   // 向上速度阈值（world 单位/s），检测弹起粒子
-        private const val SPLASH_NEAR_GROUND_RATIO = 0.88f // 靠近地面比例阈值
-
         // 水花 GL_POINTS 大小
         private const val SPLASH_PT_BASE  = 20f   // 最小点半径（px）
         private const val SPLASH_PT_RANGE = 18f   // 能量增量范围
 
         // 每个 vertex 3 个 float: (x, y, alpha)
         private const val FLOATS_PER_VERT = 3
-        // 每个下落雨滴 6 个顶点（锥形矩形 = 2 三角形）
-        private const val VERTS_PER_DROP  = 6
     }
 
     // ───────── GL 对象 ─────────
@@ -117,10 +104,6 @@ class RainGLRenderer {
     // VBO 数据缓冲（复用，避免每帧 GC）
     private var floatBuffer: FloatBuffer? = null
     private var bufferCapacity = 0   // 当前已分配的 float 数量
-
-    // 粒子分类缓冲（预分配，避免每帧分配）
-    private var isSplashCache = BooleanArray(RainSimulation.MAX_PARTICLES)
-    private var speedCache    = FloatArray(RainSimulation.MAX_PARTICLES)
 
     // ───────── 初始化 ─────────
 
@@ -138,82 +121,54 @@ class RainGLRenderer {
     // ───────── 每帧绘制 ─────────
 
     fun draw(simulation: RainSimulation, screenWidth: Int, screenHeight: Int,
-             collisionRect: FloatArray? = null) {
+             collisionRect: FloatArray? = null, bgStreaks: BackgroundRainStreaks? = null) {
         if (!initialized || !simulation.initOK) return
 
         val count    = simulation.particleCount
-        if (count == 0) return
+        if (count == 0 && bgStreaks == null) return
         val positions  = simulation.positionBuffer
         val velocities = simulation.velocityBuffer
         val prop       = simulation.proportion
+        val groupInfos = simulation.groupInfos
 
-        // ── 单次遍历：分类 + 缓存速度，避免后续重复计算 ──
-        var fallingCount = 0
-        var splashCount  = 0
-        for (i in 0 until count) {
-            val spd = velocityLen(velocities[i])
-            speedCache[i] = spd
-            val xPx = positions[i].x * prop
-            val yPx = positions[i].y * prop
-            val splash = isSplashParticle(velocities[i].y, xPx, yPx, spd, screenHeight, collisionRect)
-            isSplashCache[i] = splash
-            if (splash) splashCount++ else fallingCount++
+        // ── 仅统计散开水花（聚合组不再渲染，由背景雨线替代） ──
+        var splashCount = 0
+        for (info in groupInfos) {
+            if (!info.cohesive) {
+                splashCount += info.particleCount
+            }
         }
 
-        // VBO 空间：下落 = VERTS_PER_DROP 个顶点，水花 = 1 个顶点
-        val totalFloats = fallingCount * VERTS_PER_DROP * FLOATS_PER_VERT + splashCount * FLOATS_PER_VERT
+        // VBO 空间：背景雨线 + 水花
+        val bgFloats = if (bgStreaks != null) BackgroundRainStreaks.TOTAL_FLOATS else 0
+        val totalFloats = bgFloats + splashCount * FLOATS_PER_VERT
         if (totalFloats == 0) return
         ensureBuffer(totalFloats)
         val buf = floatBuffer!!
         buf.clear()
 
-        // ── 填充下落雨滴顶点（锥形矩形：头宽满α → 尾窄零α，GPU 线性插值渐变） ──
-        for (i in 0 until count) {
-            if (isSplashCache[i]) continue
+        // ── 填充背景雨线顶点（最先写入 → 最先绘制 → 视觉最底层） ──
+        val bgVertCount = if (bgStreaks != null) {
+            val posBefore = buf.position()
+            bgStreaks.fillVertices(buf)
+            (buf.position() - posBefore) / FLOATS_PER_VERT
+        } else 0
 
-            val px    = positions[i].x * prop
-            val py    = positions[i].y * prop
-            val vx    = velocities[i].x
-            val vyVal = velocities[i].y
-            val spd   = speedCache[i]
+        // ── 填充散开组：每个粒子渲染为水花 GL_POINT ──
+        for (info in groupInfos) {
+            if (info.cohesive) continue
+            val start = info.bufferStart
+            val end   = start + info.particleCount
+            for (i in start until end) {
+                val px     = positions[i].x * prop
+                val py     = positions[i].y * prop
+                val vx     = velocities[i].x
+                val vyVal  = velocities[i].y
+                val spd    = sqrt(vx * vx + vyVal * vyVal)
+                val energy = (spd * prop * 0.00022f).coerceIn(0.25f, 1.0f)
 
-            val trail = (spd * prop * FALL_TRAIL_FACTOR).coerceAtMost(FALL_MAX_TRAIL)
-            val normX = if (spd > 0.001f) vx / spd else 0f
-            val normY = if (spd > 0.001f) vyVal / spd else 1f
-            val perpX = -normY * FALL_HALF_WIDTH
-            val perpY =  normX * FALL_HALF_WIDTH
-
-            // 头部（前端，满宽）
-            val hx = px; val hy = py
-            // 尾部（后端，收窄）
-            val tx = px - normX * trail
-            val ty = py - normY * trail
-            val tailPerpX = perpX * TAIL_WIDTH_FRAC
-            val tailPerpY = perpY * TAIL_WIDTH_FRAC
-
-            val headA = FALL_ALPHA
-            val tailA = 0f
-
-            // 三角形 1：头左 → 头右 → 尾右
-            buf.put(hx - perpX);     buf.put(hy - perpY);     buf.put(headA)
-            buf.put(hx + perpX);     buf.put(hy + perpY);     buf.put(headA)
-            buf.put(tx + tailPerpX); buf.put(ty + tailPerpY); buf.put(tailA)
-
-            // 三角形 2：头左 → 尾右 → 尾左
-            buf.put(hx - perpX);     buf.put(hy - perpY);     buf.put(headA)
-            buf.put(tx + tailPerpX); buf.put(ty + tailPerpY); buf.put(tailA)
-            buf.put(tx - tailPerpX); buf.put(ty - tailPerpY); buf.put(tailA)
-        }
-
-        // ── 填充水花顶点（GL_POINTS） ──
-        for (i in 0 until count) {
-            if (!isSplashCache[i]) continue
-
-            val px     = positions[i].x * prop
-            val py     = positions[i].y * prop
-            val energy = (speedCache[i] * prop * 0.00022f).coerceIn(0.25f, 1.0f)
-
-            buf.put(px); buf.put(py); buf.put(energy)
+                buf.put(px); buf.put(py); buf.put(energy)
+            }
         }
 
         buf.flip()
@@ -229,7 +184,7 @@ class RainGLRenderer {
 
         val stride = FLOATS_PER_VERT * 4
 
-        // ── Pass 1：下落雨滴（普通混合，GL_TRIANGLES）──
+        // ── Pass 1：背景雨线（普通混合，GL_TRIANGLES） ──
         GLES30.glUseProgram(dropProgram)
         GLES30.glEnable(GLES30.GL_BLEND)
         GLES30.glBlendFunc(GLES30.GL_SRC_ALPHA, GLES30.GL_ONE_MINUS_SRC_ALPHA)
@@ -240,11 +195,10 @@ class RainGLRenderer {
         GLES30.glVertexAttribPointer(1, 1, GLES30.GL_FLOAT, false, stride, 8)
 
         setResolution(dropProgram, screenWidth.toFloat(), screenHeight.toFloat())
-        // u_color.a 设为 1.0，让顶点 alpha (FALL_ALPHA) 成为唯一不透明度控制
-        setColor(dropProgram, 0.78f, 0.88f, 1.0f, 1.0f)
 
-        if (fallingCount > 0) {
-            GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, fallingCount * VERTS_PER_DROP)
+        if (bgVertCount > 0) {
+            setColor(dropProgram, 0.75f, 0.85f, 0.98f, 1.0f)
+            GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, bgVertCount)
         }
 
         // ── Pass 2：水花（加法混合，GL_POINTS）──
@@ -263,7 +217,7 @@ class RainGLRenderer {
         GLES30.glUniform1f(ptRangeLoc, SPLASH_PT_RANGE)
 
         if (splashCount > 0) {
-            val splashOffset = fallingCount * VERTS_PER_DROP
+            val splashOffset = bgVertCount
             GLES30.glDrawArrays(GLES30.GL_POINTS, splashOffset, splashCount)
         }
 
@@ -295,29 +249,6 @@ class RainGLRenderer {
                 .order(ByteOrder.nativeOrder())
                 .asFloatBuffer()
             bufferCapacity = capacity
-        }
-    }
-
-    private fun velocityLen(v: org.jbox2d.common.Vec2) =
-        sqrt(v.x * v.x + v.y * v.y)
-
-    /**
-     * 判断粒子是否为溅落水花：
-     * - 速度向上（反弹）→ 水花
-     * - 在碰撞矩形附近且速度较慢 → 水花
-     */
-    private fun isSplashParticle(
-        vy: Float, xScreen: Float, yScreen: Float, speed: Float,
-        screenHeight: Int, collisionRect: FloatArray?
-    ): Boolean {
-        if (vy < SPLASH_VY) return true
-        return if (collisionRect != null) {
-            val margin = 30f
-            xScreen in (collisionRect[0] - margin)..(collisionRect[2] + margin) &&
-                yScreen in (collisionRect[1] - margin)..(collisionRect[3] + margin) &&
-                speed in 0.5f..12f
-        } else {
-            yScreen > screenHeight * SPLASH_NEAR_GROUND_RATIO && speed in 0.5f..12f
         }
     }
 

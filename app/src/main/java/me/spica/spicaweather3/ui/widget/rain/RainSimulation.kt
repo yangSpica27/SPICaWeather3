@@ -13,7 +13,21 @@ import org.jbox2d.particle.ParticleGroupDef
 import org.jbox2d.particle.ParticleType
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.math.sqrt
 import kotlin.random.Random
+
+/**
+ * 粒子组渲染信息：供渲染器判断该组应整体渲染还是逐粒子渲染
+ */
+data class GroupRenderInfo(
+    val centerX: Float,      // 质心 X（世界坐标）
+    val centerY: Float,      // 质心 Y（世界坐标）
+    val avgVx: Float,        // 平均速度 X（世界单位/秒）
+    val avgVy: Float,        // 平均速度 Y（世界单位/秒）
+    val cohesive: Boolean,   // 粒子是否仍聚合为整体
+    val bufferStart: Int,    // 粒子在全局缓冲中的起始索引
+    val particleCount: Int   // 该组的粒子数量
+)
 
 /**
  * JBox2D 物理雨滴模拟
@@ -48,6 +62,12 @@ class RainSimulation(
 
         /** 每个圆角的弧线细分段数，4 个角共 SEGMENTS_PER_CORNER*4 个顶点 */
         private const val SEGMENTS_PER_CORNER = 4
+
+        /** 聚合判定：粒子离质心最大距离（世界坐标），超出则视为散开 */
+        private const val COHESIVE_SPREAD_SQ = 0.35f * 0.35f
+
+        /** 聚合判定：平均竖直速度下限，低于此值说明已减速/碰撞 */
+        private const val COHESIVE_MIN_VY = 5f
 
         init {
             // 提高 JBox2D 多边形顶点上限以支持更平滑的圆角碰撞体
@@ -95,6 +115,13 @@ class RainSimulation(
      * 速度方向决定雨滴拖尾朝向，速度大小决定拖尾长度
      */
     val velocityBuffer: Array<Vec2> get() = world.particleVelocityBuffer
+
+    // ────────── 粒子组渲染信息 ──────────
+
+    private val _groupInfos = ArrayList<GroupRenderInfo>(MAX_GROUPS)
+
+    /** 每帧更新后的粒子组渲染信息，供渲染器区分整体渲染和逐粒子渲染 */
+    val groupInfos: List<GroupRenderInfo> get() = _groupInfos
 
     // ────────── 初始化 ──────────
 
@@ -144,8 +171,12 @@ class RainSimulation(
             }
 
             // 每帧步进两次（1/120s × 2 = 1/60s）= 与真实时间同步，消除 0.5× 速度偏差
-            world.step(1f / 120f, 10, 3)
-            world.step(1f / 120f, 10, 3)
+            world.step(1f / 100f, 10, 3)
+            world.step(1f / 100f, 10, 3)
+            world.step(1f / 100f, 10, 3)
+
+            // 更新粒子组渲染信息，供渲染器判断整体/逐粒子渲染
+            computeGroupInfos()
         }
     }
 
@@ -216,6 +247,58 @@ class RainSimulation(
         })
 
         appliedCollisionRect = rect.clone()
+    }
+
+    // ────────── 私有：粒子组渲染信息计算 ──────────
+
+    /**
+     * 遍历所有活跃粒子组，计算质心、平均速度和聚合状态。
+     * 聚合判定：所有粒子与质心的距离平方 < [COHESIVE_SPREAD_SQ] 且平均下落速度 > [COHESIVE_MIN_VY]
+     */
+    private fun computeGroupInfos() {
+        _groupInfos.clear()
+        val positions = world.particlePositionBuffer
+        val velocities = world.particleVelocityBuffer
+
+        for (g in groups) {
+            val start = g.bufferIndex
+            val cnt = g.particleCount
+            if (cnt == 0) continue
+
+            var sumX = 0f; var sumY = 0f
+            var sumVx = 0f; var sumVy = 0f
+            for (i in start until start + cnt) {
+                sumX += positions[i].x
+                sumY += positions[i].y
+                sumVx += velocities[i].x
+                sumVy += velocities[i].y
+            }
+            val cx = sumX / cnt
+            val cy = sumY / cnt
+            val avx = sumVx / cnt
+            val avy = sumVy / cnt
+
+            // 计算粒子与质心的最大距离平方
+            var maxDistSq = 0f
+            for (i in start until start + cnt) {
+                val dx = positions[i].x - cx
+                val dy = positions[i].y - cy
+                val distSq = dx * dx + dy * dy
+                if (distSq > maxDistSq) maxDistSq = distSq
+            }
+
+            val cohesive = maxDistSq < COHESIVE_SPREAD_SQ && avy > COHESIVE_MIN_VY
+
+            _groupInfos.add(
+                GroupRenderInfo(
+                    centerX = cx, centerY = cy,
+                    avgVx = avx, avgVy = avy,
+                    cohesive = cohesive,
+                    bufferStart = start,
+                    particleCount = cnt
+                )
+            )
+        }
     }
 
     // ────────── 私有：创建粒子组 ──────────
