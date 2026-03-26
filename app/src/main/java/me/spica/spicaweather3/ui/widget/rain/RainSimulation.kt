@@ -159,8 +159,6 @@ class RainSimulation(
         val rect = pendingCollisionRect ?: return
         if (rect.contentEquals(appliedCollisionRect)) return
 
-        collisionBody?.let { world.destroyBody(it) }
-
         val left = rect[0] / proportion
         val top = rect[1] / proportion
         val right = rect[2] / proportion
@@ -169,6 +167,14 @@ class RainSimulation(
         val cy = (top + bottom) / 2f
         val hw = (right - left) / 2f
         val hh = (bottom - top) / 2f
+
+        // 跳过退化矩形，避免 JBox2D PolygonShape 断言失败
+        if (hw < Settings.linearSlop || hh < Settings.linearSlop) return
+
+        collisionBody?.let {
+            world.destroyBody(it)
+            collisionBody = null
+        }
 
         val bodyDef = BodyDef().apply {
             type = BodyType.STATIC
@@ -179,7 +185,8 @@ class RainSimulation(
             val cr = (if (rect.size > 4) rect[4] / proportion else 0f)
                 .coerceAtMost(minOf(hw, hh))
             shape = PolygonShape().also {
-                if (cr > 0.01f) {
+                // 圆角半径必须远小于半宽/半高，否则角心重叠导致顶点退化
+                if (cr > 0.01f && hw - cr > Settings.linearSlop && hh - cr > Settings.linearSlop) {
                     // 每个圆角用 SEGMENTS_PER_CORNER 段弧线近似，共 N*4 个顶点（CCW）
                     val n = SEGMENTS_PER_CORNER
                     val verts = ArrayList<Vec2>(n * 4)
