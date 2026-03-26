@@ -13,16 +13,20 @@ import androidx.compose.ui.graphics.Brush
 import kotlinx.coroutines.launch
 import androidx.compose.ui.geometry.Rect
 import me.spica.spicaweather3.common.type.WeatherAnimType
+import me.spica.spicaweather3.data.remote.api.model.weather.AggregatedWeatherData
 import me.spica.spicaweather3.ui.widget.cloud.CloudView
 import me.spica.spicaweather3.ui.widget.galaxy.GalaxyView
 import me.spica.spicaweather3.ui.widget.haze.HazeView
 import me.spica.spicaweather3.ui.widget.rain.RainView
 import me.spica.spicaweather3.ui.widget.snow.SnowView
 import me.spica.spicaweather3.ui.widget.sun.SunView
+import me.spica.spicaweather3.utils.navSharedBounds
+import me.spica.spicaweather3.utils.navSharedElement
 
 
 @Composable
 fun WeatherBackground(
+  weatherData: AggregatedWeatherData,
   collapsedFraction: Float,
   currentWeatherType: WeatherAnimType,
   collisionRect: Rect? = null,

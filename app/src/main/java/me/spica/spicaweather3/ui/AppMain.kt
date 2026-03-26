@@ -41,6 +41,8 @@ import me.spica.spicaweather3.ui.widget.BottomSheetMenu
 import me.spica.spicaweather3.ui.widget.DropdownMenuOverlay
 import me.spica.spicaweather3.ui.widget.LocalDropdownMenuController
 import me.spica.spicaweather3.ui.widget.LocalMenuState
+import me.spica.spicaweather3.ui.widget.materialSharedAxisZIn
+import me.spica.spicaweather3.ui.widget.materialSharedAxisZOut
 import me.spica.spicaweather3.utils.DataStoreUtil
 import me.spica.spicaweather3.utils.LocationHelper
 import me.spica.spicaweather3.utils.isLandscape
@@ -159,10 +161,13 @@ private fun PortraitMainScreen() {
                         .background(MiuixTheme.colorScheme.surface),
                     sharedTransitionScope = this@SharedTransitionLayout,
                     transitionSpec = {
-                        slideInHorizontally { i -> i } togetherWith slideOutHorizontally { i -> -i }
+                        materialSharedAxisZIn(true) togetherWith materialSharedAxisZOut(true)
                     },
                     popTransitionSpec = {
-                        slideInHorizontally { i -> -i } togetherWith slideOutHorizontally { i -> i }
+                        materialSharedAxisZIn(true) togetherWith materialSharedAxisZOut(true)
+                    },
+                    predictivePopTransitionSpec = {
+                        materialSharedAxisZIn(true) togetherWith materialSharedAxisZOut(true)
                     },
                     entryProvider = entryProvider {
                         entry<Routes.Main> {

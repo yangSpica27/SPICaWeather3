@@ -47,6 +47,8 @@ import me.spica.spicaweather3.common.type.WeatherAnimType
 import me.spica.spicaweather3.ui.LocalSharedTransitionScope
 import me.spica.spicaweather3.ui.main.weather.WeatherPageState
 import me.spica.spicaweather3.ui.widget.particle.ThanosDisintegrateContainer
+import me.spica.spicaweather3.utils.navSharedBounds
+import me.spica.spicaweather3.utils.navSharedElement
 import me.spica.spicaweather3.utils.noRippleClickable
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 import top.yukonga.miuix.kmp.basic.Icon

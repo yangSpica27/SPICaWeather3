@@ -110,6 +110,7 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: AggregatedWeatherData, s
             collapsedFraction = 0f, // 0=完全展开，1=完全折叠
             collisionRect = collisionRect,
             collisionCornerRadiusPx = cornerRadiusPx,
+            weatherData = weatherData
         )
 
         // 天气信息文字层
