@@ -109,7 +109,7 @@ class RainTextureView(context: Context) : TextureView(context), TextureView.Surf
                     val dt = ((frameStart - lastFrameNs).coerceIn(0L, 50_000_000L)) / 1_000_000_000f
                     lastFrameNs = frameStart
 
-                    // JBox2D 物理步进（固定 1/120s 步长，内部自行管理时间）
+                    // JBox2D 物理步进（固定 2×1/120s 步长，与渲染帧率同步）
                     simulation.update()
 
                     // 背景雨线推进
@@ -121,7 +121,7 @@ class RainTextureView(context: Context) : TextureView(context), TextureView.Surf
                     GLES30.glViewport(0, 0, w, h)
                     GLES30.glClearColor(0f, 0f, 0f, 0f)
                     GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT)
-                    r.draw(simulation, w, h, pendingRect, streaks)
+                    r.draw(simulation, w, h, streaks)
                     EGL14.eglSwapBuffers(eglDisplay, eglSurface)
 
                     // 控制帧率约 60 fps

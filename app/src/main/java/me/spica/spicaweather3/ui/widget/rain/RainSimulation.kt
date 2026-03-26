@@ -13,21 +13,17 @@ import org.jbox2d.particle.ParticleGroupDef
 import org.jbox2d.particle.ParticleType
 import kotlin.math.cos
 import kotlin.math.sin
-import kotlin.math.sqrt
 import kotlin.random.Random
 
 /**
- * 粒子组渲染信息：供渲染器判断该组应整体渲染还是逐粒子渲染
+ * 粒子组渲染信息：供渲染器判断该组应整体渲染还是逐粒子渲染。
+ * 使用可变字段 + 对象池，避免每帧分配新对象。
  */
-data class GroupRenderInfo(
-    val centerX: Float,      // 质心 X（世界坐标）
-    val centerY: Float,      // 质心 Y（世界坐标）
-    val avgVx: Float,        // 平均速度 X（世界单位/秒）
-    val avgVy: Float,        // 平均速度 Y（世界单位/秒）
-    val cohesive: Boolean,   // 粒子是否仍聚合为整体
-    val bufferStart: Int,    // 粒子在全局缓冲中的起始索引
-    val particleCount: Int   // 该组的粒子数量
-)
+class GroupRenderInfo {
+    var cohesive: Boolean = false   // 粒子是否仍聚合为整体
+    var bufferStart: Int = 0        // 粒子在全局缓冲中的起始索引
+    var particleCount: Int = 0      // 该组的粒子数量
+}
 
 /**
  * JBox2D 物理雨滴模拟
@@ -36,7 +32,7 @@ data class GroupRenderInfo(
  *  - 重力 Vec2(0, 15)，雨滴向下加速
  *  - 屏幕底部设置静态刚体（地板），粒子与之碰撞弹溅
  *  - 最多 MAX_GROUPS 个粒子组并发，超过生命周期后回收重生
- *  - 每帧固定步进 1/120s（原始行为）
+ *  - 每帧固定步进 2 × 1/120s = 1/60s（与渲染帧率同步）
  *
  * OpenGL 渲染器通过 [positionBuffer]、[velocityBuffer]、[particleCount]
  * 直接读取 JBox2D 内部缓冲，在同一渲染线程内无需额外同步。
@@ -116,12 +112,16 @@ class RainSimulation(
      */
     val velocityBuffer: Array<Vec2> get() = world.particleVelocityBuffer
 
-    // ────────── 粒子组渲染信息 ──────────
+    // ────────── 粒子组渲染信息（预分配对象池，避免每帧 GC） ──────────
 
-    private val _groupInfos = ArrayList<GroupRenderInfo>(MAX_GROUPS)
+    private val _groupInfoPool = Array(MAX_GROUPS) { GroupRenderInfo() }
+    private var _groupInfoCount = 0
 
-    /** 每帧更新后的粒子组渲染信息，供渲染器区分整体渲染和逐粒子渲染 */
-    val groupInfos: List<GroupRenderInfo> get() = _groupInfos
+    /** 每帧更新后的有效粒子组数量 */
+    val groupInfoCount: Int get() = _groupInfoCount
+
+    /** 预分配的粒子组渲染信息数组，有效范围 [0, groupInfoCount) */
+    val groupInfos: Array<GroupRenderInfo> get() = _groupInfoPool
 
     // ────────── 初始化 ──────────
 
@@ -150,7 +150,7 @@ class RainSimulation(
     /**
      * 推进一帧物理模拟，并回收生命周期到期的粒子组
      *
-     * 固定以 1/120s 步进，与原始行为保持一致。
+     * 每帧步进 2 次 × 1/120s = 1/60s，与渲染帧率同步。
      * 在渲染线程内调用，无需在外部加锁。
      */
     fun update() {
@@ -159,21 +159,19 @@ class RainSimulation(
             applyCollisionRect()
             val now = System.currentTimeMillis()
 
-            // 找出生命周期到期的粒子组
-            val expired = groups.filter { g ->
-                g.userData != null && now - (g.userData as Long) > TOTAL_LIFETIME_MS
+            // 索引遍历，避免 filter/indexOf 产生临时列表和 O(n) 查找
+            for (i in groups.indices) {
+                val g = groups[i]
+                val birth = g.userData as? Long ?: continue
+                if (now - birth > TOTAL_LIFETIME_MS) {
+                    world.destroyParticlesInGroup(g)
+                    groups[i] = createGroup()
+                }
             }
 
-            // 销毁旧粒子并在原位置替换为新组
-            for (old in expired) {
-                world.destroyParticlesInGroup(old)
-                groups[groups.indexOf(old)] = createGroup()
-            }
-
-            // 每帧步进两次（1/120s × 2 = 1/60s）= 与真实时间同步，消除 0.5× 速度偏差
-            world.step(1f / 100f, 10, 3)
-            world.step(1f / 100f, 10, 3)
-            world.step(1f / 100f, 10, 3)
+            // 每帧步进两次（1/120s × 2 = 1/60s），与真实时间同步
+            world.step(1f / 120f, 8, 3)
+            world.step(1f / 120f, 8, 3)
 
             // 更新粒子组渲染信息，供渲染器判断整体/逐粒子渲染
             computeGroupInfos()
@@ -252,30 +250,28 @@ class RainSimulation(
     // ────────── 私有：粒子组渲染信息计算 ──────────
 
     /**
-     * 遍历所有活跃粒子组，计算质心、平均速度和聚合状态。
+     * 遍历所有活跃粒子组，计算聚合状态并更新预分配的渲染信息池。
      * 聚合判定：所有粒子与质心的距离平方 < [COHESIVE_SPREAD_SQ] 且平均下落速度 > [COHESIVE_MIN_VY]
      */
     private fun computeGroupInfos() {
-        _groupInfos.clear()
         val positions = world.particlePositionBuffer
         val velocities = world.particleVelocityBuffer
+        var infoIdx = 0
 
         for (g in groups) {
             val start = g.bufferIndex
             val cnt = g.particleCount
             if (cnt == 0) continue
 
-            var sumX = 0f; var sumY = 0f
-            var sumVx = 0f; var sumVy = 0f
+            // 先计算质心和平均竖直速度（仅用于聚合判定）
+            var sumX = 0f; var sumY = 0f; var sumVy = 0f
             for (i in start until start + cnt) {
                 sumX += positions[i].x
                 sumY += positions[i].y
-                sumVx += velocities[i].x
                 sumVy += velocities[i].y
             }
             val cx = sumX / cnt
             val cy = sumY / cnt
-            val avx = sumVx / cnt
             val avy = sumVy / cnt
 
             // 计算粒子与质心的最大距离平方
@@ -287,18 +283,12 @@ class RainSimulation(
                 if (distSq > maxDistSq) maxDistSq = distSq
             }
 
-            val cohesive = maxDistSq < COHESIVE_SPREAD_SQ && avy > COHESIVE_MIN_VY
-
-            _groupInfos.add(
-                GroupRenderInfo(
-                    centerX = cx, centerY = cy,
-                    avgVx = avx, avgVy = avy,
-                    cohesive = cohesive,
-                    bufferStart = start,
-                    particleCount = cnt
-                )
-            )
+            val info = _groupInfoPool[infoIdx++]
+            info.cohesive = maxDistSq < COHESIVE_SPREAD_SQ && avy > COHESIVE_MIN_VY
+            info.bufferStart = start
+            info.particleCount = cnt
         }
+        _groupInfoCount = infoIdx
     }
 
     // ────────── 私有：创建粒子组 ──────────

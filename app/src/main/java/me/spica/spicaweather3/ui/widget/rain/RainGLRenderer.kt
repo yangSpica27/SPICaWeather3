@@ -101,6 +101,14 @@ class RainGLRenderer {
 
     private var initialized = false
 
+    // 缓存 uniform 位置，避免每帧 glGetUniformLocation 查询
+    private var dropResolutionLoc = -1
+    private var dropColorLoc      = -1
+    private var splashResolutionLoc = -1
+    private var splashColorLoc      = -1
+    private var splashPtBaseLoc     = -1
+    private var splashPtRangeLoc    = -1
+
     // VBO 数据缓冲（复用，避免每帧 GC）
     private var floatBuffer: FloatBuffer? = null
     private var bufferCapacity = 0   // 当前已分配的 float 数量
@@ -110,6 +118,14 @@ class RainGLRenderer {
     fun init() {
         dropProgram   = buildProgram(DROP_VERT,   DROP_FRAG)
         splashProgram = buildProgram(SPLASH_VERT, SPLASH_FRAG)
+
+        // 缓存所有 uniform 位置
+        dropResolutionLoc   = GLES30.glGetUniformLocation(dropProgram,   "u_resolution")
+        dropColorLoc        = GLES30.glGetUniformLocation(dropProgram,   "u_color")
+        splashResolutionLoc = GLES30.glGetUniformLocation(splashProgram, "u_resolution")
+        splashColorLoc      = GLES30.glGetUniformLocation(splashProgram, "u_color")
+        splashPtBaseLoc     = GLES30.glGetUniformLocation(splashProgram, "u_pt_base")
+        splashPtRangeLoc    = GLES30.glGetUniformLocation(splashProgram, "u_pt_range")
 
         val ids = IntArray(1)
         GLES30.glGenBuffers(1, ids, 0)
@@ -121,7 +137,7 @@ class RainGLRenderer {
     // ───────── 每帧绘制 ─────────
 
     fun draw(simulation: RainSimulation, screenWidth: Int, screenHeight: Int,
-             collisionRect: FloatArray? = null, bgStreaks: BackgroundRainStreaks? = null) {
+             bgStreaks: BackgroundRainStreaks? = null) {
         if (!initialized || !simulation.initOK) return
 
         val count    = simulation.particleCount
@@ -129,11 +145,13 @@ class RainGLRenderer {
         val positions  = simulation.positionBuffer
         val velocities = simulation.velocityBuffer
         val prop       = simulation.proportion
-        val groupInfos = simulation.groupInfos
+        val infos      = simulation.groupInfos
+        val infoCount  = simulation.groupInfoCount
 
         // ── 仅统计散开水花（聚合组不再渲染，由背景雨线替代） ──
         var splashCount = 0
-        for (info in groupInfos) {
+        for (idx in 0 until infoCount) {
+            val info = infos[idx]
             if (!info.cohesive) {
                 splashCount += info.particleCount
             }
@@ -155,7 +173,8 @@ class RainGLRenderer {
         } else 0
 
         // ── 填充散开组：每个粒子渲染为水花 GL_POINT ──
-        for (info in groupInfos) {
+        for (idx in 0 until infoCount) {
+            val info = infos[idx]
             if (info.cohesive) continue
             val start = info.bufferStart
             val end   = start + info.particleCount
@@ -194,10 +213,10 @@ class RainGLRenderer {
         GLES30.glVertexAttribPointer(0, 2, GLES30.GL_FLOAT, false, stride, 0)
         GLES30.glVertexAttribPointer(1, 1, GLES30.GL_FLOAT, false, stride, 8)
 
-        setResolution(dropProgram, screenWidth.toFloat(), screenHeight.toFloat())
+        setResolution(dropResolutionLoc, screenWidth.toFloat(), screenHeight.toFloat())
 
         if (bgVertCount > 0) {
-            setColor(dropProgram, 0.75f, 0.85f, 0.98f, 1.0f)
+            setColor(dropColorLoc, 0.75f, 0.85f, 0.98f, 1.0f)
             GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, bgVertCount)
         }
 
@@ -208,13 +227,11 @@ class RainGLRenderer {
         GLES30.glVertexAttribPointer(0, 2, GLES30.GL_FLOAT, false, stride, 0)
         GLES30.glVertexAttribPointer(1, 1, GLES30.GL_FLOAT, false, stride, 8)
 
-        setResolution(splashProgram, screenWidth.toFloat(), screenHeight.toFloat())
-        setColor(splashProgram, 0.82f, 0.93f, 1.0f, 0.90f)
+        setResolution(splashResolutionLoc, screenWidth.toFloat(), screenHeight.toFloat())
+        setColor(splashColorLoc, 0.82f, 0.93f, 1.0f, 0.90f)
 
-        val ptBaseLoc  = GLES30.glGetUniformLocation(splashProgram, "u_pt_base")
-        val ptRangeLoc = GLES30.glGetUniformLocation(splashProgram, "u_pt_range")
-        GLES30.glUniform1f(ptBaseLoc,  SPLASH_PT_BASE)
-        GLES30.glUniform1f(ptRangeLoc, SPLASH_PT_RANGE)
+        GLES30.glUniform1f(splashPtBaseLoc,  SPLASH_PT_BASE)
+        GLES30.glUniform1f(splashPtRangeLoc, SPLASH_PT_RANGE)
 
         if (splashCount > 0) {
             val splashOffset = bgVertCount
@@ -252,13 +269,11 @@ class RainGLRenderer {
         }
     }
 
-    private fun setResolution(program: Int, w: Float, h: Float) {
-        val loc = GLES30.glGetUniformLocation(program, "u_resolution")
+    private fun setResolution(loc: Int, w: Float, h: Float) {
         GLES30.glUniform2f(loc, w, h)
     }
 
-    private fun setColor(program: Int, r: Float, g: Float, b: Float, a: Float) {
-        val loc = GLES30.glGetUniformLocation(program, "u_color")
+    private fun setColor(loc: Int, r: Float, g: Float, b: Float, a: Float) {
         GLES30.glUniform4f(loc, r, g, b, a)
     }
 
