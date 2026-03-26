@@ -48,7 +48,8 @@ fun WeatherCardsGrid(
   weatherData: AggregatedWeatherData,
   onReorder: (List<WeatherCardConfig>) -> Unit,
   scrollBehavior: ScrollBehavior,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
+  paddingValues: PaddingValues
 ) {
   // 拖拽状态标记
   var isDragging by remember { mutableStateOf(false) }
@@ -94,7 +95,7 @@ fun WeatherCardsGrid(
     horizontalArrangement = Arrangement.spacedBy(12.dp),
     verticalArrangement = Arrangement.spacedBy(12.dp),
     state = listState,
-    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
+    contentPadding = paddingValues
   ) {
     displayCards.forEach { cardConfig ->
       item(

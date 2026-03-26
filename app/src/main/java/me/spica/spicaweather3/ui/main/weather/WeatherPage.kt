@@ -7,6 +7,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -47,7 +48,8 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 fun WeatherPage(
   weatherState: WeatherPageState,
   modifier: Modifier = Modifier,
-  scrollBehavior: ScrollBehavior
+  scrollBehavior: ScrollBehavior,
+  paddingValues: PaddingValues
 ) {
   AnimatedContent(
     weatherState,
@@ -59,7 +61,8 @@ fun WeatherPage(
       is WeatherPageState.Data -> {
         DataPage(
           cityEntity = state.cityEntity,
-          scrollBehavior = scrollBehavior
+          scrollBehavior = scrollBehavior,
+          paddingValues = paddingValues
         )
       }
 
@@ -81,7 +84,8 @@ fun WeatherPage(
 @Composable
 private fun DataPage(
   cityEntity: me.spica.spicaweather3.data.local.db.entity.CityEntity,
-  scrollBehavior: ScrollBehavior
+  scrollBehavior: ScrollBehavior,
+  paddingValues: PaddingValues
 ) {
   val viewModel = koinInject<WeatherViewModel>()
   
@@ -112,7 +116,8 @@ private fun DataPage(
       // 避免不可见卡片（如晴天时的 MINUTELY）被挤到末尾
       viewModel.reorderCards(reorderedCards)
     },
-    scrollBehavior = scrollBehavior
+    scrollBehavior = scrollBehavior,
+    paddingValues = paddingValues
   )
 }
 

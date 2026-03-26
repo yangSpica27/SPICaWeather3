@@ -30,6 +30,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -43,6 +44,7 @@ import com.kyant.backdrop.drawPlainBackdrop
 import com.kyant.backdrop.effects.blur
 import com.kyant.backdrop.effects.colorControls
 import com.kyant.backdrop.effects.lens
+import com.kyant.backdrop.effects.opacity
 import com.kyant.backdrop.effects.vibrancy
 import com.kyant.backdrop.highlight.Highlight
 import me.spica.spicaweather3.R
@@ -78,144 +80,153 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun MainScreen() {
-  // ==================== 状态管理 ====================
-  // 底部弹窗显示状态
-  val showBottomSheet = rememberSaveable { mutableStateOf(false) }
+    // ==================== 状态管理 ====================
+    // 底部弹窗显示状态
+    val showBottomSheet = rememberSaveable { mutableStateOf(false) }
 
-  // ViewModel 实例
-  val viewModel = koinActivityViewModel<WeatherViewModel>()
+    // ViewModel 实例
+    val viewModel = koinActivityViewModel<WeatherViewModel>()
 
-  // 收集 ViewModel 状态
-  val isRefreshing = viewModel.isRefreshing.collectAsStateWithLifecycle()
-  val weatherPageStates = viewModel.weatherPageStates.collectAsStateWithLifecycle()
+    // 收集 ViewModel 状态
+    val isRefreshing = viewModel.isRefreshing.collectAsStateWithLifecycle()
+    val weatherPageStates = viewModel.weatherPageStates.collectAsStateWithLifecycle()
 
-  // ==================== Pager 状态管理 ====================
-  // 横向分页器状态，页数等于城市数量
-  val pagerState = rememberPagerState {
-    weatherPageStates.value.size
-  }
-
-  // 监听初始索引变化，用于从其他页面返回时定位
-  val initIndex = viewModel.initIndex.collectAsStateWithLifecycle()
-  LaunchedEffect(initIndex.value) {
-    pagerState.requestScrollToPage(initIndex.value)
-  }
-
-  // ==================== 派生状态 ====================
-  // 当前页面的天气数据
-  val currentPageData = remember(pagerState.currentPage, weatherPageStates.value) {
-    derivedStateOf {
-      weatherPageStates.value.getOrNull(pagerState.currentPage)
+    // ==================== Pager 状态管理 ====================
+    // 横向分页器状态，页数等于城市数量
+    val pagerState = rememberPagerState {
+        weatherPageStates.value.size
     }
-  }
 
-  // 当前城市信息
-  val currentCity = remember(currentPageData.value) {
-    derivedStateOf {
-      currentPageData.value?.cityEntity
+    // 监听初始索引变化，用于从其他页面返回时定位
+    val initIndex = viewModel.initIndex.collectAsStateWithLifecycle()
+    LaunchedEffect(initIndex.value) {
+        pagerState.requestScrollToPage(initIndex.value)
     }
-  }.value
 
-  // ==================== 副作用 ====================
-  // 根据当前天气更新背景动画类型
-  LaunchedEffect(currentPageData.value) {
-    val pageData = currentPageData.value
-    if (pageData is WeatherPageState.Data) {
-      val iconId = pageData.cityEntity.weather?.current?.icon?:"100"
-      viewModel.weatherAnimType.value = WeatherAnimType.getAnimType(iconId)
-    }
-  }
-
-  // ==================== UI 相关状态 ====================
-  // 滚动行为控制器
-  val scrollBehavior = MiuixScrollBehavior()
-
-  // 导航控制器
-  val navigator = LocalNavController.current
-
-  // 毛玻璃效果状态
-  val backdrop = rememberLayerBackdrop()
-
-  val refreshTexts = listOf(
-    stringResource(R.string.refresh_pull_down),
-    stringResource(R.string.refresh_release),
-    stringResource(R.string.refresh_refreshing),
-    stringResource(R.string.refresh_complete)
-  )
-
-  // ==================== UI 布局 ====================
-  with(LocalSharedTransitionScope.current) {
-    Scaffold(
-      modifier = Modifier
-        .fillMaxSize(),
-      // 浮动添加按钮 - 跳转到城市列表
-      floatingActionButton = {
-        AddCityButton(
-          backdrop = backdrop,
-          onClick = { navigator.add(Routes.WeatherList) }
-        )
-      },
-      // 顶部标题栏
-      topBar = {
-        MainTopBar(
-          modifier = Modifier
-            .drawPlainBackdrop(
-              backdrop = backdrop,
-              shape = { RoundedCornerShape(0.dp) },
-              effects = { standardGlassEffect() }
-            )
-            .fillMaxWidth(),
-          scrollBehavior = scrollBehavior,
-          // 大标题（展开状态）
-          largeTitle = {
-            AnimatedCityTitle(
-              cityName = currentCity?.name,
-              transitionSpec = {
-                materialSharedAxisXIn(true) togetherWith materialSharedAxisXOut(true)
-              },
-              onClick = { showBottomSheet.value = true }
-            )
-          },
-          // 小标题（折叠状态）
-          title = {
-            AnimatedCityTitle(
-              cityName = currentCity?.name,
-              transitionSpec = {
-                materialSharedAxisZIn(true) togetherWith materialSharedAxisZOut(true)
-              },
-              onClick = { showBottomSheet.value = true }
-            )
-          }
-        )
-      }
-    ) { paddingValues ->
-
-      // 主内容区域
-      Box(
-        modifier = Modifier
-          .layerBackdrop(backdrop) // 毛玻璃效果源
-          .fillMaxSize()
-      ) {
-        // 下拉刷新容器
-        PullToRefresh(
-          isRefreshing = isRefreshing.value,
-          onRefresh = { viewModel.refresh() },
-          contentPadding = PaddingValues(top = MainScreenConstants.PULL_REFRESH_TOP_PADDING),
-          color = MiuixTheme.colorScheme.onSurface,
-          topAppBarScrollBehavior = scrollBehavior,
-          refreshTexts = refreshTexts
-        ) {
-          // 横向分页器 - 多城市滑动浏览
-          WeatherPager(
-            pagerState = pagerState,
-            weatherPageStates = weatherPageStates.value,
-            scrollBehavior = scrollBehavior,
-            paddingValues = paddingValues
-          )
+    // ==================== 派生状态 ====================
+    // 当前页面的天气数据
+    val currentPageData = remember(pagerState.currentPage, weatherPageStates.value) {
+        derivedStateOf {
+            weatherPageStates.value.getOrNull(pagerState.currentPage)
         }
-      }
     }
-  }
+
+    // 当前城市信息
+    val currentCity = remember(currentPageData.value) {
+        derivedStateOf {
+            currentPageData.value?.cityEntity
+        }
+    }.value
+
+    // ==================== 副作用 ====================
+    // 根据当前天气更新背景动画类型
+    LaunchedEffect(currentPageData.value) {
+        val pageData = currentPageData.value
+        if (pageData is WeatherPageState.Data) {
+            val iconId = pageData.cityEntity.weather?.current?.icon ?: "100"
+            viewModel.weatherAnimType.value = WeatherAnimType.getAnimType(iconId)
+        }
+    }
+
+    // ==================== UI 相关状态 ====================
+    // 滚动行为控制器
+    val scrollBehavior = MiuixScrollBehavior()
+
+    // 导航控制器
+    val navigator = LocalNavController.current
+
+    // 毛玻璃效果状态
+    val backdrop = rememberLayerBackdrop()
+
+    val refreshTexts = listOf(
+        stringResource(R.string.refresh_pull_down),
+        stringResource(R.string.refresh_release),
+        stringResource(R.string.refresh_refreshing),
+        stringResource(R.string.refresh_complete)
+    )
+
+    // ==================== UI 布局 ====================
+    with(LocalSharedTransitionScope.current) {
+        Scaffold(
+            modifier = Modifier
+                .fillMaxSize(),
+            // 浮动添加按钮 - 跳转到城市列表
+            floatingActionButton = {
+                AddCityButton(
+                    backdrop = backdrop,
+                    onClick = { navigator.add(Routes.WeatherList) }
+                )
+            },
+            // 顶部标题栏
+            topBar = {
+                MainTopBar(
+                    modifier = Modifier
+                        .drawPlainBackdrop(
+                            backdrop = backdrop,
+                            shape = {
+                                RoundedCornerShape(0.dp)
+                                    },
+                            effects = {
+                                standardGlassEffect()
+                                lens(
+                                    5f.dp.toPx(),
+                                    10f.dp.toPx(),
+                                    chromaticAberration = true
+                                )
+                            },
+                        )
+                        .fillMaxWidth(),
+                    scrollBehavior = scrollBehavior,
+                    // 大标题（展开状态）
+                    largeTitle = {
+                        AnimatedCityTitle(
+                            cityName = currentCity?.name,
+                            transitionSpec = {
+                                materialSharedAxisXIn(true) togetherWith materialSharedAxisXOut(true)
+                            },
+                            onClick = { showBottomSheet.value = true }
+                        )
+                    },
+                    // 小标题（折叠状态）
+                    title = {
+                        AnimatedCityTitle(
+                            cityName = currentCity?.name,
+                            transitionSpec = {
+                                materialSharedAxisZIn(true) togetherWith materialSharedAxisZOut(true)
+                            },
+                            onClick = { showBottomSheet.value = true }
+                        )
+                    }
+                )
+            }
+        ) { paddingValues ->
+
+            // 主内容区域
+            Box(
+                modifier = Modifier
+                    .layerBackdrop(backdrop) // 毛玻璃效果源
+                    .fillMaxSize()
+            ) {
+                // 下拉刷新容器
+                PullToRefresh(
+                    isRefreshing = isRefreshing.value,
+                    onRefresh = { viewModel.refresh() },
+                    contentPadding = PaddingValues(top = MainScreenConstants.PULL_REFRESH_TOP_PADDING),
+                    color = MiuixTheme.colorScheme.onSurface,
+                    topAppBarScrollBehavior = scrollBehavior,
+                    refreshTexts = refreshTexts
+                ) {
+                    // 横向分页器 - 多城市滑动浏览
+                    WeatherPager(
+                        pagerState = pagerState,
+                        weatherPageStates = weatherPageStates.value,
+                        scrollBehavior = scrollBehavior,
+                        paddingValues = paddingValues
+                    )
+                }
+            }
+        }
+    }
 }
 
 /**
@@ -223,45 +234,45 @@ fun MainScreen() {
  */
 @Composable
 private fun AddCityButton(
-  backdrop: LayerBackdrop,
-  onClick: () -> Unit
+    backdrop: LayerBackdrop,
+    onClick: () -> Unit
 ) {
- with(LocalSharedTransitionScope.current){
-   val glassColor = MiuixTheme.colorScheme.onSurface.copy(alpha = .1f)
-   Box(
-     modifier = Modifier
-       .size(MAIN_PLUS_BUTTON_SIZE)
-       .noRippleClickable(onClick = onClick)
-       .clip(CircleShape)
-       .drawBackdrop(
-         highlight = { Highlight.Plain },
-         backdrop = backdrop,
-         shape = { CircleShape },
-         onDrawSurface = {
-           drawCircle(
-             color = glassColor,
-             radius = size.minDimension / 2f
-           )
-         },
-         effects = {
-           standardGlassEffect()
-           lens(
-             12f.dp.toPx(),
-             22f.dp.toPx(),
-             chromaticAberration = true
-           )
-         }
-       ),
-     contentAlignment = Alignment.Center
-   ) {
-     Icon(
-       imageVector = Icons.Filled.Add,
-      contentDescription = stringResource(R.string.cd_add_city),
-       tint = MiuixTheme.colorScheme.onSurface,
-       modifier = Modifier.size(32.dp)
-     )
-   }
- }
+    with(LocalSharedTransitionScope.current) {
+        val glassColor = MiuixTheme.colorScheme.onSurface.copy(alpha = .1f)
+        Box(
+            modifier = Modifier
+                .size(MAIN_PLUS_BUTTON_SIZE)
+                .noRippleClickable(onClick = onClick)
+                .clip(CircleShape)
+                .drawBackdrop(
+                    highlight = { Highlight.Plain },
+                    backdrop = backdrop,
+                    shape = { CircleShape },
+                    onDrawSurface = {
+                        drawCircle(
+                            color = glassColor,
+                            radius = size.minDimension / 2f
+                        )
+                    },
+                    effects = {
+                        standardGlassEffect()
+                        lens(
+                            12f.dp.toPx(),
+                            22f.dp.toPx(),
+                            chromaticAberration = true
+                        )
+                    }
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Add,
+                contentDescription = stringResource(R.string.cd_add_city),
+                tint = MiuixTheme.colorScheme.onSurface,
+                modifier = Modifier.size(32.dp)
+            )
+        }
+    }
 }
 
 /**
@@ -269,29 +280,29 @@ private fun AddCityButton(
  */
 @Composable
 private fun AnimatedCityTitle(
-  cityName: String?,
-  transitionSpec: () -> ContentTransform = {
-    (fadeIn(animationSpec = tween(220, delayMillis = 90)) +
-        scaleIn(initialScale = 0.92f, animationSpec = tween(220, delayMillis = 90)))
-      .togetherWith(fadeOut(animationSpec = tween(90)))
-  },
-  onClick: () -> Unit
+    cityName: String?,
+    transitionSpec: () -> ContentTransform = {
+        (fadeIn(animationSpec = tween(220, delayMillis = 90)) +
+                scaleIn(initialScale = 0.92f, animationSpec = tween(220, delayMillis = 90)))
+            .togetherWith(fadeOut(animationSpec = tween(90)))
+    },
+    onClick: () -> Unit
 ) {
-  AnimatedContent(
-    targetState = cityName,
-    contentKey = { it.toString() },
-    transitionSpec = { transitionSpec() }
-  ) { name ->
-    val fallbackName = stringResource(R.string.main_city_unknown)
-    Text(
-      text = name ?: fallbackName,
-      color = MiuixTheme.colorScheme.onSurface,
-      fontSize = 22.sp,
-      modifier = Modifier
-        .noRippleClickable(onClick = onClick)
-        .padding(vertical = 22.dp)
-    )
-  }
+    AnimatedContent(
+        targetState = cityName,
+        contentKey = { it.toString() },
+        transitionSpec = { transitionSpec() }
+    ) { name ->
+        val fallbackName = stringResource(R.string.main_city_unknown)
+        Text(
+            text = name ?: fallbackName,
+            color = MiuixTheme.colorScheme.onSurface,
+            fontSize = 22.sp,
+            modifier = Modifier
+                .noRippleClickable(onClick = onClick)
+                .padding(vertical = 22.dp)
+        )
+    }
 }
 
 /**
@@ -299,31 +310,36 @@ private fun AnimatedCityTitle(
  */
 @Composable
 private fun WeatherPager(
-  pagerState: PagerState,
-  weatherPageStates: List<WeatherPageState>,
-  scrollBehavior: ScrollBehavior,
-  paddingValues: PaddingValues
+    pagerState: PagerState,
+    weatherPageStates: List<WeatherPageState>,
+    scrollBehavior: ScrollBehavior,
+    paddingValues: PaddingValues
 ) {
-  HorizontalPager(
-    state = pagerState,
-    modifier = Modifier.fillMaxSize(),
-    beyondViewportPageCount = MainScreenConstants.PAGER_BEYOND_VIEWPORT_PAGE_COUNT,
-    pageContent = { currentIndex ->
-      // 仅在目标页面时显示内容，优化性能
-      if (weatherPageStates.isNotEmpty()) {
-        ShowOnIdleContent(visible = currentIndex == pagerState.targetPage) {
-          WeatherPage(
-            weatherPageStates[currentIndex],
-            scrollBehavior = scrollBehavior,
-            modifier = Modifier
-              .fillMaxSize()
-              .padding(paddingValues = paddingValues)
-          )
-        }
-      }
+    HorizontalPager(
+        state = pagerState,
+        modifier = Modifier.fillMaxSize(),
+        beyondViewportPageCount = MainScreenConstants.PAGER_BEYOND_VIEWPORT_PAGE_COUNT,
+        pageContent = { currentIndex ->
+            // 仅在目标页面时显示内容，优化性能
+            if (weatherPageStates.isNotEmpty()) {
+                ShowOnIdleContent(visible = currentIndex == pagerState.targetPage) {
+                    WeatherPage(
+                        weatherPageStates[currentIndex],
+                        scrollBehavior = scrollBehavior,
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        paddingValues = PaddingValues(
+                            top = paddingValues.calculateTopPadding(),
+                            start = 15.dp,
+                            end = 15.dp,
+                            bottom = paddingValues.calculateBottomPadding()
+                        )
+                    )
+                }
+            }
 
-    }
-  )
+        }
+    )
 }
 
 
