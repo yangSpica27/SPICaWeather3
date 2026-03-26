@@ -190,8 +190,8 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: AggregatedWeatherData, s
                         val location = it.boundsInRoot()
                        with(density){
                            humidityRectInRoot = location.copy(
-                               left = location.left + 12.dp.toPx(), // 左侧内边距
-                               right = location.right - 12.dp.toPx() // 右侧内边距
+                               left = location.left + 8.dp.toPx(), // 左侧内边距
+                               right = location.right - 8.dp.toPx() // 右侧内边距
                            )
                        }
                     }
