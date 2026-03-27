@@ -76,15 +76,17 @@ fun ThanosDisintegrateContainer(
             // 将硬件位图转换为软件位图（ARGB_8888），以便访问像素
             val softwareBitmap = hardwareBitmap.copy(Bitmap.Config.ARGB_8888, false)
             
-            // 初始化粒子系统
-            particleManager.initFromBitmap(
-                softwareBitmap,
-                componentSize.width,
-                componentSize.height
-            )
-            
-            // 释放复制的位图（粒子已初始化，不再需要）
-            softwareBitmap.recycle()
+            try {
+                // 初始化粒子系统
+                particleManager.initFromBitmap(
+                    softwareBitmap,
+                    componentSize.width,
+                    componentSize.height
+                )
+            } finally {
+                // 释放位图资源
+                softwareBitmap.recycle()
+            }
             
             isParticleInitialized = true
             
@@ -151,8 +153,7 @@ fun ThanosDisintegrateContainer(
                         val nativeCanvas = canvas.nativeCanvas
                         
                         // 1. 先绘制未消散的部分（仍在原位的粒子）
-                        val inactiveParticles = particleManager.getInactiveParticles()
-                        for (particle in inactiveParticles) {
+                        particleManager.forEachInactiveParticle { particle ->
                             particlePaint.color = particle.color
                             particlePaint.alpha = 255
                             nativeCanvas.drawRect(
@@ -165,20 +166,17 @@ fun ThanosDisintegrateContainer(
                         }
                         
                         // 2. 绘制正在飘散的粒子
-                        val activeParticles = particleManager.getActiveParticles()
-                        for (particle in activeParticles) {
-                            if (particle.alpha > 0) {
-                                particlePaint.color = particle.color
-                                particlePaint.alpha = particle.alpha
-                                
-                                // 绘制圆形粒子，看起来更像灰尘
-                                nativeCanvas.drawCircle(
-                                    particle.x + particle.size / 2,
-                                    particle.y + particle.size / 2,
-                                    particle.size / 2,
-                                    particlePaint
-                                )
-                            }
+                        particleManager.forEachActiveParticle { particle ->
+                            particlePaint.color = particle.color
+                            particlePaint.alpha = particle.alpha
+                            
+                            // 绘制圆形粒子，看起来更像灰尘
+                            nativeCanvas.drawCircle(
+                                particle.x + particle.size / 2,
+                                particle.y + particle.size / 2,
+                                particle.size / 2,
+                                particlePaint
+                            )
                         }
                     }
                 }

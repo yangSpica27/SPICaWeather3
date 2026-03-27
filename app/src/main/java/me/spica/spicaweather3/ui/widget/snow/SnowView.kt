@@ -127,23 +127,35 @@ private class SnowParticleSystem(
   private var windForceX = 0f
   private var windTick = 0
   private val windChangeInterval = 40
+
+  // 复用的 Path 对象和预计算的六角形三角函数查找表
+  private val hexPath = android.graphics.Path()
+
+  companion object {
+    private val HEX_COS = FloatArray(6) { i -> cos(Math.toRadians((i * 60).toDouble())).toFloat() }
+    private val HEX_SIN = FloatArray(6) { i -> sin(Math.toRadians((i * 60).toDouble())).toFloat() }
+  }
   
-  // 三层雪花的绘制画笔
+  // 按层分组的雪花索引，避免每帧 filter 分配列表
+  private val snowflakesByLayer = Array(3) { ArrayList<Int>() }
+  
+  // 三层雪花的绘制画笔（缓存 BlurMaskFilter）
+  private val blurFilters = arrayOf(
+    BlurMaskFilter(3f, BlurMaskFilter.Blur.NORMAL),
+    BlurMaskFilter(2f, BlurMaskFilter.Blur.NORMAL),
+    BlurMaskFilter(1.5f, BlurMaskFilter.Blur.NORMAL)
+  )
+
   private val paintLayers = Array(3) { layer ->
     Paint().apply { 
       isAntiAlias = true
       when (layer) {
-        0 -> alpha = 0.3f // 远景 - 半透明
-        1 -> alpha = 0.6f // 中景
-        2 -> alpha = 0.9f // 近景 - 最清晰
+        0 -> alpha = 0.3f
+        1 -> alpha = 0.6f
+        2 -> alpha = 0.9f
       }
     }.asFrameworkPaint().apply {
-      // 添加轻微模糊效果
-      when (layer) {
-        0 -> maskFilter = BlurMaskFilter(3f, BlurMaskFilter.Blur.NORMAL)
-        1 -> maskFilter = BlurMaskFilter(2f, BlurMaskFilter.Blur.NORMAL)
-        2 -> maskFilter = BlurMaskFilter(1.5f, BlurMaskFilter.Blur.NORMAL)
-      }
+      maskFilter = blurFilters[layer]
     }
   }
   
@@ -165,6 +177,18 @@ private class SnowParticleSystem(
       repeat(maxSnowflakes) { index ->
         snowflakes.add(createDecorativeSnowflake(index))
       }
+      // 构建按层分组的索引
+      rebuildLayerIndex()
+    }
+  }
+  
+  /**
+   * 重建按层分组的雪花索引
+   */
+  private fun rebuildLayerIndex() {
+    for (layer in 0..2) snowflakesByLayer[layer].clear()
+    snowflakes.forEachIndexed { index, flake ->
+      snowflakesByLayer[flake.layer].add(index)
     }
   }
   
@@ -294,6 +318,11 @@ private class SnowParticleSystem(
         if (flake.y > height + 50 || flake.x < -50 || flake.x > width + 50) {
           val newFlake = createDecorativeSnowflake()
           snowflakes[index] = newFlake
+          // 层变化时更新索引
+          if (newFlake.layer != flake.layer) {
+            snowflakesByLayer[flake.layer].remove(index)
+            snowflakesByLayer[newFlake.layer].add(index)
+          }
         }
       }
     }
@@ -302,25 +331,23 @@ private class SnowParticleSystem(
   fun render(canvas: Canvas) {
     if (!::world.isInitialized)return
     synchronized(this) {
-      // 先绘制装饰性雪花（按层次从远到近）
+      // 先绘制装饰性雪花（按层次从远到近），使用预构建的层索引避免 filter 分配
       for (layer in 0..2) {
         val paint = paintLayers[layer]
         paint.color = Color.White.toArgb()
         
-        snowflakes.filter { it.layer == layer }.forEach { flake ->
+        for (idx in snowflakesByLayer[layer]) {
+          val flake = snowflakes[idx]
           canvas.save()
           canvas.translate(flake.x, flake.y)
           canvas.rotate(flake.rotation)
           
-          // 绘制雪花（六角形或圆形）
           val adjustedAlpha = (flake.alpha * 255).toInt()
           paint.alpha = adjustedAlpha
           
           if (flake.size > 5f) {
-            // 大雪花绘制为六角形
             drawHexagonSnowflake(canvas, paint, flake.size)
           } else {
-            // 小雪花绘制为圆形
             canvas.drawCircle(0f, 0f, flake.size, paint)
           }
           
@@ -364,30 +391,27 @@ private class SnowParticleSystem(
   }
   
   /**
-   * 绘制六角形雪花
+   * 绘制六角形雪花（复用 Path 对象 + 预计算三角函数查找表）
    */
   private fun drawHexagonSnowflake(canvas: Canvas, paint: android.graphics.Paint, size: Float) {
-    val path = android.graphics.Path()
+    hexPath.reset()
     for (i in 0..5) {
-      val angle = Math.toRadians((i * 60).toDouble())
-      val x = (size * cos(angle)).toFloat()
-      val y = (size * sin(angle)).toFloat()
+      val x = size * HEX_COS[i]
+      val y = size * HEX_SIN[i]
       if (i == 0) {
-        path.moveTo(x, y)
+        hexPath.moveTo(x, y)
       } else {
-        path.lineTo(x, y)
+        hexPath.lineTo(x, y)
       }
     }
-    path.close()
-    canvas.drawPath(path, paint)
+    hexPath.close()
+    canvas.drawPath(hexPath, paint)
     
     // 绘制内部结构线条
     paint.strokeWidth = 1f
+    val innerScale = size * 0.6f
     for (i in 0..5) {
-      val angle = Math.toRadians((i * 60).toDouble())
-      val x = (size * 0.6f * cos(angle)).toFloat()
-      val y = (size * 0.6f * sin(angle)).toFloat()
-      canvas.drawLine(0f, 0f, x, y, paint)
+      canvas.drawLine(0f, 0f, innerScale * HEX_COS[i], innerScale * HEX_SIN[i], paint)
     }
   }
 }

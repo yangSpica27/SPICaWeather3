@@ -41,7 +41,8 @@ data class DisintegrateParticle(
  */
 class ThanosDisintegrateManager {
 
-    private val particles = mutableListOf<DisintegrateParticle>()
+    @PublishedApi
+    internal val particles = mutableListOf<DisintegrateParticle>()
     private var isInitialized = false
     
     // 配置参数
@@ -155,19 +156,22 @@ class ThanosDisintegrateManager {
     }
     
     /**
-     * 获取所有粒子用于绘制
+     * 遍历未消散的粒子（用于绘制剩余的卡片部分），避免 filter 分配新列表
      */
-    fun getParticles(): List<DisintegrateParticle> = particles
+    inline fun forEachInactiveParticle(action: (DisintegrateParticle) -> Unit) {
+        for (particle in particles) {
+            if (!particle.isActive) action(particle)
+        }
+    }
     
     /**
-     * 获取未消散的粒子（用于绘制剩余的卡片部分）
+     * 遍历已消散的粒子（用于绘制飘散的粒子），避免 filter 分配新列表
      */
-    fun getInactiveParticles(): List<DisintegrateParticle> = particles.filter { !it.isActive }
-    
-    /**
-     * 获取已消散的粒子（用于绘制飘散的粒子）
-     */
-    fun getActiveParticles(): List<DisintegrateParticle> = particles.filter { it.isActive && it.alpha > 0 }
+    inline fun forEachActiveParticle(action: (DisintegrateParticle) -> Unit) {
+        for (particle in particles) {
+            if (particle.isActive && particle.alpha > 0) action(particle)
+        }
+    }
     
     /**
      * 检查消散是否完成

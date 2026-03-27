@@ -89,16 +89,18 @@ class WeatherViewModel(
           isUserLoc = true
         )
         manageCitiesUseCase.addCity(city)
-        if (shouldRefresh) {
-          refresh()
-        }
       } else if (bdLocation != null) {
+        // 只保存定位信息，不在此处触发天气刷新
         locationUseCase.saveUserLocation(
           bdLocation = bdLocation,
-          shouldRefresh = shouldRefresh,
+          shouldRefresh = false,
           onError = { _error.value = it },
-          onSucceed = { if (!shouldRefresh) _error.value = null }
+          onSucceed = { _error.value = null }
         )
+      }
+      // 定位解析完成后，统一走批量刷新路径（单次 insertAll，单次 Room 发射）
+      if (shouldRefresh) {
+        refresh()
       }
     }
   }
@@ -115,6 +117,7 @@ class WeatherViewModel(
   }
 
   fun refresh() {
+    if (_isRefreshing.value) return
     _isRefreshing.update { true }
     viewModelScope.launch(Dispatchers.IO) {
       val cities = locationUseCase.getAllCitiesFlow()
