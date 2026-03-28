@@ -28,7 +28,7 @@
 <img src="/pic/Screenshot_20251118_171558.png" width="20%"/>
 <img src="/pic/Screenshot_20251118_171608.png" width="20%"/>
 <img src="/pic/Screenshot_20260102_150406.png" width="20%"/>
-<img src="/pic/Screenshot_20260102_150432.png" width="20%"/>
+<img src="/pic/Screenshot_2026-03-28-15-23-27-184_me.spica.spica.jpg" width="20%"/>
 </p>
 
 > [!TIP]
