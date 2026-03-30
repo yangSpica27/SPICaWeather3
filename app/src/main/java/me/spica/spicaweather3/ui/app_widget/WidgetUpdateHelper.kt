@@ -1,7 +1,6 @@
 package me.spica.spicaweather3.ui.app_widget
 
 import android.content.Context
-import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.updateAll
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -24,5 +23,26 @@ object WidgetUpdateHelper {
                 e.printStackTrace()
             }
         }
+    }
+
+    /**
+     * 更新散排天气小组件
+     */
+    suspend fun updateScatteredWeatherWidgets(context: Context) {
+        withContext(Dispatchers.IO) {
+            try {
+                ScatteredWeatherAppWidget().updateAll(context)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    /**
+     * 更新所有小组件（天气数据刷新后统一调用）
+     */
+    suspend fun updateAllWidgets(context: Context) {
+        updateTodayInfoWidgets(context)
+        updateScatteredWeatherWidgets(context)
     }
 }

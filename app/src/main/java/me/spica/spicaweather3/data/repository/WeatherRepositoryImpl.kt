@@ -69,7 +69,7 @@ class WeatherRepositoryImpl(
         if (weatherData != null && weatherData.success) {
             city.weather = weatherData.data
             cityDao.insert(city)
-            WidgetUpdateHelper.updateTodayInfoWidgets(App.instance)
+            WidgetUpdateHelper.updateAllWidgets(App.instance)
             onSucceed()
         } else {
             onError(stringProvider.getString(R.string.error_request_failed))
@@ -103,7 +103,7 @@ class WeatherRepositoryImpl(
         }
 
         cityDao.insertAll(cities)
-        WidgetUpdateHelper.updateTodayInfoWidgets(App.instance)
+        WidgetUpdateHelper.updateAllWidgets(App.instance)
         onSucceed()
     }
 

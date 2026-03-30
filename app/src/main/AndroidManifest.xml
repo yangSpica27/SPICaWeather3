@@ -74,6 +74,18 @@
           android:resource="@xml/weekly_weather_widget_info" />
     </receiver>
 
+    <!-- 散排天气小组件 -->
+    <receiver
+        android:name=".ui.app_widget.ScatteredWeatherAppWidgetReceiver"
+        android:exported="true">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+      </intent-filter>
+      <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/scattered_weather_widget_info" />
+    </receiver>
+
   </application>
 
 </manifest>
