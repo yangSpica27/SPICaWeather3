@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -36,7 +37,6 @@ import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import com.kyant.backdrop.drawPlainBackdrop
 import com.kyant.backdrop.effects.lens
-import com.kyant.capsule.ContinuousRoundedRectangle
 import me.spica.spicaweather3.R
 import me.spica.spicaweather3.presentation.theme.WIDGET_CARD_PADDING
 import me.spica.spicaweather3.presentation.theme.WIDGET_CARD_TITLE_TEXT_STYLE
@@ -136,12 +136,12 @@ fun UVCard(uv: Int, startAnim: Boolean) {
                 Color(0xFF915BF0)
               )
             ),
-            shape = ContinuousRoundedRectangle(2.dp)
+            shape = RoundedCornerShape(2.dp)
           )
           .border(
             1.dp,
             color = Color.White,
-            ContinuousRoundedRectangle(2.dp)
+            RoundedCornerShape(2.dp)
           )
       )
       Box(

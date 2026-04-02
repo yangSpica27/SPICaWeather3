@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
@@ -16,16 +17,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kyant.capsule.ContinuousRoundedRectangle
 import dev.chrisbanes.haze.HazeProgressive
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.materials.HazeMaterials
 import me.spica.spicaweather3.R
-import me.spica.spicaweather3.ui.LocalSharedTransitionScope
 import me.spica.spicaweather3.ui.widget.MainTopBar
 import me.spica.spicaweather3.utils.navSharedBounds
-import me.spica.spicaweather3.utils.navSharedElement
 import me.spica.spicaweather3.utils.noRippleClickable
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
@@ -79,7 +77,7 @@ fun WeatherListTopBar(
             .navSharedBounds("search_bar")
             .background(
               MiuixTheme.colorScheme.onSurface.copy(alpha = .1f),
-              ContinuousRoundedRectangle(12.dp)
+              RoundedCornerShape(12.dp)
             )
             .noRippleClickable(onClick = onSearchClick)
             .padding(horizontal = 16.dp, vertical = 12.dp),

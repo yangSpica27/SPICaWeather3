@@ -21,9 +21,9 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,10 +36,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.kyant.capsule.ContinuousRoundedRectangle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.spica.spicaweather3.R
 import me.spica.spicaweather3.route.LocalNavController
-import me.spica.spicaweather3.ui.LocalSharedTransitionScope
 import me.spica.spicaweather3.ui.main.WeatherViewModel
 import me.spica.spicaweather3.utils.navSharedBounds
 import me.spica.spicaweather3.utils.noRippleClickable
@@ -223,7 +222,7 @@ private fun TopCities(modifier: Modifier = Modifier) {
                         .pressable(null)
                         .background(
                             MiuixTheme.colorScheme.surfaceContainerHigh,
-                            ContinuousRoundedRectangle(8.dp)
+                            RoundedCornerShape(8.dp)
                         )
                         .noRippleClickable {
                             viewModel.saveLocation(location = location, onSucceed = {

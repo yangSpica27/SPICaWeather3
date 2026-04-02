@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,7 +42,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kyant.capsule.ContinuousRoundedRectangle
 import me.spica.spicaweather3.R
 import me.spica.spicaweather3.common.type.WeatherAnimType
 import me.spica.spicaweather3.ui.LocalSharedTransitionScope
@@ -172,9 +172,9 @@ fun ReorderableCollectionItemScope.WeatherListItem(
                     )
                     .shadow(
                         elevation = elevation,
-                        shape = ContinuousRoundedRectangle(12.dp),
+                        shape = RoundedCornerShape(12.dp),
                     )
-                    .clip(ContinuousRoundedRectangle(12.dp)),
+                    .clip(RoundedCornerShape(12.dp)),
                 cityData = item
             )
         }

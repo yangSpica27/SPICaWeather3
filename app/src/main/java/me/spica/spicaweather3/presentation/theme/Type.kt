@@ -1,11 +1,10 @@
 package me.spica.spicaweather3.presentation.theme
 
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.kyant.capsule.ContinuousRoundedRectangle
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 
@@ -16,7 +15,7 @@ val MAIN_PLUS_BUTTON_SIZE = 64.dp
 val WIDGET_CARD_PADDING = 12.dp
 
 // 卡片组件的圆角
-val WIDGET_CARD_CORNER_SHAPE = ContinuousRoundedRectangle(12.dp)
+val WIDGET_CARD_CORNER_SHAPE = RoundedCornerShape(12.dp)
 
 // 卡片组件的标题
 

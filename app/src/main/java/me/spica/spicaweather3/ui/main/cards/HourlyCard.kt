@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -37,7 +38,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastRoundToInt
-import com.kyant.capsule.ContinuousRoundedRectangle
 import me.spica.spicaweather3.R
 import me.spica.spicaweather3.data.remote.api.model.weather.AggregatedWeatherData
 import me.spica.spicaweather3.presentation.theme.WIDGET_CARD_CORNER_SHAPE
@@ -147,7 +147,7 @@ private fun TabRowWithContour(titles: List<String>, onTabSelected: (Int) -> Unit
   val tabHeight = remember { mutableStateMapOf<Int, Dp>() }
   val density = LocalDensity.current
 
-  val radius = remember { ContinuousRoundedRectangle(12.dp) }
+  val radius = remember { RoundedCornerShape(12.dp) }
 
   val indicatorOffset by animateDpAsState(
     targetValue = tabPositions.getOrElse(selectIndex) { 0.dp }, label = ""
@@ -240,7 +240,7 @@ fun TabItem(
   Box(
     modifier = modifier
       .clip(
-        ContinuousRoundedRectangle(12.dp)
+        RoundedCornerShape(12.dp)
       )
       .noRippleClickable {
         onClick()
