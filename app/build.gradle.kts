@@ -12,7 +12,7 @@ plugins {
 
 android {
     namespace = "me.spica.spicaweather3"
-    compileSdk = 36
+    compileSdk = 37
 
 
 
@@ -141,7 +141,9 @@ dependencies {
     // Jetpack Compose integration
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.dynamicanimation.ktx)
-    implementation(libs.miuix.android)
+    val version = "0.9.0"
+    implementation(libs.miuix.ui)
+    implementation(libs.miuix.preference)
 //  implementation(libs.miuix.android.icon)
     implementation(libs.backdrop)
     implementation(libs.capsule)

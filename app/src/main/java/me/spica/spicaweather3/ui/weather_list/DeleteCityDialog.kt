@@ -9,7 +9,7 @@ import me.spica.spicaweather3.R
 import me.spica.spicaweather3.data.local.db.entity.CityEntity
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.TextButton
-import top.yukonga.miuix.kmp.extra.SuperDialog
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
 
 /**
  * 删除城市确认对话框
@@ -28,10 +28,10 @@ fun DeleteCityDialog(
   onConfirm: () -> Unit,
   onDismiss: () -> Unit
 ) {
-  SuperDialog(
+  OverlayDialog(
     title = stringResource(R.string.dialog_title_notice),
     summary = stringResource(R.string.weather_list_delete_city_message, cityName),
-    show = show,
+    show = show.value,
     onDismissRequest = onDismiss
   ) {
     TextButton(
