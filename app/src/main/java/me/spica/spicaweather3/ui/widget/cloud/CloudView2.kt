@@ -117,7 +117,10 @@ private class CloudView2TextureView(context: Context) :
     override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
         isRunning = false
         renderHandler?.removeCallbacksAndMessages(null)
-        renderThread?.quitSafely()
+        renderThread?.let { thread ->
+            thread.quitSafely()
+            try { thread.join() } catch (_: InterruptedException) { Thread.currentThread().interrupt() }
+        }
         renderThread = null
         renderHandler = null
         return true
@@ -127,6 +130,7 @@ private class CloudView2TextureView(context: Context) :
     override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {}
 
     private fun renderFrame() {
+        if (!isRunning) return
         val canvas = lockCanvas() ?: return
         try {
             canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
