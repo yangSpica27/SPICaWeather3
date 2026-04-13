@@ -33,6 +33,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import me.spica.spicaweather3.R
 import me.spica.spicaweather3.data.remote.api.model.weather.AggregatedWeatherData
 import me.spica.spicaweather3.data.remote.api.model.weather.DailyForecast
@@ -43,6 +44,7 @@ import me.spica.spicaweather3.utils.noRippleClickable
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.pressable
+import kotlin.random.Random
 
 /**
  * 天级别天气信息卡片
@@ -143,7 +145,8 @@ private fun DailyItem(item: DailyForecast, limitLow: Int, limitHigh: Int) {
         style = MiuixTheme.textStyles.title4,
         color = MiuixTheme.colorScheme.onSurfaceContainer,
         modifier = Modifier.width(50.dp),
-        fontWeight = FontWeight.ExtraBold
+        fontWeight = FontWeight.ExtraBold,
+        textAlign = TextAlign.End
       )
       TempProgress(
         modifier = Modifier
@@ -158,7 +161,8 @@ private fun DailyItem(item: DailyForecast, limitLow: Int, limitHigh: Int) {
         style = MiuixTheme.textStyles.title4,
         color = MiuixTheme.colorScheme.onSurfaceContainer,
         modifier = Modifier.width(50.dp),
-        fontWeight = FontWeight.ExtraBold
+        fontWeight = FontWeight.ExtraBold,
+        textAlign = TextAlign.End
       )
     }
     // 详细信息面板（可展开/收起）
@@ -296,12 +300,12 @@ fun ItemInfo(
     ) {
       Text(
         text = title,
-        style = MiuixTheme.textStyles.title4,
-        color = MiuixTheme.colorScheme.onSurface.copy(alpha = .8f)
+        style = MiuixTheme.textStyles.subtitle,
+        color = MiuixTheme.colorScheme.onSurface.copy(alpha = .6f),
       )
       Text(
         text = value,
-        style = MiuixTheme.textStyles.body1,
+        style = MiuixTheme.textStyles.body2,
         color = MiuixTheme.colorScheme.onSurface,
         fontWeight = FontWeight.W800
       )

@@ -20,7 +20,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
@@ -51,6 +55,7 @@ import org.koin.compose.viewmodel.koinActivityViewModel
 import top.yukonga.miuix.kmp.theme.ColorSchemeMode
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.theme.ThemeController
+import top.yukonga.miuix.kmp.theme.defaultTextStyles
 
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -108,7 +113,78 @@ fun AppMain() {
     val dropdownMenuController = LocalDropdownMenuController.current
 
     MiuixTheme(
-        controller = themeController
+        controller = themeController,
+        textStyles =
+            defaultTextStyles(
+                main =
+                    TextStyle(
+                        fontSize = 17.sp,
+                        letterSpacing = 0.1.sp,
+                    ),
+                paragraph =
+                    TextStyle(
+                        fontSize = 17.sp,
+                        lineHeight = 1.2f.em,
+                    ),
+                body1 =
+                    TextStyle(
+                        fontSize = 16.sp,
+                        letterSpacing = 0.5.sp,
+                    ),
+                body2 =
+                    TextStyle(
+                        fontSize = 14.sp,
+                        letterSpacing = 0.4.sp,
+                    ),
+                button =
+                    TextStyle(
+                        fontSize = 17.sp,
+                        letterSpacing = 0.4.sp,
+                    ),
+                footnote1 =
+                    TextStyle(
+                        fontSize = 13.sp,
+                        letterSpacing = 0.5.sp,
+                    ),
+                footnote2 =
+                    TextStyle(
+                        fontSize = 11.sp,
+                        letterSpacing = 0.5.sp,
+                    ),
+                headline1 =
+                    TextStyle(
+                        fontSize = 17.sp,
+                    ),
+                headline2 =
+                    TextStyle(
+                        fontSize = 16.sp,
+                    ),
+                subtitle =
+                    TextStyle(
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.1.sp,
+                    ),
+                title1 =
+                    TextStyle(
+                        fontSize = 32.sp,
+                    ),
+                title2 =
+                    TextStyle(
+                        fontSize = 24.sp,
+                        letterSpacing = 0.1.sp,
+                    ),
+                title3 =
+                    TextStyle(
+                        fontSize = 20.sp,
+                        letterSpacing = 0.15.sp,
+                    ),
+                title4 =
+                    TextStyle(
+                        fontSize = 18.sp,
+                        letterSpacing = 0.1.sp,
+                    ),
+            ),
     ) {
         // 使用已缓存的屏幕方向状态
         LaunchedEffect(isLandscapeMode) {
