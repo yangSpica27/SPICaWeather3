@@ -203,10 +203,10 @@ app/src/main/java/me/spica/spicaweather3/
 ## 🚀 快速开始
 
 ### 环境要求
-- Android Studio Ladybug 或更高版本
+- Android Studio Otter 3 Feature Drop 或更高版本
 - JDK 17 或更高版本
 - Android SDK 33+
-- Gradle 8.13+
+- Gradle 9.1+
 
 ### 配置步骤
 
