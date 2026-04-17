@@ -1,7 +1,7 @@
 package me.spica.spicaweather3.domain.usecase
 
 import kotlinx.coroutines.flow.Flow
-import me.spica.spicaweather3.data.local.db.entity.CityEntity
+import me.spica.spicaweather3.domain.model.City
 import me.spica.spicaweather3.domain.repository.IWeatherRepository
 
 /**
@@ -10,7 +10,7 @@ import me.spica.spicaweather3.domain.repository.IWeatherRepository
 class GetAllCitiesUseCase(
     private val repository: IWeatherRepository
 ) {
-    operator fun invoke(): Flow<List<CityEntity>> {
+    operator fun invoke(): Flow<List<City>> {
         return repository.getAllCitiesFlow()
     }
 

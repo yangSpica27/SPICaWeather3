@@ -74,7 +74,7 @@ fun CityListPane(
     ) {
       itemsIndexed(
         items = cities,
-        key = { _, state -> state.cityEntity.id }
+        key = { _, state -> state.city.id }
       ) { index, state ->
         CityListItem(
           cityState = state,
@@ -95,7 +95,7 @@ private fun CityListItem(
   isSelected: Boolean,
   onClick: () -> Unit
 ) {
-  val city = cityState.cityEntity
+  val city = cityState.city
   val weather = city.weather
 
   // 根据选中状态计算颜色
@@ -122,7 +122,7 @@ private fun CityListItem(
     verticalAlignment = Alignment.CenterVertically
   ) {
     // 定位图标（如果是用户位置）
-    if (city.isUserLoc) {
+    if (city.isUserLocation) {
       Box(
         modifier = Modifier
           .size(32.dp)
@@ -151,10 +151,10 @@ private fun CityListItem(
         color = contentColor
       )
 
-      if (city.adm1.isNotEmpty() && city.adm1 != city.name) {
+      if (city.administrativeArea1.isNotEmpty() && city.administrativeArea1 != city.name) {
         Spacer(modifier = Modifier.height(2.dp))
         Text(
-          text = "${city.adm1} · ${city.adm2}",
+          text = "${city.administrativeArea1} · ${city.administrativeArea2}",
           fontSize = 12.sp,
           color = MiuixTheme.colorScheme.onSurfaceVariantSummary
         )

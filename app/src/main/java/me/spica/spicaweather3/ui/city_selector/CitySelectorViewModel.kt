@@ -8,7 +8,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import me.spica.spicaweather3.data.remote.api.model.Location
+import me.spica.spicaweather3.data.mapper.toCity
+import me.spica.spicaweather3.domain.model.SearchLocation
 import me.spica.spicaweather3.domain.usecase.ManageCitiesUseCase
 import me.spica.spicaweather3.domain.usecase.SearchCityUseCase
 
@@ -22,15 +23,15 @@ class CitySelectorViewModel(
 
   private var topsTopJob: Job? = null
 
-  private val _topCities = MutableStateFlow<List<Location>>(arrayListOf())
-  val topCities: StateFlow<List<Location>> = _topCities
+  private val _topCities = MutableStateFlow<List<SearchLocation>>(arrayListOf())
+  val topCities: StateFlow<List<SearchLocation>> = _topCities
 
   private val _errorMessage = MutableStateFlow<String?>(null)
 
   val errorMessage: StateFlow<String?> = _errorMessage
 
-  private val _searchResult = MutableStateFlow<List<Location>>(arrayListOf())
-  val searchResult: StateFlow<List<Location>> = _searchResult
+  private val _searchResult = MutableStateFlow<List<SearchLocation>>(arrayListOf())
+  val searchResult: StateFlow<List<SearchLocation>> = _searchResult
 
   init {
     topsTopJob = viewModelScope.launch(Dispatchers.IO) {
@@ -45,7 +46,7 @@ class CitySelectorViewModel(
     }
   }
 
-  fun saveLocation(location: Location,
+  fun saveLocation(location: SearchLocation,
                    onSucceed: () -> Unit) {
     viewModelScope.launch(Dispatchers.IO) {
       manageCitiesUseCase.addCity(location.toCity())

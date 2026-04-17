@@ -21,7 +21,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
-import me.spica.spicaweather3.data.local.db.entity.CityEntity
+import me.spica.spicaweather3.domain.model.City
 import me.spica.spicaweather3.route.LocalNavController
 import me.spica.spicaweather3.route.Routes
 import me.spica.spicaweather3.ui.main.WeatherViewModel
@@ -52,7 +52,7 @@ fun WeatherListScreen() {
   var tempList by remember { mutableStateOf(listOf<WeatherPageState>()) }
   var isDrag by remember { mutableStateOf(false) }
   val showDialog = remember { mutableStateOf(false) }
-  var selectedCity by remember { mutableStateOf<CityEntity?>(null) }
+  var selectedCity by remember { mutableStateOf<City?>(null) }
   var disintegratingCityId by remember { mutableStateOf<Long?>(null) }
 
   // 监听城市列表变化，非拖拽状态时同步到临时列表
@@ -95,8 +95,8 @@ fun WeatherListScreen() {
     val reorderableLazyListState = rememberReorderableLazyListState(listState) { from, to ->
       if (from.index == 0 || to.index == 0) return@rememberReorderableLazyListState
 
-      val city1 = tempList[from.index].cityEntity
-      val city2 = tempList[to.index].cityEntity
+      val city1 = tempList[from.index].city
+      val city2 = tempList[to.index].city
       viewModel.swapSort(city1, city2)
       
       tempList = tempList.toMutableList().apply {
@@ -119,11 +119,11 @@ fun WeatherListScreen() {
     ) {
       itemsIndexed(
         items = tempList,
-        key = { _, city -> city.cityEntity.id }
+        key = { _, city -> city.city.id }
       ) { index, item ->
         ReorderableItem(
           reorderableLazyListState,
-          key = item.cityEntity.id,
+          key = item.city.id,
           enabled = index != 0
         ) {
           WeatherListItem(
@@ -134,8 +134,8 @@ fun WeatherListScreen() {
             onDragStart = { isDrag = true },
             onDragStop = { isDrag = false },
             onClick = {
-              if (!item.cityEntity.isUserLoc && disintegratingCityId == null) {
-                selectedCity = item.cityEntity
+              if (!item.city.isUserLocation && disintegratingCityId == null) {
+                selectedCity = item.city
                 showDialog.value = true
               }
             },

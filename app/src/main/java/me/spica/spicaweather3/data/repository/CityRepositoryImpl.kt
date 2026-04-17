@@ -6,8 +6,9 @@ import com.skydoves.sandwich.onSuccess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import me.spica.spicaweather3.R
+import me.spica.spicaweather3.data.mapper.toSearchLocation
 import me.spica.spicaweather3.data.remote.api.ApiService
-import me.spica.spicaweather3.data.remote.api.model.Location
+import me.spica.spicaweather3.domain.model.SearchLocation
 import me.spica.spicaweather3.domain.repository.ICityRepository
 import me.spica.spicaweather3.utils.StringProvider
 
@@ -27,13 +28,14 @@ class CityRepositoryImpl(
     override suspend fun searchCity(
         keyword: String,
         onError: (String?) -> Unit,
-        onSucceed: (List<Location>) -> Unit
+        onSucceed: (List<SearchLocation>) -> Unit
     ) {
         withContext(Dispatchers.IO) {
             apiService.lookupCity(keyword)
                 .onSuccess {
                     if (data.code == "200") {
-                        onSucceed(data.location)
+                        // 转换为领域模型
+                        onSucceed(data.location.map { it.toSearchLocation() })
                     } else {
                         onError(stringProvider.getString(R.string.error_request_failed))
                     }
@@ -46,13 +48,14 @@ class CityRepositoryImpl(
 
     override suspend fun fetchTopCities(
         onError: (String?) -> Unit,
-        onSucceed: (List<Location>) -> Unit
+        onSucceed: (List<SearchLocation>) -> Unit
     ) {
         withContext(Dispatchers.IO) {
             apiService.topCity()
                 .onSuccess {
                     if (data.code == "200") {
-                        onSucceed(data.topCityList)
+                        // 转换为领域模型
+                        onSucceed(data.topCityList.map { it.toSearchLocation() })
                     } else {
                         onError(stringProvider.getString(R.string.error_request_failed))
                     }

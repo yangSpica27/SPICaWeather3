@@ -81,14 +81,14 @@ fun ReorderableCollectionItemScope.WeatherListItem(
     onDisintegrationComplete: () -> Unit
 ) {
     // 入场动画
-    val appearAnim = remember(item.cityEntity.id) { androidx.compose.animation.core.Animatable(0f) }
-    val delayMillis = remember(item.cityEntity.id) { Random.nextInt(0, 200) }
-    val durationMillis = remember(item.cityEntity.id) { Random.nextInt(260, 520) }
+    val appearAnim = remember(item.city.id) { androidx.compose.animation.core.Animatable(0f) }
+    val delayMillis = remember(item.city.id) { Random.nextInt(0, 200) }
+    val durationMillis = remember(item.city.id) { Random.nextInt(260, 520) }
 
     // 当前item是否正在拖拽
     var draging by remember { mutableStateOf(false) }
 
-    LaunchedEffect(item.cityEntity.id) {
+    LaunchedEffect(item.city.id) {
         appearAnim.snapTo(0f)
         appearAnim.animateTo(
             targetValue = 1f,
@@ -126,7 +126,7 @@ fun ReorderableCollectionItemScope.WeatherListItem(
 
         // 判断当前卡片是否正在消散
         val isThisCardDisintegrating =
-            disintegratingCityId == item.cityEntity.id.hashCode().toLong()
+            disintegratingCityId == item.city.id.hashCode().toLong()
 
         // 消散完成后标记，用于隐藏卡片防止闪烁
         var hasDisintegrated by remember { mutableStateOf(false) }
@@ -198,13 +198,13 @@ private fun WeatherItemContent(
 ) {
     // 卡片背景色，会根据天气类型动画变化
     val cardColor = remember { androidx.compose.animation.Animatable(initColor) }
-    val cityEntity = remember(cityData) { cityData.cityEntity }
-    val isUserLoc = remember(cityEntity) { cityEntity.isUserLoc }
+    val city = remember(cityData) { cityData.city }
+    val isUserLocation = remember(city) { city.isUserLocation }
 
     // 根据天气数据动画更新卡片背景色
     LaunchedEffect(cityData) {
         if (cityData is WeatherPageState.Data) {
-            val iconId = cityEntity.weather?.current?.icon ?: "100"
+            val iconId = city.weather?.current?.icon ?: "100"
             cardColor.animateTo(WeatherAnimType.getAnimType(iconId).topColor)
         } else {
             cardColor.animateTo(initColor)
@@ -229,14 +229,14 @@ private fun WeatherItemContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    cityEntity.name,
+                    city.name,
                     color = MiuixTheme.colorScheme.surface,
                     textAlign = TextAlign.Start,
                     style = MiuixTheme.textStyles.title2,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 22.sp
                 )
-                if (isUserLoc) {
+                if (isUserLocation) {
                     Icon(
                         painter = painterResource(R.drawable.ic_location),
                         contentDescription = null,
@@ -247,7 +247,7 @@ private fun WeatherItemContent(
             }
             // 省份和市区信息
             Text(
-                "${cityEntity.adm1},${cityEntity.adm2}",
+                "${city.administrativeArea1},${city.administrativeArea2}",
                 color = MiuixTheme.colorScheme.surface,
                 textAlign = TextAlign.Start,
                 style = MiuixTheme.textStyles.body2,
@@ -276,7 +276,7 @@ private fun WeatherItemContent(
                                         fontWeight = FontWeight.Light
                                     )
                                 ) {
-                                    append("${state.cityEntity.weather?.current?.temperature}")
+                                    append("${state.city.weather?.current?.temperature}")
                                 }
                                 withStyle(
                                     style = SpanStyle(

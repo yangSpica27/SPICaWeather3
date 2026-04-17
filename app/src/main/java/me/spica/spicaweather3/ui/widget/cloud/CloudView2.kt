@@ -16,7 +16,9 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.viewinterop.AndroidView
@@ -54,8 +56,21 @@ fun CloudView2(
             animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
             label = "show_progress"
         )
+        
+        // 使用 remember 保持 View 实例，避免重复创建
+        val textureView = remember { CloudView2TextureView(null) }
+        
+        // 确保组件离开时清理资源
+        DisposableEffect(Unit) {
+            onDispose {
+                textureView.cleanup()
+            }
+        }
+        
         AndroidView(
-            factory = { ctx -> CloudView2TextureView(ctx) },
+            factory = { ctx -> 
+                textureView.also { it.initialize(ctx) }
+            },
             update = { view -> view.showProgress = showProgress },
             modifier = Modifier
                 .fillMaxSize()
@@ -67,62 +82,97 @@ fun CloudView2(
     }
 }
 
-private class CloudView2TextureView(context: Context) :
-    TextureView(context), TextureView.SurfaceTextureListener {
+private class CloudView2TextureView(initialContext: Context?) :
+    TextureView(initialContext ?: getDummyContext()), 
+    TextureView.SurfaceTextureListener {
 
-    private val density = context.resources.displayMetrics.density
+    companion object {
+        private fun getDummyContext(): Context {
+            throw IllegalStateException("Context must be provided via initialize()")
+        }
+    }
+
+    private var _density: Float = 2.0f
+    private val density: Float get() = _density
 
     @Volatile var showProgress: Float = 0f
 
     private var renderThread: HandlerThread? = null
     private var renderHandler: Handler? = null
-    private val startTime = SystemClock.uptimeMillis()
+    private var startTime = SystemClock.uptimeMillis()
 
     @Volatile private var isRunning = false
+    @Volatile private var isSurfaceAvailable = false
 
     private val paint1 = Paint().apply {
-        color = Color.argb(0x18, 0xFF, 0xFF, 0xFF) // 最远层，透明度最低
+        color = Color.argb(0x18, 0xFF, 0xFF, 0xFF)
         isAntiAlias = true
     }
     private val paint2 = Paint().apply {
-        color = Color.argb(0x28, 0xFF, 0xFF, 0xFF) // 中间层
+        color = Color.argb(0x28, 0xFF, 0xFF, 0xFF)
         isAntiAlias = true
     }
     private val paint3 = Paint().apply {
-        color = Color.argb(0x40, 0xFF, 0xFF, 0xFF) // 最近层，透明度最高
+        color = Color.argb(0x40, 0xFF, 0xFF, 0xFF)
         isAntiAlias = true
     }
 
     private val frameRunnable = object : Runnable {
         override fun run() {
-            if (!isRunning) return
+            if (!isRunning || !isSurfaceAvailable) return
             val frameStart = SystemClock.uptimeMillis()
-            renderFrame()
-            val delay = maxOf(1L, 16L - (SystemClock.uptimeMillis() - frameStart))
-            renderHandler?.postDelayed(this, delay)
+            try {
+                renderFrame()
+            } catch (e: Exception) {
+                // 捕获渲染异常，防止崩溃
+                android.util.Log.w("CloudView2", "Render frame error", e)
+            }
+            // 双重检查，确保线程安全
+            if (isRunning && isSurfaceAvailable) {
+                val delay = maxOf(1L, 16L - (SystemClock.uptimeMillis() - frameStart))
+                renderHandler?.postDelayed(this, delay)
+            }
         }
     }
 
-    init {
+    fun initialize(ctx: Context) {
+        _density = ctx.resources.displayMetrics.density
         isOpaque = false
         surfaceTextureListener = this
     }
 
-    override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
-        isRunning = true
-        renderThread = HandlerThread("CloudView2Render").apply { start() }
-        renderHandler = Handler(renderThread!!.looper).also { it.post(frameRunnable) }
-    }
-
-    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
+    fun cleanup() {
         isRunning = false
+        isSurfaceAvailable = false
         renderHandler?.removeCallbacksAndMessages(null)
         renderThread?.let { thread ->
             thread.quitSafely()
-            try { thread.join() } catch (_: InterruptedException) { Thread.currentThread().interrupt() }
+            try { 
+                thread.join(100) // 最多等待100ms避免阻塞
+            } catch (_: InterruptedException) { 
+                Thread.currentThread().interrupt() 
+            }
         }
         renderThread = null
         renderHandler = null
+    }
+
+    override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
+        isSurfaceAvailable = true
+        startTime = SystemClock.uptimeMillis()
+        
+        // 防止重复创建线程
+        if (renderThread == null || !renderThread!!.isAlive) {
+            isRunning = true
+            renderThread = HandlerThread("CloudView2Render").apply { start() }
+            renderHandler = Handler(renderThread!!.looper)
+            renderHandler?.post(frameRunnable)
+        }
+    }
+
+    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
+        isSurfaceAvailable = false
+        cleanup()
         return true
     }
 
@@ -130,8 +180,16 @@ private class CloudView2TextureView(context: Context) :
     override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {}
 
     private fun renderFrame() {
-        if (!isRunning) return
-        val canvas = lockCanvas() ?: return
+        // 三重检查确保安全
+        if (!isRunning || !isSurfaceAvailable) return
+        
+        val canvas = try {
+            lockCanvas()
+        } catch (e: Exception) {
+            // Surface 可能已被销毁，静默失败
+            return
+        } ?: return
+        
         try {
             canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
 
@@ -143,85 +201,100 @@ private class CloudView2TextureView(context: Context) :
             val drift1 = (elapsed % 12000L) / 12000f
             val drift2 = (elapsed % 8000L) / 8000f
             val drift3 = (elapsed % 5500L) / 5500f
-            val breathe1 = triangleWave(elapsed, 4000L)
-            val breathe2 = triangleWave(elapsed, 3200L)
-            val breathe3 = triangleWave(elapsed, 2800L)
+            val breathe1 = cloudTriangleWave(elapsed, 4000L)
+            val breathe2 = cloudTriangleWave(elapsed, 3200L)
+            val breathe3 = cloudTriangleWave(elapsed, 2800L)
 
-            // 以右上角为轴心缩放（与原 scale(sp, sp, pivot=Offset(width,0)) 一致）
             canvas.save()
             canvas.scale(sp, sp, w, 0f)
 
             // ===== 第一层云（最远，最慢）=====
             val layer1Y = h * 0.08f
             val layer1DriftX = drift1 * w * 1.5f - w * 0.25f
-            val layer1Breathe = 1f + sin(breathe1 * PI.toFloat()) * 0.08f
+            val layer1Breathe = 1f + sin(breathe1 * PI).toFloat() * 0.08f
 
             canvas.save()
             canvas.translate(layer1DriftX, layer1Y)
             canvas.scale(layer1Breathe, layer1Breathe)
-            drawCloudGroup(canvas, paint1, w / 6f, 0f, 0f)
+            drawCloudGroup2(canvas, paint1, w / 6f, 0f, 0f)
             canvas.restore()
 
             canvas.save()
             canvas.translate(layer1DriftX + w * 0.7f, layer1Y + 20f * density)
             canvas.scale(layer1Breathe * 0.9f, layer1Breathe * 0.9f)
-            drawCloudGroup(canvas, paint1, w / 7f, 0f, 0f)
+            drawCloudGroup2(canvas, paint1, w / 7f, 0f, 0f)
             canvas.restore()
 
             // ===== 第二层云（中速）=====
             val layer2Y = h * 0.15f
             val layer2DriftX = drift2 * w * 1.3f - w * 0.15f
-            val layer2Breathe = 1f + sin(breathe2 * PI.toFloat()) * 0.1f
+            val layer2Breathe = 1f + sin(breathe2 * PI).toFloat() * 0.1f
 
             canvas.save()
             canvas.translate(layer2DriftX, layer2Y)
             canvas.scale(layer2Breathe, layer2Breathe)
-            drawCloudGroup(canvas, paint2, w / 5f, 0f, 0f)
+            drawCloudGroup2(canvas, paint2, w / 5f, 0f, 0f)
             canvas.restore()
 
             canvas.save()
             canvas.translate(layer2DriftX + w * 0.55f, layer2Y - 15f * density)
             canvas.scale(layer2Breathe * 1.1f, layer2Breathe * 1.1f)
-            drawCloudGroup(canvas, paint2, w / 5.5f, 0f, 0f)
+            drawCloudGroup2(canvas, paint2, w / 5.5f, 0f, 0f)
             canvas.restore()
 
             canvas.save()
             canvas.translate(layer2DriftX - w * 0.3f, layer2Y + 30f * density)
             canvas.scale(layer2Breathe * 0.85f, layer2Breathe * 0.85f)
-            drawCloudGroup(canvas, paint2, w / 6.5f, 0f, 0f)
+            drawCloudGroup2(canvas, paint2, w / 6.5f, 0f, 0f)
             canvas.restore()
 
             // ===== 第三层云（最近，最快）=====
             val layer3Y = h * 0.25f
             val layer3DriftX = drift3 * w * 1.2f - w * 0.1f
-            val layer3Breathe = 1f + sin(breathe3 * PI.toFloat()) * 0.12f
+            val layer3Breathe = 1f + sin(breathe3 * PI).toFloat() * 0.12f
 
             canvas.save()
             canvas.translate(layer3DriftX, layer3Y)
             canvas.scale(layer3Breathe, layer3Breathe)
-            drawCloudGroup(canvas, paint3, w / 4.5f, 0f, 0f)
+            drawCloudGroup2(canvas, paint3, w / 4.5f, 0f, 0f)
             canvas.restore()
 
             canvas.save()
             canvas.translate(layer3DriftX + w * 0.6f, layer3Y + 10f * density)
             canvas.scale(layer3Breathe * 0.95f, layer3Breathe * 0.95f)
-            drawCloudGroup(canvas, paint3, w / 5f, 0f, 0f)
+            drawCloudGroup2(canvas, paint3, w / 5f, 0f, 0f)
             canvas.restore()
 
             canvas.save()
             canvas.translate(layer3DriftX - w * 0.25f, layer3Y - 20f * density)
             canvas.scale(layer3Breathe * 1.05f, layer3Breathe * 1.05f)
-            drawCloudGroup(canvas, paint3, w / 5.2f, 0f, 0f)
+            drawCloudGroup2(canvas, paint3, w / 5.2f, 0f, 0f)
             canvas.restore()
 
-            canvas.restore() // 还原 showProgress scale
+            canvas.restore()
         } finally {
-            unlockCanvasAndPost(canvas)
+            try {
+                unlockCanvasAndPost(canvas)
+            } catch (e: Exception) {
+                // 捕获 unlock 异常
+                android.util.Log.w("CloudView2", "Unlock canvas error", e)
+            }
         }
     }
 }
 
-private fun drawCloudGroup(
+/**
+ * 三角波函数 - 用于呼吸动画的周期性变化
+ */
+private fun cloudTriangleWave(elapsed: Long, period: Long): Float {
+    val phase = (elapsed % period).toFloat() / period.toFloat()
+    return if (phase < 0.5f) phase * 2f else 2f - phase * 2f
+}
+
+/**
+ * 绘制云朵组 - 由多个圆形组合而成
+ */
+private fun drawCloudGroup2(
     canvas: Canvas,
     paint: Paint,
     baseRadius: Float,

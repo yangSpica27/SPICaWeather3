@@ -1,6 +1,6 @@
 package me.spica.spicaweather3.domain.repository
 
-import me.spica.spicaweather3.data.remote.api.model.Location
+import me.spica.spicaweather3.domain.model.SearchLocation
 
 /**
  * 城市数据仓库接口
@@ -15,7 +15,7 @@ interface ICityRepository {
     suspend fun searchCity(
         keyword: String,
         onError: (String?) -> Unit,
-        onSucceed: (List<Location>) -> Unit
+        onSucceed: (List<SearchLocation>) -> Unit
     )
     
     /**
@@ -23,6 +23,6 @@ interface ICityRepository {
      */
     suspend fun fetchTopCities(
         onError: (String?) -> Unit,
-        onSucceed: (List<Location>) -> Unit
+        onSucceed: (List<SearchLocation>) -> Unit
     )
 }

@@ -8,7 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import me.spica.spicaweather3.common.model.WeatherCardConfig
-import me.spica.spicaweather3.data.remote.api.model.weather.AggregatedWeatherData
+import me.spica.spicaweather3.domain.model.WeatherData
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 
 /**
@@ -27,7 +27,7 @@ import sh.calvin.reorderable.ReorderableCollectionItemScope
 @Composable
 fun ReorderableCollectionItemScope.WeatherCardItem(
   cardConfig: WeatherCardConfig,
-  weatherData: AggregatedWeatherData,
+  weatherData: WeatherData,
   delayMillis: Int,
   durationMillis: Int,
   shakeOffset: Float,

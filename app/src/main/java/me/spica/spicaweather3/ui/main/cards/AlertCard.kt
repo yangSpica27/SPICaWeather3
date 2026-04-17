@@ -19,7 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import me.spica.spicaweather3.R
-import me.spica.spicaweather3.data.remote.api.model.weather.AggregatedWeatherData
+import me.spica.spicaweather3.domain.model.WeatherData
 import me.spica.spicaweather3.presentation.theme.COLOR_WHITE_100
 import me.spica.spicaweather3.presentation.theme.WIDGET_CARD_CORNER_SHAPE
 import me.spica.spicaweather3.presentation.theme.WIDGET_CARD_PADDING
@@ -27,7 +27,7 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 
 @Composable
-fun AlertCard(weatherData: AggregatedWeatherData) {
+fun AlertCard(weatherData: WeatherData) {
   val alerts = remember(weatherData.weatherAlerts) {
     weatherData.weatherAlerts ?: emptyList()
   }

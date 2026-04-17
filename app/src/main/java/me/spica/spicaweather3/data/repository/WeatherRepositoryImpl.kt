@@ -6,13 +6,16 @@ import com.skydoves.sandwich.onFailure
 import com.skydoves.sandwich.onSuccess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import me.spica.spicaweather3.App
 import me.spica.spicaweather3.R
 import me.spica.spicaweather3.data.local.db.dao.CityDao
-import me.spica.spicaweather3.data.local.db.entity.CityEntity
+import me.spica.spicaweather3.data.mapper.toDomain
+import me.spica.spicaweather3.data.mapper.toEntity
 import me.spica.spicaweather3.data.remote.api.ApiService
 import me.spica.spicaweather3.data.remote.api.model.BatchWeatherRequest
+import me.spica.spicaweather3.domain.model.City
 import me.spica.spicaweather3.domain.repository.IWeatherRepository
 import me.spica.spicaweather3.ui.app_widget.WidgetUpdateHelper
 import me.spica.spicaweather3.utils.StringProvider
@@ -33,12 +36,14 @@ class WeatherRepositoryImpl(
     private val stringProvider: StringProvider
 ) : IWeatherRepository {
 
-    override fun getAllCitiesFlow(): Flow<List<CityEntity>> {
-        return cityDao.getAllFlow()
+    override fun getAllCitiesFlow(): Flow<List<City>> {
+        return cityDao.getAllFlow().map { entities ->
+            entities.map { it.toDomain() }
+        }
     }
 
-    override fun getAllCities(): List<CityEntity> {
-        return cityDao.getAll()
+    override fun getAllCities(): List<City> {
+        return cityDao.getAll().map { it.toDomain() }
     }
 
     override suspend fun refreshWeather(
@@ -49,15 +54,15 @@ class WeatherRepositoryImpl(
     ) = withContext(Dispatchers.IO) {
         // 查找所有城市，找到匹配的城市
         val allCities = cityDao.getAll()
-        val city = allCities.find { it.lat == lat && it.lon == lon }
+        val cityEntity = allCities.find { it.lat == lat && it.lon == lon }
         
-        if (city == null) {
+        if (cityEntity == null) {
             onError(stringProvider.getString(R.string.error_request_failed))
             return@withContext
         }
 
         val response = apiService.getWeather(
-            BatchWeatherRequest(listOf(city.toWeatherRequestLocation()))
+            BatchWeatherRequest(listOf(cityEntity.toWeatherRequestLocation()))
         ).getOrNull()
 
         if (response == null || response.code != 200 || response.data == null) {
@@ -67,8 +72,9 @@ class WeatherRepositoryImpl(
 
         val weatherData = response.data.results.firstOrNull()
         if (weatherData != null && weatherData.success) {
-            city.weather = weatherData.data
-            cityDao.insert(city)
+            // 使用 copy 替代直接修改，避免可变性问题
+            val updatedEntity = cityEntity.copy(weather = weatherData.data)
+            cityDao.insert(updatedEntity)
             WidgetUpdateHelper.updateAllWidgets(App.instance)
             onSucceed()
         } else {
@@ -77,12 +83,15 @@ class WeatherRepositoryImpl(
     }
 
     override suspend fun refreshAllCitiesWeather(
-        cities: List<CityEntity>,
+        cities: List<City>,
         onError: (String?) -> Unit,
         onSucceed: () -> Unit
     ) = withContext(Dispatchers.IO) {
+        // 转换为 Entity 以访问数据层方法
+        val cityEntities = cities.map { it.toEntity() }
+        
         val response = apiService.getWeather(
-            BatchWeatherRequest(cities.map { it.toWeatherRequestLocation() })
+            BatchWeatherRequest(cityEntities.map { it.toWeatherRequestLocation() })
         ).getOrNull()
 
         if (response == null) {
@@ -95,36 +104,39 @@ class WeatherRepositoryImpl(
             return@withContext
         }
 
-        cities.forEach { city ->
-            val weatherData = response.data.results.find { it.locationId == city.id }
+        // 创建更新后的实体列表
+        val updatedEntities = cityEntities.map { entity ->
+            val weatherData = response.data.results.find { it.locationId == entity.id }
             if (weatherData != null && weatherData.success) {
-                city.weather = weatherData.data
+                entity.copy(weather = weatherData.data)
+            } else {
+                entity
             }
         }
 
-        cityDao.insertAll(cities)
+        cityDao.insertAll(updatedEntities)
         WidgetUpdateHelper.updateAllWidgets(App.instance)
         onSucceed()
     }
 
-    override suspend fun insertCity(city: CityEntity) = withContext(Dispatchers.IO) {
-        cityDao.insert(city)
+    override suspend fun insertCity(city: City) = withContext(Dispatchers.IO) {
+        cityDao.insert(city.toEntity())
     }
 
-    override suspend fun deleteCity(city: CityEntity) = withContext(Dispatchers.IO) {
-        cityDao.delete(city)
+    override suspend fun deleteCity(city: City) = withContext(Dispatchers.IO) {
+        cityDao.delete(city.toEntity())
     }
 
-    override suspend fun swapSort(city1: CityEntity, city2: CityEntity) =
+    override suspend fun swapSort(city1: City, city2: City) =
         withContext(Dispatchers.IO) {
-            cityDao.swapSort(city1, city2)
+            cityDao.swapSort(city1.toEntity(), city2.toEntity())
         }
 
-    override suspend fun getUserLoc(): CityEntity? = withContext(Dispatchers.IO) {
-        return@withContext cityDao.getUserLoc()
+    override suspend fun getUserLoc(): City? = withContext(Dispatchers.IO) {
+        return@withContext cityDao.getUserLoc()?.toDomain()
     }
 
-    override suspend fun insertUserLoc(city: CityEntity) = withContext(Dispatchers.IO) {
-        cityDao.updateUserLoc(city)
+    override suspend fun insertUserLoc(city: City) = withContext(Dispatchers.IO) {
+        cityDao.updateUserLoc(city.toEntity())
     }
 }

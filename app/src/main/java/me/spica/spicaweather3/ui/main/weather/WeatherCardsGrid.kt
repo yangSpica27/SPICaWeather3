@@ -24,7 +24,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import me.spica.spicaweather3.common.model.WeatherCardConfig
-import me.spica.spicaweather3.data.remote.api.model.weather.AggregatedWeatherData
+import me.spica.spicaweather3.domain.model.WeatherData
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyGridState
 import top.yukonga.miuix.kmp.basic.ScrollBehavior
@@ -45,7 +45,7 @@ import kotlin.random.Random
 @Composable
 fun WeatherCardsGrid(
   cards: List<WeatherCardConfig>,
-  weatherData: AggregatedWeatherData,
+  weatherData: WeatherData,
   onReorder: (List<WeatherCardConfig>) -> Unit,
   scrollBehavior: ScrollBehavior,
   modifier: Modifier = Modifier,

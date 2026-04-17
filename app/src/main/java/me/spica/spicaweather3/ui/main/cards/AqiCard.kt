@@ -25,7 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.spica.spicaweather3.R
-import me.spica.spicaweather3.data.remote.api.model.weather.AirQualitySummary
+import me.spica.spicaweather3.domain.model.AirQualityData
 import me.spica.spicaweather3.presentation.theme.COLOR_BLACK_100
 import me.spica.spicaweather3.presentation.theme.COLOR_BLACK_5
 import me.spica.spicaweather3.presentation.theme.WIDGET_CARD_PADDING
@@ -38,7 +38,7 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
  * 使用 air2 数据显示详细的 AQI 信息、等级、健康建议和主要污染物
  */
 @Composable
-fun AqiCard(airQualitySummary: AirQualitySummary?, startAnim: Boolean) {
+fun AqiCard(airQualitySummary: AirQualityData?, startAnim: Boolean) {
   // 从 air2 获取数据，使用第一个 index（通常是综合 AQI）
   val airIndex = airQualitySummary ?: return
   val aqi = airIndex.aqi

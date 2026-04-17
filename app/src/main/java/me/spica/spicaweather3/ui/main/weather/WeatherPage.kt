@@ -60,7 +60,7 @@ fun WeatherPage(
     when (state) {
       is WeatherPageState.Data -> {
         DataPage(
-          cityEntity = state.cityEntity,
+          city = state.city,
           scrollBehavior = scrollBehavior,
           paddingValues = paddingValues
         )
@@ -78,19 +78,19 @@ fun WeatherPage(
  * 
  * 展示天气数据和可配置的天气卡片网格。
  * 
- * @param cityEntity 城市实体（包含天气数据）
+ * @param city 城市领域模型（包含天气数据）
  * @param scrollBehavior 滚动行为
  */
 @Composable
 private fun DataPage(
-  cityEntity: me.spica.spicaweather3.data.local.db.entity.CityEntity,
+  city: me.spica.spicaweather3.domain.model.City,
   scrollBehavior: ScrollBehavior,
   paddingValues: PaddingValues
 ) {
   val viewModel = koinInject<WeatherViewModel>()
   
   // 获取天气数据（已保证非空）
-  val weatherData = cityEntity.weather!!
+  val weatherData = city.weather!!
   
   // 获取所有卡片配置
   val allCardsConfigs = viewModel.cardsConfig.collectAsStateWithLifecycle().value
@@ -103,8 +103,9 @@ private fun DataPage(
   }.value
 
   // 根据天气数据过滤可显示的卡片
-  val filteredCards = remember(allCardsConfigs, weatherData, currentAnimType) {
-    viewModel.getFilteredCardsForWeather(allCardsConfigs, weatherData, currentAnimType)
+  val hasAlerts = weatherData.weatherAlerts?.isNotEmpty() ?: false
+  val filteredCards = remember(allCardsConfigs, currentAnimType, hasAlerts) {
+    viewModel.getFilteredCardsForWeather(allCardsConfigs, currentAnimType, hasAlerts)
   }
 
   // 天气卡片网格

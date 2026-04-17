@@ -11,11 +11,18 @@ import me.spica.spicaweather3.R
 class LocationHelper(private val appContext: Context) {
 
   private val locationClient = LocationClient(appContext)
+  private var currentListener: BDAbstractLocationListener? = null
 
   fun fetchLocation(
     onSuccess: (BDLocation) -> Unit,
     onFailure: (Exception) -> Unit
   ) {
+    // 停止之前的定位请求（如果存在）
+    currentListener?.let { 
+      locationClient.stop()
+      currentListener = null
+    }
+    
     val option = LocationClientOption();
     option.locationMode = LocationClientOption.LocationMode.Hight_Accuracy;
     option.setFirstLocType(LocationClientOption.FirstLocType.ACCURACY_IN_FIRST_LOC)
@@ -29,7 +36,8 @@ class LocationHelper(private val appContext: Context) {
     option.setNeedNewVersionRgc(true);
     option.setIsNeedAddress(true)
     locationClient.locOption = option;
-    locationClient.registerLocationListener(object : BDAbstractLocationListener() {
+    
+    val listener = object : BDAbstractLocationListener() {
       override fun onReceiveLocation(location: BDLocation) {
         val addr = location.getAddrStr() //获取详细地址信息
         val country = location.getCountry() //获取国家
@@ -44,7 +52,11 @@ class LocationHelper(private val appContext: Context) {
         val locType = location.getLocType() //获取位置类型
         val locTypeDescription = location.getLocTypeDescription() //获取位置类型描述
         Log.e("LocationHelper", "onReceiveLocation: $location")
+        
+        // 停止定位并清理监听器引用
         locationClient.stop()
+        currentListener = null
+        
         if (
           (latitude > 0 && longitude > 0) &&
           (longitude < 180 && latitude < 90) &&
@@ -63,7 +75,10 @@ class LocationHelper(private val appContext: Context) {
         }
       }
 
-    })
+    }
+    
+    currentListener = listener
+    locationClient.registerLocationListener(listener)
     locationClient.start()
   }
 

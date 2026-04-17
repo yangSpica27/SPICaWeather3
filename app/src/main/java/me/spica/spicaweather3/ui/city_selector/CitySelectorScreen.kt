@@ -157,7 +157,7 @@ private fun ListSelector() {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(item.name, style = MiuixTheme.textStyles.subtitle)
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("${item.adm2}, ${item.adm1}", style = MiuixTheme.textStyles.body1)
+                Text("${item.administrativeArea2}, ${item.administrativeArea1}", style = MiuixTheme.textStyles.body1)
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }

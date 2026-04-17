@@ -1,6 +1,6 @@
 package me.spica.spicaweather3.domain.usecase
 
-import me.spica.spicaweather3.data.local.db.entity.CityEntity
+import me.spica.spicaweather3.domain.model.City
 import me.spica.spicaweather3.domain.repository.IWeatherRepository
 
 /**
@@ -25,7 +25,7 @@ class RefreshWeatherUseCase(
      * 批量刷新多个城市的天气
      */
     suspend fun refreshAllCities(
-        cities: List<CityEntity>,
+        cities: List<City>,
         onError: (String?) -> Unit = {},
         onSucceed: () -> Unit = {}
     ) {

@@ -3,7 +3,7 @@ package me.spica.spicaweather3.ui.main.weather
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import me.spica.spicaweather3.common.model.WeatherCardType
-import me.spica.spicaweather3.data.remote.api.model.weather.AggregatedWeatherData
+import me.spica.spicaweather3.domain.model.WeatherData
 import me.spica.spicaweather3.ui.main.cards.AlertCard
 import me.spica.spicaweather3.ui.main.cards.AqiCard
 import me.spica.spicaweather3.ui.main.cards.DailyCard
@@ -33,7 +33,7 @@ object WeatherCardFactory {
   @Composable
   fun CreateCard(
     cardType: WeatherCardType,
-    weatherData: AggregatedWeatherData,
+    weatherData: WeatherData,
     startAnim: Boolean,
     modifier: Modifier = Modifier
   ) {

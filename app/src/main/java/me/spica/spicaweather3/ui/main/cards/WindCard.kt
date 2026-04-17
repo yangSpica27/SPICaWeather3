@@ -29,7 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import me.spica.spicaweather3.R
-import me.spica.spicaweather3.data.remote.api.model.weather.AggregatedWeatherData
+import me.spica.spicaweather3.domain.model.WeatherData
 import me.spica.spicaweather3.presentation.theme.WIDGET_CARD_PADDING
 import me.spica.spicaweather3.presentation.theme.WIDGET_CARD_TITLE_TEXT_STYLE
 import top.yukonga.miuix.kmp.basic.Text
@@ -40,7 +40,7 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
  * 显示当前风力信息、风向、风速，以及未来24小时风力趋势图
  */
 @Composable
-fun WindCard(weatherEntity: AggregatedWeatherData, startAnim: Boolean) {
+fun WindCard(weatherEntity: WeatherData, startAnim: Boolean) {
   val todayWeather = weatherEntity.current
   val hourlyWeather = weatherEntity.forecast.next24Hours ?: emptyList()
 

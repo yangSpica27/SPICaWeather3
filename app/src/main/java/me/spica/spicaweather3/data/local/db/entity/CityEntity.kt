@@ -10,7 +10,12 @@ import me.spica.spicaweather3.ui.main.weather.WeatherPageState
 import java.util.*
 
 @TypeConverters(RoomTypeConverters::class)
-@Entity
+@Entity(
+  indices = [
+    androidx.room.Index(value = ["isUserLoc"]),
+    androidx.room.Index(value = ["sort"])
+  ]
+)
 data class CityEntity(
   @PrimaryKey
   val id: String = UUID.randomUUID().toString(),
@@ -31,11 +36,6 @@ data class CityEntity(
       latitude = lat,
       name = name
     )
-
-  fun toWeatherData(): WeatherPageState {
-    if (weather == null) return WeatherPageState.Empty(this)
-    return WeatherPageState.Data(this)
-  }
 
   override fun toString(): String {
     return "CityEntity(id='$id', name='$name', lat='$lat', lon='$lon', adm1='$adm1', adm2='$adm2', sort=$sort, weather=$weather)"

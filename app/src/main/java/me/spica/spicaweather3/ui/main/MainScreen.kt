@@ -114,7 +114,7 @@ fun MainScreen() {
     // 当前城市信息
     val currentCity = remember(currentPageData.value) {
         derivedStateOf {
-            currentPageData.value?.cityEntity
+            currentPageData.value?.city
         }
     }.value
 
@@ -123,7 +123,7 @@ fun MainScreen() {
     LaunchedEffect(currentPageData.value) {
         val pageData = currentPageData.value
         if (pageData is WeatherPageState.Data) {
-            val iconId = pageData.cityEntity.weather?.current?.icon ?: "100"
+            val iconId = pageData.city.weather?.current?.icon ?: "100"
             viewModel.weatherAnimType.value = WeatherAnimType.getAnimType(iconId)
         }
     }

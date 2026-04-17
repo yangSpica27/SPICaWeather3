@@ -39,10 +39,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastRoundToInt
 import me.spica.spicaweather3.R
-import me.spica.spicaweather3.data.remote.api.model.weather.AggregatedWeatherData
+import me.spica.spicaweather3.domain.model.WeatherData
 import me.spica.spicaweather3.presentation.theme.WIDGET_CARD_CORNER_SHAPE
 import me.spica.spicaweather3.presentation.theme.WIDGET_CARD_PADDING
 import me.spica.spicaweather3.presentation.theme.WIDGET_CARD_TITLE_TEXT_STYLE
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import me.spica.spicaweather3.ui.main.DailyTempLineView
 import me.spica.spicaweather3.ui.main.ItemWindData
 import me.spica.spicaweather3.ui.main.TempLineItem
@@ -55,7 +57,7 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.pressable
 
 @Composable
-fun HourlyCard(modifier: Modifier = Modifier, weatherData: AggregatedWeatherData) {
+fun HourlyCard(modifier: Modifier = Modifier, weatherData: WeatherData) {
   Column(
     modifier = modifier
       .padding(WIDGET_CARD_PADDING),
@@ -106,10 +108,15 @@ fun HourlyCard(modifier: Modifier = Modifier, weatherData: AggregatedWeatherData
       if (index == 0) {
         val sampleData = remember(weatherData) {
           weatherData.forecast.next24Hours?.map { hourlyWeather ->
+            val hour = try {
+              OffsetDateTime.parse(hourlyWeather.time).toLocalDateTime().hour
+            } catch (e: Exception) {
+              0
+            }
             TempLineItem(
               maxTemp = hourlyWeather.temperature.toDouble(),
               minTemp = hourlyWeather.temperature.toDouble(),
-              date = "${hourlyWeather.getTimeAsLocalDateTime().hour}:00",
+              date = "${hour}:00",
               weatherType = hourlyWeather.condition,
               wind360 = hourlyWeather.wind360.fastRoundToInt(),
               windDirection = hourlyWeather.windDirection,
@@ -122,8 +129,13 @@ fun HourlyCard(modifier: Modifier = Modifier, weatherData: AggregatedWeatherData
       } else {
         val sampleData = remember(weatherData) {
           weatherData.forecast.next24Hours?.map { hourlyWeather ->
+            val hour = try {
+              OffsetDateTime.parse(hourlyWeather.time).toLocalDateTime().hour
+            } catch (e: Exception) {
+              0
+            }
             ItemWindData(
-              date = "${hourlyWeather.getTimeAsLocalDateTime().hour}:00",
+              date = "${hour}:00",
               windDirection = hourlyWeather.windDirection,
               windSpeed = hourlyWeather.windSpeed.fastRoundToInt(),
               wind360 = hourlyWeather.wind360.fastRoundToInt()

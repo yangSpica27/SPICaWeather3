@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -35,8 +36,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import me.spica.spicaweather3.R
-import me.spica.spicaweather3.data.remote.api.model.weather.AggregatedWeatherData
-import me.spica.spicaweather3.data.remote.api.model.weather.DailyForecast
+import me.spica.spicaweather3.domain.model.WeatherData
+import me.spica.spicaweather3.domain.model.DailyForecast
 import me.spica.spicaweather3.presentation.theme.COLOR_BLACK_10
 import me.spica.spicaweather3.presentation.theme.WIDGET_CARD_CORNER_SHAPE
 import me.spica.spicaweather3.presentation.theme.WIDGET_CARD_TITLE_TEXT_STYLE
@@ -44,6 +45,7 @@ import me.spica.spicaweather3.utils.noRippleClickable
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.pressable
+import java.time.LocalDateTime
 import kotlin.random.Random
 
 /**
@@ -54,7 +56,7 @@ import kotlin.random.Random
  * @param data 天气数据，包含多日预报信息
  */
 @Composable
-fun DailyCard(data: AggregatedWeatherData) {
+fun DailyCard(data: WeatherData) {
   // 计算所有天气数据中的最低和最高温度，用于温度进度条的比例计算
   val limitLow = remember(data) { data.forecast.next7Days.minOf { it.tempMin } }
   val limitHigh = remember(data) { data.forecast.next7Days.maxOf { it.tempMax } }
@@ -122,13 +124,38 @@ private fun DailyItem(item: DailyForecast, limitLow: Int, limitHigh: Int) {
       horizontalArrangement = Arrangement.spacedBy(12.dp),
       verticalAlignment = Alignment.CenterVertically
     ) {
-      val dayLabel = if (item.isToday()) {
+      // 判断是否为今天并生成日期标签
+      val dayLabel = remember(item.date) {
+        try {
+          val forecastDate = LocalDateTime.parse("${item.date}T00:00:00")
+          val today = LocalDateTime.now()
+          if (today.year == forecastDate.year && 
+              today.monthValue == forecastDate.monthValue &&
+              today.dayOfMonth == forecastDate.dayOfMonth) {
+            null // 标记为今天，后续用字符串资源
+          } else {
+            when (forecastDate.dayOfWeek.value) {
+              1 -> "周一"
+              2 -> "周二"
+              3 -> "周三"
+              4 -> "周四"
+              5 -> "周五"
+              6 -> "周六"
+              7 -> "周日"
+              else -> ""
+            }
+          }
+        } catch (e: Exception) {
+          ""
+        }
+      }
+      val displayLabel = if (dayLabel == null) {
         stringResource(R.string.common_today)
       } else {
-        item.getDayOfWeekLabel()
+        dayLabel
       }
       Text(
-        dayLabel,
+        displayLabel,
         style = MiuixTheme.textStyles.body1,
         color = MiuixTheme.colorScheme.onSurfaceContainer,
         fontWeight = FontWeight.W800,
@@ -148,6 +175,7 @@ private fun DailyItem(item: DailyForecast, limitLow: Int, limitHigh: Int) {
         fontWeight = FontWeight.ExtraBold,
         textAlign = TextAlign.End
       )
+      Spacer(modifier = Modifier.width(6.dp))
       TempProgress(
         modifier = Modifier
           .width(55.dp)
@@ -212,7 +240,7 @@ private fun DailyItem(item: DailyForecast, limitLow: Int, limitHigh: Int) {
           ItemInfo(
             modifier = Modifier.weight(1f),
             title = stringResource(R.string.daily_info_visibility),
-            value = stringResource(R.string.daily_visibility_value, item.vis),
+            value = stringResource(R.string.daily_visibility_value, item.visibility),
           ) {
             Icon(
               painter = painterResource(id = R.drawable.material_symbols_outlined_eye_tracking),

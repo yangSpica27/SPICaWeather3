@@ -1,7 +1,7 @@
 package me.spica.spicaweather3.domain.repository
 
 import kotlinx.coroutines.flow.Flow
-import me.spica.spicaweather3.data.local.db.entity.CityEntity
+import me.spica.spicaweather3.domain.model.City
 
 /**
  * 天气数据仓库接口
@@ -13,12 +13,12 @@ interface IWeatherRepository {
     /**
      * 获取所有城市列表的 Flow
      */
-    fun getAllCitiesFlow(): Flow<List<CityEntity>>
+    fun getAllCitiesFlow(): Flow<List<City>>
 
     /**
      * 获取所有城市列表
      */
-    fun getAllCities(): List<CityEntity>
+    fun getAllCities(): List<City>
     
     /**
      * 根据经纬度刷新天气数据
@@ -34,7 +34,7 @@ interface IWeatherRepository {
      * 批量刷新多个城市的天气
      */
     suspend fun refreshAllCitiesWeather(
-        cities: List<CityEntity>,
+        cities: List<City>,
         onError: (String?) -> Unit,
         onSucceed: () -> Unit
     )
@@ -42,25 +42,25 @@ interface IWeatherRepository {
     /**
      * 插入或更新城市
      */
-    suspend fun insertCity(city: CityEntity)
+    suspend fun insertCity(city: City)
     
     /**
      * 删除城市
      */
-    suspend fun deleteCity(city: CityEntity)
+    suspend fun deleteCity(city: City)
     
     /**
      * 交换两个城市的排序
      */
-    suspend fun swapSort(city1: CityEntity, city2: CityEntity)
+    suspend fun swapSort(city1: City, city2: City)
     
     /**
      * 获取用户定位的城市
      */
-    suspend fun getUserLoc(): CityEntity?
+    suspend fun getUserLoc(): City?
     
     /**
      * 插入或更新用户定位城市
      */
-    suspend fun insertUserLoc(city: CityEntity)
+    suspend fun insertUserLoc(city: City)
 }

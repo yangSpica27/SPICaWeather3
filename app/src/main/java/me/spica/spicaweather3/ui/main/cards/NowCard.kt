@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import me.spica.spicaweather3.R
 import me.spica.spicaweather3.common.type.WeatherAnimType
-import me.spica.spicaweather3.data.remote.api.model.weather.AggregatedWeatherData
+import me.spica.spicaweather3.domain.model.WeatherData
 import me.spica.spicaweather3.ui.widget.WeatherBackground
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
@@ -51,7 +51,7 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
  * @param startAnim 是否开始播放动画
  */
 @Composable
-fun NowCard(modifier: Modifier = Modifier, weatherData: AggregatedWeatherData, startAnim: Boolean) {
+fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: Boolean) {
 
 
     // 根据天气图标ID计算对应的天气动画类型（晴天、雨天、雪天等）

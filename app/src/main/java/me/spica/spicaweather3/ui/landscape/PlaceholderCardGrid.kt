@@ -74,7 +74,7 @@ fun PlaceholderCardGrid(
     ) {
         // 标题
         Text(
-            text = cityState.cityEntity.name,
+            text = cityState.city.name,
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             color = MiuixTheme.colorScheme.onSurface,
@@ -82,7 +82,7 @@ fun PlaceholderCardGrid(
         )
         
         // 副标题 - 天气描述
-        cityState.cityEntity.weather?.current?.let { today ->
+        cityState.city.weather?.current?.let { today ->
             Text(
                 text = "${today.temperature}°",
                 fontSize = 16.sp,
@@ -239,7 +239,7 @@ fun CardDetailPlaceholder(
                 )
                 
                 Text(
-                    text = "城市: ${cityState.cityEntity.name}",
+                    text = "城市: ${cityState.city.name}",
                     fontSize = 16.sp,
                     color = MiuixTheme.colorScheme.onSurfaceVariantSummary
                 )

@@ -1,13 +1,13 @@
 package me.spica.spicaweather3.ui.main.weather
 
-import me.spica.spicaweather3.data.local.db.entity.CityEntity
+import me.spica.spicaweather3.domain.model.City
 
 sealed class WeatherPageState(
-  val cityEntity: CityEntity
+  val city: City
 ) {
 
-  class Data(cityEntity: CityEntity) : WeatherPageState(cityEntity)
+  class Data(city: City) : WeatherPageState(city)
 
-  class Empty(cityEntity: CityEntity) : WeatherPageState(cityEntity)
+  class Empty(city: City) : WeatherPageState(city)
 
 }

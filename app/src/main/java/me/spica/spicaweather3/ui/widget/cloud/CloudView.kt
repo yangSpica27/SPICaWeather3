@@ -16,7 +16,9 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.viewinterop.AndroidView
@@ -38,8 +40,21 @@ fun CloudView(
             animationSpec = spring(dampingRatio = .45f, stiffness = 500f),
             label = "show_progress"
         )
+        
+        // 使用 remember 保持 View 实例，避免重复创建
+        val textureView = remember { CloudTextureView(null) }
+        
+        // 确保组件离开时清理资源
+        DisposableEffect(Unit) {
+            onDispose {
+                textureView.cleanup()
+            }
+        }
+        
         AndroidView(
-            factory = { ctx -> CloudTextureView(ctx) },
+            factory = { ctx -> 
+                textureView.also { it.initialize(ctx) }
+            },
             update = { view -> view.showProgress = showProgress },
             modifier = Modifier
                 .fillMaxSize()
@@ -50,51 +65,87 @@ fun CloudView(
     }
 }
 
-private class CloudTextureView(context: Context) :
-    TextureView(context), TextureView.SurfaceTextureListener {
+private class CloudTextureView(initialContext: Context?) :
+    TextureView(initialContext ?: getDummyContext()), 
+    TextureView.SurfaceTextureListener {
 
-    private val density = context.resources.displayMetrics.density
+    companion object {
+        // 提供一个临时 context 用于初始化
+        private fun getDummyContext(): Context {
+            throw IllegalStateException("Context must be provided via initialize()")
+        }
+    }
+
+    private var _density: Float = 2.0f
+    private val density: Float get() = _density
 
     @Volatile var showProgress: Float = 0f
 
     private var renderThread: HandlerThread? = null
     private var renderHandler: Handler? = null
-    private val startTime = SystemClock.uptimeMillis()
+    private var startTime = SystemClock.uptimeMillis()
 
     @Volatile private var isRunning = false
+    @Volatile private var isSurfaceAvailable = false
 
     private val paint = Paint().apply { isAntiAlias = true }
 
     private val frameRunnable = object : Runnable {
         override fun run() {
-            if (!isRunning) return
+            if (!isRunning || !isSurfaceAvailable) return
             val frameStart = SystemClock.uptimeMillis()
-            renderFrame()
-            val delay = maxOf(1L, 16L - (SystemClock.uptimeMillis() - frameStart))
-            renderHandler?.postDelayed(this, delay)
+            try {
+                renderFrame()
+            } catch (e: Exception) {
+                // 捕获渲染异常，防止崩溃
+                android.util.Log.w("CloudView", "Render frame error", e)
+            }
+            // 双重检查，确保线程安全
+            if (isRunning && isSurfaceAvailable) {
+                val delay = maxOf(1L, 16L - (SystemClock.uptimeMillis() - frameStart))
+                renderHandler?.postDelayed(this, delay)
+            }
         }
     }
 
-    init {
+    fun initialize(ctx: Context) {
+        _density = ctx.resources.displayMetrics.density
         isOpaque = false
         surfaceTextureListener = this
     }
 
-    override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
-        isRunning = true
-        renderThread = HandlerThread("CloudRender").apply { start() }
-        renderHandler = Handler(renderThread!!.looper).also { it.post(frameRunnable) }
-    }
-
-    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
+    fun cleanup() {
         isRunning = false
+        isSurfaceAvailable = false
         renderHandler?.removeCallbacksAndMessages(null)
         renderThread?.let { thread ->
             thread.quitSafely()
-            try { thread.join() } catch (_: InterruptedException) { Thread.currentThread().interrupt() }
+            try { 
+                thread.join(100) // 最多等待100ms避免阻塞
+            } catch (_: InterruptedException) { 
+                Thread.currentThread().interrupt() 
+            }
         }
         renderThread = null
         renderHandler = null
+    }
+
+    override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
+        isSurfaceAvailable = true
+        startTime = SystemClock.uptimeMillis()
+        
+        // 防止重复创建线程
+        if (renderThread == null || !renderThread!!.isAlive) {
+            isRunning = true
+            renderThread = HandlerThread("CloudRender").apply { start() }
+            renderHandler = Handler(renderThread!!.looper)
+            renderHandler?.post(frameRunnable)
+        }
+    }
+
+    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
+        isSurfaceAvailable = false
+        cleanup()
         return true
     }
 
@@ -102,8 +153,16 @@ private class CloudTextureView(context: Context) :
     override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {}
 
     private fun renderFrame() {
-        if (!isRunning) return
-        val canvas = lockCanvas() ?: return
+        // 三重检查确保安全
+        if (!isRunning || !isSurfaceAvailable) return
+        
+        val canvas = try {
+            lockCanvas()
+        } catch (e: Exception) {
+            // Surface 可能已被销毁，静默失败
+            return
+        } ?: return
+        
         try {
             canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
 
@@ -112,11 +171,10 @@ private class CloudTextureView(context: Context) :
             val sp = showProgress
             val step = 16f * density
 
-            val dist1 = smoothWave(elapsed, 5400L)
-            val dist2 = smoothWave(elapsed, 3500L)
-            val dist3 = smoothWave(elapsed, 2750L)
+            val dist1 = smoothCloudWave(elapsed, 5400L)
+            val dist2 = smoothCloudWave(elapsed, 3500L)
+            val dist3 = smoothCloudWave(elapsed, 2750L)
 
-            // 与原实现一致：以右上角为轴心缩放（canvas.scale pivot = (w, 0)）
             canvas.save()
             canvas.scale(sp, sp, w, 0f)
 
@@ -140,7 +198,20 @@ private class CloudTextureView(context: Context) :
 
             canvas.restore()
         } finally {
-            unlockCanvasAndPost(canvas)
+            try {
+                unlockCanvasAndPost(canvas)
+            } catch (e: Exception) {
+                // 捕获 unlock 异常
+                android.util.Log.w("CloudView", "Unlock canvas error", e)
+            }
         }
     }
+}
+
+/**
+ * 平滑波动函数 - 用于云朵大小的周期性变化
+ */
+private fun smoothCloudWave(elapsed: Long, period: Long): Float {
+    val phase = (elapsed % period).toFloat() / period.toFloat()
+    return kotlin.math.sin(phase * 2f * kotlin.math.PI.toFloat()).toFloat()
 }

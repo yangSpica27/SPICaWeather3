@@ -1,6 +1,6 @@
 package me.spica.spicaweather3.domain.usecase
 
-import me.spica.spicaweather3.data.remote.api.model.Location
+import me.spica.spicaweather3.domain.model.SearchLocation
 import me.spica.spicaweather3.domain.repository.ICityRepository
 
 /**
@@ -15,7 +15,7 @@ class SearchCityUseCase(
     suspend operator fun invoke(
         keyword: String,
         onError: (String?) -> Unit = {},
-        onSucceed: (List<Location>) -> Unit = {}
+        onSucceed: (List<SearchLocation>) -> Unit = {}
     ) {
         if (keyword.isEmpty()) {
             onSucceed(emptyList())
@@ -29,7 +29,7 @@ class SearchCityUseCase(
      */
     suspend fun getTopCities(
         onError: (String?) -> Unit = {},
-        onSucceed: (List<Location>) -> Unit = {}
+        onSucceed: (List<SearchLocation>) -> Unit = {}
     ) {
         repository.fetchTopCities(onError, onSucceed)
     }

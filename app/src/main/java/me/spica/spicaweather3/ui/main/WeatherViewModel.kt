@@ -19,8 +19,7 @@ import me.spica.spicaweather3.common.type.WeatherAnimType
 import me.spica.spicaweather3.common.model.WeatherCardConfig
 import me.spica.spicaweather3.common.model.WeatherCardType
 import me.spica.spicaweather3.core.constants.MainScreenConstants
-import me.spica.spicaweather3.data.local.db.entity.CityEntity
-import me.spica.spicaweather3.data.remote.api.model.weather.AggregatedWeatherData
+import me.spica.spicaweather3.domain.model.City
 import me.spica.spicaweather3.domain.usecase.GetAllCitiesUseCase
 import me.spica.spicaweather3.domain.usecase.LocationUseCase
 import me.spica.spicaweather3.domain.usecase.ManageCitiesUseCase
@@ -46,7 +45,7 @@ class WeatherViewModel(
 
   @OptIn(FlowPreview::class)
   val weatherPageStates: StateFlow<List<WeatherPageState>> = _dataFlow
-    .map { value -> value.map { cityEntity -> cityEntity.toWeatherData() } }
+    .map { cities -> cities.map { city -> city.toWeatherPageState() } }
     .conflate()
     .distinctUntilChanged()
     .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
@@ -68,7 +67,7 @@ class WeatherViewModel(
 
   val initIndex = MutableStateFlow(0)
 
-  fun swapSort(city1: CityEntity, city2: CityEntity) {
+  fun swapSort(city1: City, city2: City) {
     viewModelScope.launch(context = Dispatchers.IO) {
       manageCitiesUseCase.swapCityOrder(city1, city2)
     }
@@ -79,14 +78,16 @@ class WeatherViewModel(
       val userLoc = locationUseCase.getUserLocationCity()
       if (userLoc == null && bdLocation == null) {
         // 默认北京
-        val city = CityEntity(
+        val city = City(
+          id = java.util.UUID.randomUUID().toString(),
           name = "北京",
-          lat = "39.90498",
-          lon = "116.40528",
-          adm1 = "北京市",
-          adm2 = "北京市",
-          sort = -1,
-          isUserLoc = true
+          latitude = "39.90498",
+          longitude = "116.40528",
+          administrativeArea1 = "北京市",
+          administrativeArea2 = "北京市",
+          sortOrder = -1,
+          isUserLocation = true,
+          weather = null
         )
         manageCitiesUseCase.addCity(city)
       } else if (bdLocation != null) {
@@ -107,7 +108,7 @@ class WeatherViewModel(
 
 
   fun deleteCity(
-    city: CityEntity,
+    city: City,
     onSuccess: () -> Unit = {}
   ) {
     viewModelScope.launch(context = Dispatchers.IO) {
@@ -132,7 +133,7 @@ class WeatherViewModel(
           _isRefreshing.update { false }
           // 刷新成功后更新时间戳和城市列表快照
           lastRefreshTime = System.currentTimeMillis()
-          lastRefreshedCityIds = weatherPageStates.value.map { it.cityEntity.id }
+          lastRefreshedCityIds = weatherPageStates.value.map { it.city.id }
         }
       )
     }
@@ -142,21 +143,21 @@ class WeatherViewModel(
    * 根据天气数据过滤可显示的卡片
    * 
    * @param configs 所有卡片配置
-   * @param weatherData 天气数据
    * @param animType 当前天气动画类型
+   * @param hasAlerts 是否有天气预警
    * @return 过滤后的可显示卡片列表
    */
   fun getFilteredCardsForWeather(
     configs: List<WeatherCardConfig>,
-    weatherData: AggregatedWeatherData,
-    animType: WeatherAnimType
+    animType: WeatherAnimType,
+    hasAlerts: Boolean
   ): List<WeatherCardConfig> {
     return configs.filter { config ->
       when (config.cardType) {
         // 分钟级降水预报仅在有雨的场景下显示
         WeatherCardType.MINUTELY -> animType.showRain
         // 天气预警仅在有预警数据时显示
-        WeatherCardType.ALERT -> !weatherData.weatherAlerts.isNullOrEmpty()
+        WeatherCardType.ALERT -> hasAlerts
         // 其他卡片默认显示
         else -> true
       }
@@ -175,4 +176,15 @@ class WeatherViewModel(
   }
 
 
+}
+
+/**
+ * 将 City 转换为 WeatherPageState
+ */
+fun City.toWeatherPageState(): WeatherPageState {
+  return if (weather != null) {
+    WeatherPageState.Data(this)
+  } else {
+    WeatherPageState.Empty(this)
+  }
 }
