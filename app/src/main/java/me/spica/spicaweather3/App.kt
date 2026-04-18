@@ -6,6 +6,7 @@ import me.spica.spicaweather3.core.di.networkModule
 import me.spica.spicaweather3.core.di.persistenceModule
 import me.spica.spicaweather3.core.di.utilsModule
 import me.spica.spicaweather3.core.di.viewModelModule
+import me.spica.spicaweather3.data.work.WeatherRefreshScheduler
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.GlobalContext.startKoin
@@ -22,6 +23,7 @@ class App : Application() {
     super.onCreate()
     initKoin()
     instance = this
+    WeatherRefreshScheduler.enqueue(this)
   }
 
 
