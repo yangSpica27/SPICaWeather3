@@ -53,6 +53,7 @@
     <!-- 今日天气信息小组件 -->
     <receiver
         android:name=".ui.app_widget.TodayInfoAppWidgetReceiver"
+        android:label="@string/widget_today_info_name"
         android:exported="true">
       <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -65,6 +66,7 @@
     <!-- 一周天气小组件 -->
     <receiver
         android:name=".ui.app_widget.WeeklyWeatherAppWidgetReceiver"
+        android:label="@string/widget_weekly_weather_name"
         android:exported="true">
       <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -77,6 +79,7 @@
     <!-- 散排天气小组件 -->
     <receiver
         android:name=".ui.app_widget.ScatteredWeatherAppWidgetReceiver"
+        android:label="@string/widget_scattered_weather_name"
         android:exported="true">
       <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />

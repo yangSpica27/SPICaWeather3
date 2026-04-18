@@ -93,6 +93,9 @@
   <string name="pollutant_nitrogen_dioxide">Nitrogen dioxide</string>
 
   <!-- Widget -->
+  <string name="widget_today_info_name">Todays Weather</string>
+  <string name="widget_weekly_weather_name">Weekly Weather</string>
+  <string name="widget_scattered_weather_name">Scattered Weather</string>
   <string name="widget_today_info_description">Display today\'s weather information</string>
   <string name="weekly_weather_widget_description">Display weekly weather forecast</string>
 </resources>

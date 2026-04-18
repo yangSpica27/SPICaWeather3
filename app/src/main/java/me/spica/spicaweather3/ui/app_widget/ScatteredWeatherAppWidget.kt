@@ -26,7 +26,6 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
-import androidx.room.Room
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import me.spica.spicaweather3.data.local.db.AppDatabase
@@ -49,11 +48,7 @@ class ScatteredWeatherAppWidget : GlanceAppWidget() {
         context: Context,
         id: GlanceId
     ) = withContext(Dispatchers.IO) {
-        val database = Room.databaseBuilder(
-            context.applicationContext,
-            AppDatabase::class.java,
-            "spica_weather.db"
-        ).fallbackToDestructiveMigration(false).build()
+        val database = AppDatabase.build(context)
 
         val cityEntity = database.cityDao().getUserLoc()
         val weatherData = cityEntity?.weather

@@ -23,7 +23,6 @@ import androidx.glance.layout.width
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
-import androidx.room.Room
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import me.spica.spicaweather3.data.local.db.AppDatabase
@@ -42,14 +41,7 @@ class WeeklyWeatherAppWidget : GlanceAppWidget() {
     context: Context,
     id: GlanceId
   ) = withContext(Dispatchers.IO) {
-    // 使用与应用相同的数据库名称和配置
-    val database = Room.databaseBuilder(
-      context.applicationContext,
-      AppDatabase::class.java,
-      "spica_weather.db"
-    )
-      .fallbackToDestructiveMigration(false)
-      .build()
+    val database = AppDatabase.build(context)
 
     // 获取用户位置的天气数据
     val cityEntity = database.cityDao().getUserLoc()

@@ -1,7 +1,11 @@
 package me.spica.spicaweather3.data.local.db
 
+import android.content.Context
 import androidx.room.Database
+import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import me.spica.spicaweather3.data.local.db.dao.CityDao
 import me.spica.spicaweather3.data.local.db.entity.CityEntity
 
@@ -28,4 +32,26 @@ import me.spica.spicaweather3.data.local.db.entity.CityEntity
 )
 abstract class AppDatabase : RoomDatabase() {
   abstract fun cityDao(): CityDao
+
+  companion object {
+    const val DATABASE_NAME = "spica_weather.db"
+
+    val MIGRATION_7_8 = object : Migration(7, 8) {
+      override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_CityEntity_isUserLoc` ON `CityEntity` (`isUserLoc`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_CityEntity_sort` ON `CityEntity` (`sort`)")
+      }
+    }
+
+    fun build(context: Context): AppDatabase {
+      return Room.databaseBuilder(
+        context.applicationContext,
+        AppDatabase::class.java,
+        DATABASE_NAME
+      )
+        .addMigrations(MIGRATION_7_8)
+        .fallbackToDestructiveMigration(false)
+        .build()
+    }
+  }
 }

@@ -39,10 +39,24 @@ object WidgetUpdateHelper {
     }
 
     /**
+     * 更新一周天气小组件
+     */
+    suspend fun updateWeeklyWeatherWidgets(context: Context) {
+        withContext(Dispatchers.IO) {
+            try {
+                WeeklyWeatherAppWidget().updateAll(context)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    /**
      * 更新所有小组件（天气数据刷新后统一调用）
      */
     suspend fun updateAllWidgets(context: Context) {
         updateTodayInfoWidgets(context)
+        updateWeeklyWeatherWidgets(context)
         updateScatteredWeatherWidgets(context)
     }
 }
