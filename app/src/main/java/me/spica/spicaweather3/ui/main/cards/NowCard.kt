@@ -131,7 +131,7 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: 
     ) {
         // 动态天气背景（晴天、雨天、雪天等不同动画效果）
         WeatherBackground(
-            currentWeatherType = WeatherAnimType.RainLight,
+            currentWeatherType = currentWeatherAnimType,
             collapsedFraction = 0f, // 0=完全展开，1=完全折叠
             textCollision = textCollision,
             weatherData = weatherData
