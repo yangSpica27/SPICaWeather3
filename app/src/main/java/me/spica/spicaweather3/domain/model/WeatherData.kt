@@ -1,8 +1,11 @@
 package me.spica.spicaweather3.domain.model
 
+import androidx.compose.runtime.Immutable
+
 /**
  * 领域模型 - 聚合的天气数据
  */
+@Immutable
 data class WeatherData(
     val generatedAt: String,
     val location: LocationInfo,

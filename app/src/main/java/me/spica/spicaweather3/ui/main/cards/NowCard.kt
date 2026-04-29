@@ -1,5 +1,15 @@
 package me.spica.spicaweather3.ui.main.cards
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Typeface
+import android.text.Layout
+import android.text.SpannableStringBuilder
+import android.text.StaticLayout
+import android.text.TextPaint
+import android.text.style.AbsoluteSizeSpan
+import android.text.style.StyleSpan
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -34,7 +44,9 @@ import me.spica.spicaweather3.R
 import me.spica.spicaweather3.common.type.WeatherAnimType
 import me.spica.spicaweather3.domain.model.WeatherData
 import me.spica.spicaweather3.ui.widget.WeatherBackground
+import me.spica.spicaweather3.ui.widget.rain.RainTextCollision
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import kotlin.math.ceil
 
 /**
  * 当前天气卡片
@@ -80,21 +92,35 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: 
         animationSpec = tween(durationMillis = 550, 150)
     ).value
 
-    // ==================== 碰撞矩形追踪 ====================
-    // 追踪 Box 和湿度 Text 的位置，计算相对碰撞矩形供雨滴动画使用
+    // ==================== 温度文本碰撞追踪 ====================
     var boxRectInRoot by remember { mutableStateOf(Rect.Zero) }
-    var humidityRectInRoot by remember { mutableStateOf(Rect.Zero) }
+    var temperatureRectInRoot by remember { mutableStateOf(Rect.Zero) }
     val density = LocalDensity.current
-    val cornerRadiusPx = with(density) { 12.dp.toPx() }
-
-    val collisionRect: Rect? = if (humidityRectInRoot != Rect.Zero && boxRectInRoot != Rect.Zero) {
-        Rect(
-            left = humidityRectInRoot.left - boxRectInRoot.left,
-            top = humidityRectInRoot.top - boxRectInRoot.top,
-            right = humidityRectInRoot.right - boxRectInRoot.left,
-            bottom = humidityRectInRoot.bottom - boxRectInRoot.top
-        )
-    } else null
+    val tempTextSizePx = with(density) { 94.sp.toPx() }.toInt()
+    val unitTextSizePx = with(density) { 45.sp.toPx() }.toInt()
+    val textCollision = remember(
+        weatherData.current.temperature,
+        boxRectInRoot,
+        temperatureRectInRoot,
+        tempTextSizePx,
+        unitTextSizePx,
+    ) {
+        if (boxRectInRoot == Rect.Zero || temperatureRectInRoot == Rect.Zero) {
+            null
+        } else {
+            RainTextCollision(
+                bitmap = createTemperatureCollisionBitmap(
+                    temperature = weatherData.current.temperature,
+                    widthPx = ceil(temperatureRectInRoot.width).toInt().coerceAtLeast(1),
+                    heightPx = ceil(temperatureRectInRoot.height).toInt().coerceAtLeast(1),
+                    temperatureTextSizePx = tempTextSizePx,
+                    unitTextSizePx = unitTextSizePx,
+                ),
+                left = temperatureRectInRoot.left - boxRectInRoot.left,
+                top = temperatureRectInRoot.top - boxRectInRoot.top,
+            )
+        }
+    }
 
     // ==================== 主布局 ====================
     // 使用 Box 叠加布局：底层为天气背景动画，上层为天气信息文字
@@ -105,10 +131,9 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: 
     ) {
         // 动态天气背景（晴天、雨天、雪天等不同动画效果）
         WeatherBackground(
-            currentWeatherType = currentWeatherAnimType,
+            currentWeatherType = WeatherAnimType.RainLight,
             collapsedFraction = 0f, // 0=完全展开，1=完全折叠
-            collisionRect = collisionRect,
-            collisionCornerRadiusPx = cornerRadiusPx,
+            textCollision = textCollision,
             weatherData = weatherData
         )
 
@@ -126,10 +151,12 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: 
         ) {
             // 当前温度（大号显示，带渐显和向上平移动画）
             Text(
-                modifier = Modifier.graphicsLayer {
-                    alpha = textAnimValue1
-                    translationY = -12.dp.toPx() * (1f - textAnimValue1)
-                },
+                modifier = Modifier
+                    .graphicsLayer {
+                        alpha = textAnimValue1
+                        translationY = -12.dp.toPx() * (1f - textAnimValue1)
+                    }
+                    .onGloballyPositioned { temperatureRectInRoot = it.boundsInRoot() },
                 text = buildAnnotatedString {
                     // 温度数字（94sp 超大字体）
                     withStyle(
@@ -186,15 +213,6 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: 
                         alpha = textAnimValue3
                         translationY = -12.dp.toPx() * (1f - textAnimValue3)
                     }
-                    .onGloballyPositioned {
-                        val location = it.boundsInRoot()
-                       with(density){
-                           humidityRectInRoot = location.copy(
-                               left = location.left + 20.dp.toPx(), // 左侧内边距
-                               right = location.right - 8.dp.toPx() // 右侧内边距
-                           )
-                       }
-                    }
                     .padding(start = 12.dp)
                     .clip(
                         RoundedCornerShape(12.dp)
@@ -209,6 +227,40 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: 
                         vertical = 4.dp
                     )
             )
+        }
+    }
+}
+
+private fun createTemperatureCollisionBitmap(
+    temperature: Int,
+    widthPx: Int,
+    heightPx: Int,
+    temperatureTextSizePx: Int,
+    unitTextSizePx: Int,
+): Bitmap {
+    val text = SpannableStringBuilder("${temperature}°C").apply {
+        val tempEnd = temperature.toString().length
+        setSpan(AbsoluteSizeSpan(temperatureTextSizePx), 0, tempEnd, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        setSpan(StyleSpan(Typeface.BOLD), 0, tempEnd, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        setSpan(AbsoluteSizeSpan(unitTextSizePx), tempEnd, length, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        setSpan(StyleSpan(Typeface.BOLD), tempEnd, length, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+    }
+    val paint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = android.graphics.Color.WHITE
+        typeface = Typeface.DEFAULT_BOLD
+    }
+    val layout = StaticLayout.Builder
+        .obtain(text, 0, text.length, paint, widthPx)
+        .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+        .setIncludePad(false)
+        .build()
+
+    return Bitmap.createBitmap(widthPx, heightPx, Bitmap.Config.ARGB_8888).also { bitmap ->
+        Canvas(bitmap).apply {
+            if (layout.height < heightPx) {
+                translate(0f, ((heightPx - layout.height) * 0.5f))
+            }
+            layout.draw(this)
         }
     }
 }

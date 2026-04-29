@@ -1726,6 +1726,22 @@ public class ParticleSystem {
   }
 
   /**
+   * 设置粒子压力强度。
+   * @param pressureStrength 压力强度
+   */
+  public void setParticlePressureStrength(float pressureStrength) {
+    m_pressureStrength = pressureStrength;
+  }
+
+  /**
+   * 获取粒子压力强度。
+   * @return 压力强度
+   */
+  public float getParticlePressureStrength() {
+    return m_pressureStrength;
+  }
+
+  /**
    * 设置粒子阻尼强度。
    * @param damping 阻尼强度
    */

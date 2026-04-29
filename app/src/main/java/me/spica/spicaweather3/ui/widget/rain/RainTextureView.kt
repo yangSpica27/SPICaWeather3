@@ -44,6 +44,7 @@ class RainTextureView(context: Context) : TextureView(context), TextureView.Surf
     @Volatile private var surfaceWidth = 1
     @Volatile private var surfaceHeight = 1
     @Volatile private var pendingRect: FloatArray? = null
+    @Volatile private var pendingTextCollision: RainTextCollision? = null
 
     init {
         isOpaque = false          // 关键：允许透明通道透过 TextureView
@@ -61,6 +62,20 @@ class RainTextureView(context: Context) : TextureView(context), TextureView.Surf
         }
     }
 
+    fun clearCollisionRect() {
+        pendingRect = null
+        if (::simulation.isInitialized) {
+            simulation.pendingCollisionRect = null
+        }
+    }
+
+    fun setTextCollision(collision: RainTextCollision?) {
+        pendingTextCollision = collision
+        if (::simulation.isInitialized) {
+            simulation.pendingTextCollision = collision
+        }
+    }
+
     // ─────────────────── SurfaceTextureListener ───────────────────
 
     override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
@@ -68,6 +83,7 @@ class RainTextureView(context: Context) : TextureView(context), TextureView.Surf
         surfaceHeight = height
         simulation = RainSimulation(width, height).also {
             it.pendingCollisionRect = pendingRect
+            it.pendingTextCollision = pendingTextCollision
             it.init()
         }
         startRenderLoop(surface)

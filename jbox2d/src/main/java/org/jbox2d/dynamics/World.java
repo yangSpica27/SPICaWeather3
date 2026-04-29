@@ -1874,6 +1874,24 @@ public class World {
   }
 
   /**
+   * Change particle pressure strength. Default value is 0.05f.
+   *
+   * @param pressureStrength
+   */
+  public void setParticlePressureStrength(float pressureStrength) {
+    m_particleSystem.setParticlePressureStrength(pressureStrength);
+  }
+
+  /**
+   * Get particle pressure strength.
+   *
+   * @return
+   */
+  public float getParticlePressureStrength() {
+    return m_particleSystem.getParticlePressureStrength();
+  }
+
+  /**
    * Damping is used to reduce the velocity of particles. The damping parameter can be larger than
    * 1.0f but the damping effect becomes sensitive to the time step when the damping parameter is
    * large.

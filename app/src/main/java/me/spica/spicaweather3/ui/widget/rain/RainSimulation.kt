@@ -1,5 +1,6 @@
 package me.spica.spicaweather3.ui.widget.rain
 
+import android.graphics.Bitmap
 import org.jbox2d.collision.shapes.PolygonShape
 import org.jbox2d.common.Settings
 import org.jbox2d.common.Vec2
@@ -51,7 +52,7 @@ class RainSimulation(
         const val MAX_PARTICLES = 2000
 
         /** 同时活跃的最大粒子组数 */
-        private const val MAX_GROUPS = 35
+        private const val MAX_GROUPS = 42
 
         /** 粒子组从生成到回收的总生命周期（毫秒） */
         private const val TOTAL_LIFETIME_MS = 4000L
@@ -64,6 +65,15 @@ class RainSimulation(
 
         /** 聚合判定：平均竖直速度下限，低于此值说明已减速/碰撞 */
         private const val COHESIVE_MIN_VY = 5f
+
+        /** 源项目最大雨档（bg type 8）迁移过来的主要参数 */
+        private const val MAX_RAIN_GRAVITY_Y = 100.25f
+        private const val MAX_RAIN_PRESSURE = 0.024f
+        private const val MAX_RAIN_DAMPING = 1.0f
+        private const val MAX_RAIN_BASE_VELOCITY = 40f
+        private const val MAX_RAIN_VELOCITY_VARIANCE_RATIO = 0.15f
+        private const val TEXT_COLLISION_ALPHA_THRESHOLD = 32
+        private const val TEXT_COLLISION_MIN_RUN_PX = 3
 
         init {
             // 提高 JBox2D 多边形顶点上限以支持更平滑的圆角碰撞体
@@ -92,7 +102,11 @@ class RainSimulation(
     @Volatile
     var pendingCollisionRect: FloatArray? = null
 
+    @Volatile
+    var pendingTextCollision: RainTextCollision? = null
+
     private var appliedCollisionRect: FloatArray? = null
+    private var appliedTextCollisionSignature: Int? = null
     private var collisionBody: Body? = null
 
     // ────────── 供渲染器使用的访问器 ──────────
@@ -130,12 +144,14 @@ class RainSimulation(
      */
     fun init() {
         synchronized(this) {
-            world = World(Vec2(0f, 22f))           // 向下重力（增大加速度，雨滴下落更快）
+            world = World(Vec2(0f, MAX_RAIN_GRAVITY_Y))
+            world.setParticlePressureStrength(MAX_RAIN_PRESSURE)
+            world.setParticleDamping(MAX_RAIN_DAMPING)
             world.particleRadius  = 6f / proportion
             world.particleMaxCount = MAX_PARTICLES
 
-            // 同步碰撞体（如果外部已设置碰撞矩形）
-            applyCollisionRect()
+            // 同步碰撞体（如果外部已设置碰撞矩形或文本轮廓）
+            syncCollisionBody()
 
             // 错时生成各粒子组，避免所有粒子同时出现
             for (i in 0 until MAX_GROUPS) {
@@ -156,7 +172,7 @@ class RainSimulation(
     fun update() {
         if (!initOK) return
         synchronized(this) {
-            applyCollisionRect()
+            syncCollisionBody()
             val now = System.currentTimeMillis()
 
             // 索引遍历，避免 filter/indexOf 产生临时列表和 O(n) 查找
@@ -245,6 +261,126 @@ class RainSimulation(
         })
 
         appliedCollisionRect = rect.clone()
+        appliedTextCollisionSignature = null
+    }
+
+    private fun syncCollisionBody() {
+        when {
+            pendingTextCollision != null -> applyTextCollision()
+            pendingCollisionRect != null -> applyCollisionRect()
+            else -> {
+                destroyCollisionBody()
+                appliedCollisionRect = null
+                appliedTextCollisionSignature = null
+            }
+        }
+    }
+
+    private fun applyTextCollision() {
+        val textCollision = pendingTextCollision ?: return
+        val signature = buildTextCollisionSignature(textCollision)
+        if (appliedTextCollisionSignature == signature) return
+
+        destroyCollisionBody()
+
+        val bitmap = textCollision.bitmap
+        if (bitmap.width <= 0 || bitmap.height <= 0) return
+
+        val pixels = IntArray(bitmap.width * bitmap.height)
+        bitmap.getPixels(pixels, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
+
+        val body = world.createBody(BodyDef().apply { type = BodyType.STATIC })
+        var fixtureCount = 0
+        val sampleStepPx = (bitmap.width / 42).coerceIn(4, 8)
+
+        for (xStart in 0 until bitmap.width step sampleStepPx) {
+            val xEnd = minOf(bitmap.width, xStart + sampleStepPx)
+            var runStart = -1
+            for (y in 0 until bitmap.height) {
+                val opaque = isColumnOpaque(pixels, bitmap.width, xStart, xEnd, y)
+                if (opaque) {
+                    if (runStart < 0) runStart = y
+                } else if (runStart >= 0) {
+                    fixtureCount += addTextFixture(body, textCollision, xStart, xEnd, runStart, y)
+                    runStart = -1
+                }
+            }
+            if (runStart >= 0) {
+                fixtureCount += addTextFixture(body, textCollision, xStart, xEnd, runStart, bitmap.height)
+            }
+        }
+
+        if (fixtureCount == 0) {
+            world.destroyBody(body)
+            appliedTextCollisionSignature = null
+            return
+        }
+
+        collisionBody = body
+        appliedTextCollisionSignature = signature
+        appliedCollisionRect = null
+    }
+
+    private fun addTextFixture(
+        body: Body,
+        textCollision: RainTextCollision,
+        xStart: Int,
+        xEnd: Int,
+        yStart: Int,
+        yEnd: Int,
+    ): Int {
+        val runHeight = yEnd - yStart
+        if (runHeight < TEXT_COLLISION_MIN_RUN_PX) return 0
+
+        val halfWidth = ((xEnd - xStart) * 0.5f) / proportion
+        val halfHeight = (runHeight * 0.5f) / proportion
+        if (halfWidth < Settings.linearSlop || halfHeight < Settings.linearSlop) return 0
+
+        val centerX = (textCollision.left + xStart + ((xEnd - xStart) * 0.5f)) / proportion
+        val centerY = (textCollision.top + yStart + (runHeight * 0.5f)) / proportion
+        val shape = PolygonShape().apply {
+            setAsBox(halfWidth, halfHeight, Vec2(centerX, centerY), 0f)
+        }
+        body.createFixture(FixtureDef().apply {
+            this.shape = shape
+            friction = 0.8f
+            restitution = 0.15f
+            filter.maskBits = 0b01
+            filter.groupIndex = 0b01
+        })
+        return 1
+    }
+
+    private fun isColumnOpaque(
+        pixels: IntArray,
+        bitmapWidth: Int,
+        xStart: Int,
+        xEnd: Int,
+        y: Int,
+    ): Boolean {
+        val rowOffset = y * bitmapWidth
+        for (x in xStart until xEnd) {
+            val alpha = pixels[rowOffset + x] ushr 24
+            if (alpha >= TEXT_COLLISION_ALPHA_THRESHOLD) return true
+        }
+        return false
+    }
+
+    private fun buildTextCollisionSignature(textCollision: RainTextCollision): Int {
+        val bitmap = textCollision.bitmap
+        var result = bitmap.generationId
+        result = 31 * result + bitmap.width
+        result = 31 * result + bitmap.height
+        result = 31 * result + textCollision.left.toBits()
+        result = 31 * result + textCollision.top.toBits()
+        return result
+    }
+
+    private fun destroyCollisionBody() {
+        collisionBody?.let {
+            world.destroyBody(it)
+            collisionBody = null
+        }
     }
 
     // ────────── 私有：粒子组渲染信息计算 ──────────
@@ -307,9 +443,9 @@ class RainSimulation(
         def.shape = shape
         def.flags = ParticleType.b2_waterParticle
 
-        // 初速度：以 28 为基础，±15% 随机浮动（提高初始下落速度）
-        val baseV = 28f
-        val varV  = baseV * 0.15f
+        // 最大雨档：提高初始下落速度，并保留源实现的 15% 波动
+        val baseV = MAX_RAIN_BASE_VELOCITY
+        val varV  = baseV * MAX_RAIN_VELOCITY_VARIANCE_RATIO
         def.linearVelocity.set(
             0f,
             baseV + (Random.nextFloat() - 0.5f) * 2f * varV

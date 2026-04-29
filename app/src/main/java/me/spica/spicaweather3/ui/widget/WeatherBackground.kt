@@ -18,6 +18,7 @@ import me.spica.spicaweather3.ui.widget.cloud.CloudView
 import me.spica.spicaweather3.ui.widget.galaxy.GalaxyView
 import me.spica.spicaweather3.ui.widget.haze.HazeView
 import me.spica.spicaweather3.ui.widget.rain.RainView
+import me.spica.spicaweather3.ui.widget.rain.RainTextCollision
 import me.spica.spicaweather3.ui.widget.snow.SnowView
 import me.spica.spicaweather3.ui.widget.sun.SunView
 import me.spica.spicaweather3.utils.navSharedBounds
@@ -31,6 +32,7 @@ fun WeatherBackground(
   currentWeatherType: WeatherAnimType,
   collisionRect: Rect? = null,
   collisionCornerRadiusPx: Float = 0f,
+  textCollision: RainTextCollision? = null,
 ) {
 
   val currentTopColor = remember { Animatable(WeatherAnimType.RainLight.topColor) }
@@ -62,7 +64,12 @@ fun WeatherBackground(
   ) {
     GalaxyView(collapsedFraction, currentWeatherType.showGalaxy)
     SnowView(show = currentWeatherType.showSnow)
-    RainView(show = currentWeatherType.showRain, collisionRect = collisionRect, collisionCornerRadiusPx = collisionCornerRadiusPx)
+    RainView(
+      show = currentWeatherType.showRain,
+      collisionRect = collisionRect,
+      collisionCornerRadiusPx = collisionCornerRadiusPx,
+      textCollision = textCollision
+    )
     CloudView(collapsedFraction, currentWeatherType.showCloud)
     SunView(collapsedFraction, currentWeatherType.showSun)
     HazeView(show = currentWeatherType.showHaze)
