@@ -53,14 +53,14 @@ private data class EmitterSlot(
 class RainSimulation(
     val width: Int,
     val height: Int,
-    val proportion: Float = 100f
+    val proportion: Float = 200f
 ) {
     companion object {
         /** JBox2D 允许的最大粒子数 */
         const val MAX_PARTICLES = 2800
 
         /** 同时活跃的最大粒子组数 */
-        private const val MAX_GROUPS = 42
+        private const val MAX_GROUPS = 82
 
         /** 粒子组从生成到回收的总生命周期（毫秒） */
         private const val TOTAL_LIFETIME_MS = 4000L
@@ -74,7 +74,7 @@ class RainSimulation(
         /** 聚合判定：平均竖直速度下限，低于此值说明已减速/碰撞 */
         private const val COHESIVE_MIN_VY = 5f
 
-        /** 源项目最大雨档（bg type 8）迁移过来的主要参数 */
+        /** 项目最大雨档（bg type 8）迁移过来的主要参数 */
         private const val MAX_RAIN_GRAVITY_Y = 100.25f
         private const val MAX_RAIN_PRESSURE = 0.024f
         private const val MAX_RAIN_DAMPING = 1.0f
@@ -89,8 +89,8 @@ class RainSimulation(
         private const val RESPAWN_TOP_MIN_RATIO = 0.10f
         private const val RESPAWN_TOP_MAX_RATIO = 0.40f
         private const val RESPAWN_LANE_PHASE_RATIO = 0.22f
-        private const val SLOT_RESPAWN_DELAY_MIN_MS = 48L
-        private const val SLOT_RESPAWN_DELAY_MAX_MS = 180L
+        private const val SLOT_RESPAWN_DELAY_MIN_MS = 38L
+        private const val SLOT_RESPAWN_DELAY_MAX_MS = 60L
         private const val GROUP_LIFETIME_MIN_MS = 4200L
         private const val GROUP_LIFETIME_MAX_MS = 6200L
         private const val GROUP_RECYCLE_BOTTOM_RATIO = 1.30f
@@ -125,10 +125,10 @@ class RainSimulation(
     var pendingCollisionRect: FloatArray? = null
 
     @Volatile
-    var pendingTextCollision: RainTextCollision? = null
+    var pendingTextCollisions: List<RainTextCollision> = emptyList()
 
     private var appliedCollisionRect: FloatArray? = null
-    private var appliedTextCollisionSignature: Int? = null
+    private var appliedTextCollisionSignatures: List<Int>? = null
     private var collisionBody: Body? = null
 
     // ────────── 供渲染器使用的访问器 ──────────
@@ -169,6 +169,8 @@ class RainSimulation(
             world = World(Vec2(0f, MAX_RAIN_GRAVITY_Y))
             world.setParticlePressureStrength(MAX_RAIN_PRESSURE)
             world.setParticleDamping(MAX_RAIN_DAMPING)
+            // 本项目 proportion=100，3f/100=0.03f=3px，与 testApp 视觉半径接近
+            // 较小半径 → 粒子交互距离缩短 → splash 不会过早散开 → Metaball 融合更好
             world.particleRadius  = 6f / proportion
             world.particleMaxCount = MAX_PARTICLES
 
@@ -212,8 +214,8 @@ class RainSimulation(
             }
 
             // 每帧步进两次（1/120s × 2 = 1/60s），与真实时间同步
-            world.step(1f / 60f, 8, 3)
-            world.step(1f / 60f, 8, 3)
+            world.step(1f / 120f, 8, 3)
+//            world.step(1f / 60f, 8, 3)
 
             // 更新粒子组渲染信息，供渲染器判断整体/逐粒子渲染
             computeGroupInfos()
@@ -287,63 +289,67 @@ class RainSimulation(
         })
 
         appliedCollisionRect = rect.clone()
-        appliedTextCollisionSignature = null
+        appliedTextCollisionSignatures = null
     }
 
     private fun syncCollisionBody() {
         when {
-            pendingTextCollision != null -> applyTextCollision()
+            pendingTextCollisions.isNotEmpty() -> applyTextCollision()
             pendingCollisionRect != null -> applyCollisionRect()
             else -> {
                 destroyCollisionBody()
                 appliedCollisionRect = null
-                appliedTextCollisionSignature = null
+                appliedTextCollisionSignatures = null
             }
         }
     }
 
     private fun applyTextCollision() {
-        val textCollision = pendingTextCollision ?: return
-        val signature = buildTextCollisionSignature(textCollision)
-        if (appliedTextCollisionSignature == signature) return
+        val collisions = pendingTextCollisions
+        if (collisions.isEmpty()) return
+        val signatures = collisions.map { buildTextCollisionSignature(it) }
+        if (signatures == appliedTextCollisionSignatures) return
 
         destroyCollisionBody()
 
-        val bitmap = textCollision.bitmap
-        if (bitmap.width <= 0 || bitmap.height <= 0) return
-
-        val pixels = IntArray(bitmap.width * bitmap.height)
-        bitmap.getPixels(pixels, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
-
         val body = world.createBody(BodyDef().apply { type = BodyType.STATIC })
-        var fixtureCount = 0
-        val sampleStepPx = (bitmap.width / 42).coerceIn(4, 8)
+        var totalFixtureCount = 0
 
-        for (xStart in 0 until bitmap.width step sampleStepPx) {
-            val xEnd = minOf(bitmap.width, xStart + sampleStepPx)
-            var runStart = -1
-            for (y in 0 until bitmap.height) {
-                val opaque = isColumnOpaque(pixels, bitmap.width, xStart, xEnd, y)
-                if (opaque) {
-                    if (runStart < 0) runStart = y
-                } else if (runStart >= 0) {
-                    fixtureCount += addTextFixture(body, textCollision, xStart, xEnd, runStart, y)
-                    runStart = -1
+        for (textCollision in collisions) {
+            val bitmap = textCollision.bitmap
+            if (bitmap.width <= 0 || bitmap.height <= 0) continue
+
+            val pixels = IntArray(bitmap.width * bitmap.height)
+            bitmap.getPixels(pixels, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
+
+            val sampleStepPx = (bitmap.width / 42).coerceIn(4, 8)
+
+            for (xStart in 0 until bitmap.width step sampleStepPx) {
+                val xEnd = minOf(bitmap.width, xStart + sampleStepPx)
+                var runStart = -1
+                for (y in 0 until bitmap.height) {
+                    val opaque = isColumnOpaque(pixels, bitmap.width, xStart, xEnd, y)
+                    if (opaque) {
+                        if (runStart < 0) runStart = y
+                    } else if (runStart >= 0) {
+                        totalFixtureCount += addTextFixture(body, textCollision, xStart, xEnd, runStart, y)
+                        runStart = -1
+                    }
                 }
-            }
-            if (runStart >= 0) {
-                fixtureCount += addTextFixture(body, textCollision, xStart, xEnd, runStart, bitmap.height)
+                if (runStart >= 0) {
+                    totalFixtureCount += addTextFixture(body, textCollision, xStart, xEnd, runStart, bitmap.height)
+                }
             }
         }
 
-        if (fixtureCount == 0) {
+        if (totalFixtureCount == 0) {
             world.destroyBody(body)
-            appliedTextCollisionSignature = null
+            appliedTextCollisionSignatures = null
             return
         }
 
         collisionBody = body
-        appliedTextCollisionSignature = signature
+        appliedTextCollisionSignatures = signatures
         appliedCollisionRect = null
     }
 
@@ -489,9 +495,9 @@ class RainSimulation(
     private fun createGroup(xPos: Float, yPos: Float): ParticleGroup {
         val def = ParticleGroupDef()
 
-        // 粒子组形状：细长矩形，宽约 1/300 屏幕，高约 1/25 屏幕
+        // 粒子组形状：细长矩形，宽约 1/300 屏幕，高约 1/40 屏幕（缩短列高 = 更少粒子 = 更小水花）
         val shape = PolygonShape()
-        shape.setAsBox(width / (300f * proportion), width / (25f * proportion))
+        shape.setAsBox(width / (300f * proportion), width / (40f * proportion))
         def.shape = shape
         def.flags = ParticleType.b2_waterParticle
 
@@ -522,10 +528,12 @@ class RainSimulation(
     }
 
     private fun nextSpawnXForLane(laneIndex: Int): Float {
-        val laneWidth = width.toFloat() / spawnLaneCount
+        // 只在屏幕左半区发射
+        val spawnWidth = width * 0.5f
+        val laneWidth = spawnWidth / spawnLaneCount
         val laneCenter = (laneIndex + 0.5f) * laneWidth
         val jitter = (Random.nextFloat() - 0.5f) * laneWidth * SPAWN_LANE_JITTER_RATIO
-        return (laneCenter + jitter).coerceIn(0f, width.toFloat()) / proportion
+        return (laneCenter + jitter).coerceIn(0f, spawnWidth) / proportion
     }
 
     private fun nextRespawnDelayMs(): Long {

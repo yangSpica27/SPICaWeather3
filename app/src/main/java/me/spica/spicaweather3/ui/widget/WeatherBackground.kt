@@ -32,7 +32,7 @@ fun WeatherBackground(
   currentWeatherType: WeatherAnimType,
   collisionRect: Rect? = null,
   collisionCornerRadiusPx: Float = 0f,
-  textCollision: RainTextCollision? = null,
+  textCollisions: List<RainTextCollision> = emptyList(),
 ) {
 
   val currentTopColor = remember { Animatable(WeatherAnimType.RainLight.topColor) }
@@ -68,7 +68,7 @@ fun WeatherBackground(
       show = currentWeatherType.showRain,
       collisionRect = collisionRect,
       collisionCornerRadiusPx = collisionCornerRadiusPx,
-      textCollision = textCollision
+      textCollisions = textCollisions
     )
     CloudView(collapsedFraction, currentWeatherType.showCloud)
     SunView(collapsedFraction, currentWeatherType.showSun)

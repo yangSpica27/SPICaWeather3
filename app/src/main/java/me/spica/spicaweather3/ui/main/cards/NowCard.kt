@@ -95,6 +95,7 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: 
     // ==================== 温度文本碰撞追踪 ====================
     var boxRectInRoot by remember { mutableStateOf(Rect.Zero) }
     var temperatureRectInRoot by remember { mutableStateOf(Rect.Zero) }
+    var conditionRectInRoot by remember { mutableStateOf(Rect.Zero) }
     val density = LocalDensity.current
     val tempTextSizePx = with(density) { 94.sp.toPx() }.toInt()
     val unitTextSizePx = with(density) { 45.sp.toPx() }.toInt()
@@ -121,6 +122,28 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: 
             )
         }
     }
+    val conditionCollision = remember(
+        weatherData.current.condition,
+        weatherData.current.feelsLike,
+        boxRectInRoot,
+        conditionRectInRoot,
+    ) {
+        if (boxRectInRoot == Rect.Zero || conditionRectInRoot == Rect.Zero) {
+            null
+        } else {
+            RainTextCollision(
+                bitmap = createSolidCollisionBitmap(
+                    widthPx = ceil(conditionRectInRoot.width).toInt().coerceAtLeast(1),
+                    heightPx = ceil(conditionRectInRoot.height).toInt().coerceAtLeast(1),
+                ),
+                left = conditionRectInRoot.left - boxRectInRoot.left,
+                top = conditionRectInRoot.top - boxRectInRoot.top,
+            )
+        }
+    }
+    val textCollisions = remember(textCollision, conditionCollision) {
+        listOfNotNull(textCollision, conditionCollision)
+    }
 
     // ==================== 主布局 ====================
     // 使用 Box 叠加布局：底层为天气背景动画，上层为天气信息文字
@@ -133,7 +156,7 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: 
         WeatherBackground(
             currentWeatherType = currentWeatherAnimType,
             collapsedFraction = 0f, // 0=完全展开，1=完全折叠
-            textCollision = textCollision,
+            textCollisions = textCollisions,
             weatherData = weatherData
         )
 
@@ -176,7 +199,7 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: 
                             fontWeight = FontWeight.W800
                         )
                     ) {
-                        append(" °C")
+                        append("°")
                     }
                 },
             )
@@ -196,6 +219,7 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: 
                         alpha = textAnimValue2
                         translationY = -12.dp.toPx() * (1f - textAnimValue2)
                     }
+                    .onGloballyPositioned { conditionRectInRoot = it.boundsInRoot() }
                     .padding(start = 12.dp)
             )
 
@@ -231,6 +255,12 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: 
     }
 }
 
+private fun createSolidCollisionBitmap(widthPx: Int, heightPx: Int): Bitmap {
+    return Bitmap.createBitmap(widthPx, heightPx, Bitmap.Config.ARGB_4444).also { bitmap ->
+        Canvas(bitmap).drawColor(android.graphics.Color.WHITE)
+    }
+}
+
 private fun createTemperatureCollisionBitmap(
     temperature: Int,
     widthPx: Int,
@@ -238,7 +268,7 @@ private fun createTemperatureCollisionBitmap(
     temperatureTextSizePx: Int,
     unitTextSizePx: Int,
 ): Bitmap {
-    val text = SpannableStringBuilder("${temperature}°C").apply {
+    val text = SpannableStringBuilder("${temperature}°").apply {
         val tempEnd = temperature.toString().length
         setSpan(AbsoluteSizeSpan(temperatureTextSizePx), 0, tempEnd, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         setSpan(StyleSpan(Typeface.BOLD), 0, tempEnd, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)

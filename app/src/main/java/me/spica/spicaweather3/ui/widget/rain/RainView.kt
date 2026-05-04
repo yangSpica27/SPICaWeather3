@@ -13,14 +13,14 @@ import me.spica.spicaweather3.ui.widget.ShowOnIdleContent
  * @param show 控制雨滴动画是否显示
  * @param collisionRect 碰撞矩形（本地像素坐标），雨滴会与此矩形边缘碰撞溅落
  * @param collisionCornerRadiusPx 碰撞矩形的圆角半径（像素）
- * @param textCollision 温度文本碰撞数据，存在时优先使用文本轮廓碰撞
+ * @param textCollisions 文本碰撞数据列表，各文本轮廓均参与物理碰撞
  */
 @Composable
 fun RainView(
     show: Boolean = true,
     collisionRect: Rect? = null,
     collisionCornerRadiusPx: Float = 0f,
-    textCollision: RainTextCollision? = null,
+    textCollisions: List<RainTextCollision> = emptyList(),
 ) {
     ShowOnIdleContent(
         visible = show,
@@ -29,7 +29,7 @@ fun RainView(
         AndroidView(
             factory = { context -> RainTextureView(context) },
             update = { view ->
-                view.setTextCollision(textCollision)
+                view.setTextCollisions(textCollisions)
                 if (collisionRect != null) {
                     view.setCollisionRect(
                         collisionRect.left,

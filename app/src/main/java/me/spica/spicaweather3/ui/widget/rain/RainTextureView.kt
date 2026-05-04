@@ -44,7 +44,7 @@ class RainTextureView(context: Context) : TextureView(context), TextureView.Surf
     @Volatile private var surfaceWidth = 1
     @Volatile private var surfaceHeight = 1
     @Volatile private var pendingRect: FloatArray? = null
-    @Volatile private var pendingTextCollision: RainTextCollision? = null
+    @Volatile private var pendingTextCollisions: List<RainTextCollision> = emptyList()
 
     init {
         isOpaque = false          // 关键：允许透明通道透过 TextureView
@@ -69,10 +69,10 @@ class RainTextureView(context: Context) : TextureView(context), TextureView.Surf
         }
     }
 
-    fun setTextCollision(collision: RainTextCollision?) {
-        pendingTextCollision = collision
+    fun setTextCollisions(collisions: List<RainTextCollision>) {
+        pendingTextCollisions = collisions
         if (::simulation.isInitialized) {
-            simulation.pendingTextCollision = collision
+            simulation.pendingTextCollisions = collisions
         }
     }
 
@@ -83,7 +83,7 @@ class RainTextureView(context: Context) : TextureView(context), TextureView.Surf
         surfaceHeight = height
         simulation = RainSimulation(width, height).also {
             it.pendingCollisionRect = pendingRect
-            it.pendingTextCollision = pendingTextCollision
+            it.pendingTextCollisions = pendingTextCollisions
             it.init()
         }
         startRenderLoop(surface)
@@ -218,6 +218,6 @@ class RainTextureView(context: Context) : TextureView(context), TextureView.Surf
     }
 
     companion object {
-        private const val FRAME_INTERVAL_NS = 16_666_667L // ~60 fps
+        private const val FRAME_INTERVAL_NS = 16_666_667L/2 // ~60 fps
     }
 }
