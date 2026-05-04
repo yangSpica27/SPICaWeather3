@@ -56,6 +56,7 @@ import kotlin.math.roundToInt
  * @param enabled 是否启用，默认为 true
  * @param onClick 点击事件回调
  */
+@Immutable
 data class DropdownMenuItem(
   val text: String,
   val icon: ImageVector? = null,

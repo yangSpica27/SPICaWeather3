@@ -1,5 +1,6 @@
 package me.spica.spicaweather3.common.model
 
+import androidx.compose.runtime.Immutable
 import kotlinx.serialization.Serializable
 
 /**
@@ -185,6 +186,7 @@ enum class WeatherCardType(
  * 天气卡片配置数据类
  * 用于保存用户的卡片显示和排序配置
  */
+@Immutable
 @Serializable
 data class WeatherCardConfig(
   val cardType: WeatherCardType,

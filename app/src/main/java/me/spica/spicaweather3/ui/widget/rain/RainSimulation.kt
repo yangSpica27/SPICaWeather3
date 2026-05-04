@@ -26,6 +26,14 @@ class GroupRenderInfo {
     var particleCount: Int = 0      // 该组的粒子数量
 }
 
+private data class EmitterSlot(
+    val laneIndex: Int,
+    var group: ParticleGroup? = null,
+    var spawnAtMs: Long = 0L,
+    var startedAtMs: Long = 0L,
+    var durationMs: Long = 0L,
+)
+
 /**
  * JBox2D 物理雨滴模拟
  *
@@ -49,7 +57,7 @@ class RainSimulation(
 ) {
     companion object {
         /** JBox2D 允许的最大粒子数 */
-        const val MAX_PARTICLES = 2000
+        const val MAX_PARTICLES = 2800
 
         /** 同时活跃的最大粒子组数 */
         private const val MAX_GROUPS = 42
@@ -72,6 +80,20 @@ class RainSimulation(
         private const val MAX_RAIN_DAMPING = 1.0f
         private const val MAX_RAIN_BASE_VELOCITY = 40f
         private const val MAX_RAIN_VELOCITY_VARIANCE_RATIO = 0.15f
+        private const val SPAWN_LANE_MIN_COUNT = 10
+        private const val SPAWN_LANE_MAX_COUNT = 16
+        private const val SPAWN_LANE_WIDTH_PX = 92
+        private const val SPAWN_LANE_JITTER_RATIO = 0.32f
+        private const val INITIAL_PREWARM_TOP_RATIO = 0.28f
+        private const val INITIAL_PREWARM_SPAN_RATIO = 1.48f
+        private const val RESPAWN_TOP_MIN_RATIO = 0.10f
+        private const val RESPAWN_TOP_MAX_RATIO = 0.40f
+        private const val RESPAWN_LANE_PHASE_RATIO = 0.22f
+        private const val SLOT_RESPAWN_DELAY_MIN_MS = 48L
+        private const val SLOT_RESPAWN_DELAY_MAX_MS = 180L
+        private const val GROUP_LIFETIME_MIN_MS = 4200L
+        private const val GROUP_LIFETIME_MAX_MS = 6200L
+        private const val GROUP_RECYCLE_BOTTOM_RATIO = 1.30f
         private const val TEXT_COLLISION_ALPHA_THRESHOLD = 32
         private const val TEXT_COLLISION_MIN_RUN_PX = 3
 
@@ -87,11 +109,11 @@ class RainSimulation(
 
     private lateinit var world: World
 
-    // 当前活跃粒子组列表
-    private val groups = ArrayList<ParticleGroup>()
+    // 独立发射槽：每个槽位单独维护激活组和下次补发时间，避免整批刷出
+    private val emitterSlots = ArrayList<EmitterSlot>(MAX_GROUPS)
 
-    // 用于均匀水平分布的网格列索引
-    private var nextGridIndex = 0
+    private val spawnLaneCount = (width / SPAWN_LANE_WIDTH_PX)
+        .coerceIn(SPAWN_LANE_MIN_COUNT, SPAWN_LANE_MAX_COUNT)
 
     // ────────── 碰撞矩形（替代原底部地板碰撞） ──────────
 
@@ -153,9 +175,11 @@ class RainSimulation(
             // 同步碰撞体（如果外部已设置碰撞矩形或文本轮廓）
             syncCollisionBody()
 
-            // 错时生成各粒子组，避免所有粒子同时出现
+            emitterSlots.clear()
             for (i in 0 until MAX_GROUPS) {
-                groups.add(createGroup(seedIndex = i))
+                val slot = EmitterSlot(laneIndex = i % spawnLaneCount)
+                activateSlot(slot, now = System.currentTimeMillis(), prewarmIndex = i)
+                emitterSlots.add(slot)
             }
             initOK = true
         }
@@ -175,19 +199,21 @@ class RainSimulation(
             syncCollisionBody()
             val now = System.currentTimeMillis()
 
-            // 索引遍历，避免 filter/indexOf 产生临时列表和 O(n) 查找
-            for (i in groups.indices) {
-                val g = groups[i]
-                val birth = g.userData as? Long ?: continue
-                if (now - birth > TOTAL_LIFETIME_MS) {
-                    world.destroyParticlesInGroup(g)
-                    groups[i] = createGroup()
+            for (slot in emitterSlots) {
+                val activeGroup = slot.group
+                if (activeGroup != null && shouldRecycleGroup(activeGroup, slot, now)) {
+                    world.destroyParticlesInGroup(activeGroup)
+                    slot.group = null
+                    slot.spawnAtMs = now + nextRespawnDelayMs()
+                }
+                if (slot.group == null && now >= slot.spawnAtMs) {
+                    activateSlot(slot, now)
                 }
             }
 
             // 每帧步进两次（1/120s × 2 = 1/60s），与真实时间同步
-            world.step(1f / 120f, 8, 3)
-            world.step(1f / 120f, 8, 3)
+            world.step(1f / 60f, 8, 3)
+            world.step(1f / 60f, 8, 3)
 
             // 更新粒子组渲染信息，供渲染器判断整体/逐粒子渲染
             computeGroupInfos()
@@ -394,7 +420,8 @@ class RainSimulation(
         val velocities = world.particleVelocityBuffer
         var infoIdx = 0
 
-        for (g in groups) {
+        for (slot in emitterSlots) {
+            val g = slot.group ?: continue
             val start = g.bufferIndex
             val cnt = g.particleCount
             if (cnt == 0) continue
@@ -429,12 +456,37 @@ class RainSimulation(
 
     // ────────── 私有：创建粒子组 ──────────
 
-    /**
-     * 创建一个新的水粒子组
-     *
-     * @param seedIndex 初始化时传入的序号，用于错开生成时间和高度
-     */
-    private fun createGroup(seedIndex: Int = -1): ParticleGroup {
+    private fun activateSlot(slot: EmitterSlot, now: Long, prewarmIndex: Int? = null) {
+        val durationMs = nextGroupLifetimeMs()
+        val progress = prewarmIndex?.let { (it + Random.nextFloat()) / MAX_GROUPS.toFloat() }
+        val startedAt = progress?.let { now - (durationMs * it).toLong() } ?: now
+        val (xPos, yPos) = computeSpawnPosition(slot.laneIndex, progress)
+        slot.group = createGroup(xPos, yPos)
+        slot.startedAtMs = startedAt
+        slot.durationMs = durationMs
+        slot.spawnAtMs = 0L
+    }
+
+    private fun shouldRecycleGroup(group: ParticleGroup, slot: EmitterSlot, now: Long): Boolean {
+        if (group.particleCount <= 0) return true
+        if (now - slot.startedAtMs >= slot.durationMs) return true
+        return isGroupBelowRecycleLine(group)
+    }
+
+    private fun isGroupBelowRecycleLine(group: ParticleGroup): Boolean {
+        val positions = world.particlePositionBuffer
+        val start = group.bufferIndex
+        val end = start + group.particleCount
+        if (end <= start) return true
+        var minY = Float.MAX_VALUE
+        for (i in start until end) {
+            if (positions[i].y < minY) minY = positions[i].y
+        }
+        return minY * proportion > height * GROUP_RECYCLE_BOTTOM_RATIO
+    }
+
+    /** 创建一个新的水粒子组 */
+    private fun createGroup(xPos: Float, yPos: Float): ParticleGroup {
         val def = ParticleGroupDef()
 
         // 粒子组形状：细长矩形，宽约 1/300 屏幕，高约 1/25 屏幕
@@ -451,25 +503,38 @@ class RainSimulation(
             baseV + (Random.nextFloat() - 0.5f) * 2f * varV
         )
 
-        // 水平位置：5 列网格均匀分布，每列内随机偏移
-        val cols    = 5
-        val colIdx  = nextGridIndex % cols
-        nextGridIndex = (nextGridIndex + 1) % cols
-        val colW    = width.toFloat() / cols
-        val xPos    = (colIdx * colW + Random.nextFloat() * colW) / proportion
-
-        // 垂直位置：初始化时按序号错开高度；重生时从上方随机位置落下
-        val yPos = if (seedIndex >= 0) {
-            -height / proportion * (0.5f + seedIndex * 0.15f)
-        } else {
-            -height / proportion * (0.3f + Random.nextFloat() * 0.4f)
-        }
         def.position.set(xPos, yPos)
 
-        val group = world.createParticleGroup(def)
-        // userData 存储出生时间戳（加上种子延迟），用于生命周期判断
-        val delay = if (seedIndex >= 0) seedIndex * 120L else 0L
-        group.userData = System.currentTimeMillis() + delay
-        return group
+        return world.createParticleGroup(def)
+    }
+
+    private fun computeSpawnPosition(laneIndex: Int, progress: Float?): Pair<Float, Float> {
+        val x = nextSpawnXForLane(laneIndex)
+        val y = if (progress != null) {
+            height * (-INITIAL_PREWARM_TOP_RATIO + progress * INITIAL_PREWARM_SPAN_RATIO)
+        } else {
+            val lanePhase = ((laneIndex / spawnLaneCount.toFloat()) + Random.nextFloat() * 0.35f) % 1f
+            val baseRatio = RESPAWN_TOP_MIN_RATIO +
+                Random.nextFloat() * (RESPAWN_TOP_MAX_RATIO - RESPAWN_TOP_MIN_RATIO)
+            -height * (baseRatio + lanePhase * RESPAWN_LANE_PHASE_RATIO)
+        }
+        return Pair(x, y / proportion)
+    }
+
+    private fun nextSpawnXForLane(laneIndex: Int): Float {
+        val laneWidth = width.toFloat() / spawnLaneCount
+        val laneCenter = (laneIndex + 0.5f) * laneWidth
+        val jitter = (Random.nextFloat() - 0.5f) * laneWidth * SPAWN_LANE_JITTER_RATIO
+        return (laneCenter + jitter).coerceIn(0f, width.toFloat()) / proportion
+    }
+
+    private fun nextRespawnDelayMs(): Long {
+        return SLOT_RESPAWN_DELAY_MIN_MS +
+            Random.nextLong(SLOT_RESPAWN_DELAY_MAX_MS - SLOT_RESPAWN_DELAY_MIN_MS + 1L)
+    }
+
+    private fun nextGroupLifetimeMs(): Long {
+        return GROUP_LIFETIME_MIN_MS +
+            Random.nextLong(GROUP_LIFETIME_MAX_MS - GROUP_LIFETIME_MIN_MS + 1L)
     }
 }

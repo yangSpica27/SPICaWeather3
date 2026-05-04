@@ -176,7 +176,7 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: 
                             fontWeight = FontWeight.W800
                         )
                     ) {
-                        append("°C")
+                        append(" °C")
                     }
                 },
             )
