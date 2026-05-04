@@ -99,6 +99,8 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: 
     val density = LocalDensity.current
     val tempTextSizePx = with(density) { 94.sp.toPx() }.toInt()
     val unitTextSizePx = with(density) { 45.sp.toPx() }.toInt()
+    val conditionTextSizePx = with(density) { 16.sp.toPx() }.toInt()
+    val conditionPaddingStartPx = with(density) { 12.dp.toPx() }.toInt()
     val textCollision = remember(
         weatherData.current.temperature,
         boxRectInRoot,
@@ -122,9 +124,15 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: 
             )
         }
     }
-    val conditionCollision = remember(
+    val conditionText = stringResource(
+        R.string.now_card_condition,
         weatherData.current.condition,
-        weatherData.current.feelsLike,
+        weatherData.current.feelsLike
+    )
+    val conditionCollision = remember(
+        conditionText,
+        conditionTextSizePx,
+        conditionPaddingStartPx,
         boxRectInRoot,
         conditionRectInRoot,
     ) {
@@ -133,8 +141,11 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: 
         } else {
             RainTextCollision(
                 bitmap = createSolidCollisionBitmap(
+                    text = conditionText,
                     widthPx = ceil(conditionRectInRoot.width).toInt().coerceAtLeast(1),
                     heightPx = ceil(conditionRectInRoot.height).toInt().coerceAtLeast(1),
+                    textSizePx = conditionTextSizePx,
+                    paddingStartPx = conditionPaddingStartPx,
                 ),
                 left = conditionRectInRoot.left - boxRectInRoot.left,
                 top = conditionRectInRoot.top - boxRectInRoot.top,
@@ -255,9 +266,31 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: 
     }
 }
 
-private fun createSolidCollisionBitmap(widthPx: Int, heightPx: Int): Bitmap {
-    return Bitmap.createBitmap(widthPx, heightPx, Bitmap.Config.ARGB_4444).also { bitmap ->
-        Canvas(bitmap).drawColor(android.graphics.Color.WHITE)
+private fun createSolidCollisionBitmap(
+    text: String,
+    widthPx: Int,
+    heightPx: Int,
+    textSizePx: Int,
+    paddingStartPx: Int = 0,
+): Bitmap {
+    val paint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = android.graphics.Color.WHITE
+        textSize = textSizePx.toFloat()
+        typeface = Typeface.DEFAULT_BOLD
+    }
+    val textWidthPx = (widthPx - paddingStartPx).coerceAtLeast(1)
+    val layout = StaticLayout.Builder
+        .obtain(text, 0, text.length, paint, textWidthPx)
+        .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+        .setIncludePad(false)
+        .build()
+
+    return Bitmap.createBitmap(widthPx, heightPx, Bitmap.Config.ARGB_8888).also { bitmap ->
+        Canvas(bitmap).apply {
+            val dy = if (layout.height < heightPx) (heightPx - layout.height) * 0.5f else 0f
+            translate(paddingStartPx.toFloat(), dy)
+            layout.draw(this)
+        }
     }
 }
 
