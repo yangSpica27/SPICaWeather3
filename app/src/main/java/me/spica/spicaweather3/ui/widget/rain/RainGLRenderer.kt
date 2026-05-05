@@ -26,95 +26,6 @@ class RainGLRenderer {
 
     // ───────── GLSL 着色器源码 ─────────
 
-    private val SCREEN_RAIN_VERT = """
-        #version 300 es
-        out vec2 v_uv;
-        const vec2 POSITIONS[6] = vec2[](
-            vec2(-1.0, -1.0),
-            vec2( 1.0, -1.0),
-            vec2(-1.0,  1.0),
-            vec2(-1.0,  1.0),
-            vec2( 1.0, -1.0),
-            vec2( 1.0,  1.0)
-        );
-        void main() {
-            vec2 position = POSITIONS[gl_VertexID];
-            gl_Position = vec4(position, 0.0, 1.0);
-            v_uv = position * 0.5 + 0.5;
-        }
-    """.trimIndent()
-
-    private val SCREEN_RAIN_FRAG = """
-        #version 300 es
-        precision mediump float;
-        in vec2 v_uv;
-        uniform vec2 u_resolution;
-        uniform float u_time;
-        out vec4 fragColor;
-
-        float hash11(float p) {
-            p = fract(p * 0.1031);
-            p *= p + 33.33;
-            p *= p + p;
-            return fract(p);
-        }
-
-        vec3 hash31(float p) {
-            vec3 p3 = fract(vec3(p) * vec3(0.1031, 0.11369, 0.13787));
-            p3 += dot(p3, p3.yzx + 19.19);
-            return fract(vec3(
-                (p3.x + p3.y) * p3.z,
-                (p3.x + p3.z) * p3.y,
-                (p3.y + p3.z) * p3.x
-            ));
-        }
-
-        float dropLayer(
-            vec2 uv,
-            float scale,
-            float alpha,
-            float seed,
-            float laneScale,
-            float speedBase,
-            float trailLength
-        ) {
-            uv *= scale;
-            uv = (uv - 0.5) * vec2(u_resolution.x / max(u_resolution.y, 1.0), 1.0);
-            uv.x *= laneScale;
-            float lane = floor(uv.x);
-            float dx = fract(uv.x);
-            vec3 rnd = hash31(lane + seed * 31.0 + hash11(lane + seed));
-            float offset = (rnd.x + rnd.y - 1.0) * 2.1;
-            float speed = mix(speedBase * 0.8, speedBase * 1.15, rnd.z);
-            float yv = fract(uv.y + u_time * speed + offset) * trailLength;
-            yv = 1.0 / max(yv, 0.08);
-            yv = smoothstep(0.0, 1.0, yv * yv);
-            float alphaGradient = clamp(yv + 0.45, 0.0, 1.0);
-            yv = sin(yv * 3.1415926) * (speed * 3.4);
-            float head = sin(dx * 3.1415926);
-            yv *= head * head;
-            return smoothstep(0.0, 1.0, yv) * alphaGradient * alpha;
-        }
-
-        void main() {
-            vec2 uv = v_uv;
-            float rain = 0.0;
-            rain += dropLayer(uv, 16.0, 0.16, 1.0,  7.5, 0.52, 82.0);
-            rain += dropLayer(uv, 24.0, 0.13, 2.0, 11.0, 0.70, 90.0);
-            rain += dropLayer(uv, 34.0, 0.10, 3.0, 15.0, 0.92, 98.0);
-            float bottomFade = mix(0.55, 1.0, smoothstep(0.0, 0.8, uv.y));
-            // 顶部渐弱：uv.y=1(屏幕顶) → 透明度降至 0.35，uv.y≤0.55 → 不受影响
-            float topFade    = mix(0.35, 1.0, 1.0 - smoothstep(0.55, 0.98, uv.y));
-            rain *= bottomFade * topFade;
-            vec3 baseColor = mix(
-                vec3(0.70, 0.81, 0.95),
-                vec3(0.90, 0.97, 1.0),
-                smoothstep(0.0, 1.0, uv.y)
-            );
-            fragColor = vec4(baseColor, clamp(rain, 0.0, 0.72));
-        }
-    """.trimIndent()
-
     // 下落雨滴顶点着色器（GL_TRIANGLES，忽略 gl_PointSize）
     private val DROP_VERT = """
         #version 300 es
@@ -333,7 +244,6 @@ class RainGLRenderer {
 
     // ───────── GL 对象 ─────────
 
-    private var screenRainProgram = 0
     private var dropProgram   = 0
     private var frontDropProgram = 0
     private var splashProgram = 0          // 降级用：简单径向渐变
@@ -351,8 +261,6 @@ class RainGLRenderer {
     private var initialized = false
 
     // 缓存 uniform 位置，避免每帧 glGetUniformLocation 查询
-    private var screenRainResolutionLoc = -1
-    private var screenRainTimeLoc       = -1
     private var dropResolutionLoc = -1
     private var dropColorLoc      = -1
     private var frontDropResolutionLoc = -1
@@ -379,7 +287,6 @@ class RainGLRenderer {
     // ───────── 初始化 ─────────
 
     fun init() {
-        screenRainProgram = buildProgram(SCREEN_RAIN_VERT, SCREEN_RAIN_FRAG)
         dropProgram   = buildProgram(DROP_VERT,   DROP_FRAG)
         frontDropProgram = buildProgram(FRONT_DROP_VERT, FRONT_DROP_FRAG)
         splashProgram = buildProgram(SPLASH_VERT, SPLASH_FRAG)
@@ -389,8 +296,6 @@ class RainGLRenderer {
         metaballCompositeProgram = buildProgram(METABALL_COMPOSITE_VERT, METABALL_COMPOSITE_FRAG)
 
         // 缓存所有 uniform 位置
-        screenRainResolutionLoc = GLES30.glGetUniformLocation(screenRainProgram, "u_resolution")
-        screenRainTimeLoc       = GLES30.glGetUniformLocation(screenRainProgram, "u_time")
         dropResolutionLoc   = GLES30.glGetUniformLocation(dropProgram,   "u_resolution")
         dropColorLoc        = GLES30.glGetUniformLocation(dropProgram,   "u_color")
         frontDropResolutionLoc = GLES30.glGetUniformLocation(frontDropProgram, "u_resolution")
@@ -492,16 +397,6 @@ class RainGLRenderer {
         val stride = FLOATS_PER_VERT * 4
 
         GLES30.glEnable(GLES30.GL_BLEND)
-
-        // ── Pass 1：全屏程序化雨幕（加法混合，软边多层） ──
-        GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, 0)
-        GLES30.glDisableVertexAttribArray(0)
-        GLES30.glDisableVertexAttribArray(1)
-        GLES30.glUseProgram(screenRainProgram)
-        GLES30.glBlendFunc(GLES30.GL_SRC_ALPHA, GLES30.GL_ONE)
-        setResolution(screenRainResolutionLoc, screenWidth.toFloat(), screenHeight.toFloat())
-        GLES30.glUniform1f(screenRainTimeLoc, (System.nanoTime() - startTimeNs) / 1_000_000_000f)
-        GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 6)
 
         if (totalFloats <= 0) {
             GLES30.glDisable(GLES30.GL_BLEND)
@@ -675,11 +570,7 @@ class RainGLRenderer {
             GLES30.glDeleteBuffers(1, intArrayOf(vboId), 0)
             vboId = 0
         }
-        if (screenRainProgram != 0) {
-            GLES30.glDeleteProgram(screenRainProgram)
-            screenRainProgram = 0
-        }
-        if (dropProgram != 0)   { GLES30.glDeleteProgram(dropProgram);   dropProgram = 0 }
+        if (dropProgram != 0){ GLES30.glDeleteProgram(dropProgram);   dropProgram = 0 }
         if (frontDropProgram != 0) {
             GLES30.glDeleteProgram(frontDropProgram)
             frontDropProgram = 0
