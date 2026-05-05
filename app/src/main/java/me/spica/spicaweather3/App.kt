@@ -16,7 +16,8 @@ class App : Application(), Configuration.Provider {
 
 
   override val workManagerConfiguration: Configuration
-    get() = Configuration.Builder().build()
+    get() = Configuration.Builder()
+      .build()
 
   companion object {
     lateinit var instance: App
