@@ -50,6 +50,18 @@
     </activity>
     <service android:name="com.baidu.location.f" android:enabled="true" android:process=":remote"> </service>
 
+    <!-- Remove default WorkManager initializer; App implements Configuration.Provider instead -->
+    <provider
+      android:name="androidx.startup.InitializationProvider"
+      android:authorities="${applicationId}.androidx-startup"
+      android:exported="false"
+      tools:node="merge">
+      <meta-data
+        android:name="androidx.work.WorkManagerInitializer"
+        android:value="androidx.startup"
+        tools:node="remove" />
+    </provider>
+
     <!-- 今日天气信息小组件 -->
     <receiver
         android:name=".ui.app_widget.TodayInfoAppWidgetReceiver"
