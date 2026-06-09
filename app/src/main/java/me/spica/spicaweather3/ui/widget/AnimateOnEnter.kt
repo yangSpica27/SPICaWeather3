@@ -60,5 +60,4 @@ fun AnimateOnEnter(
   ) {
     content(animatable.value,animatable)
   }
-
 }
