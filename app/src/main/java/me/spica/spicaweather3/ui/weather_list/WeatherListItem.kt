@@ -230,7 +230,7 @@ private fun WeatherItemContent(
             ) {
                 Text(
                     city.name,
-                    color = MiuixTheme.colorScheme.surface,
+                    color = Color.White,
                     textAlign = TextAlign.Start,
                     style = MiuixTheme.textStyles.title2,
                     fontWeight = FontWeight.SemiBold,
@@ -240,7 +240,7 @@ private fun WeatherItemContent(
                     Icon(
                         painter = painterResource(R.drawable.ic_location),
                         contentDescription = null,
-                        tint = MiuixTheme.colorScheme.surface,
+                        tint = Color.White,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -248,7 +248,7 @@ private fun WeatherItemContent(
             // 省份和市区信息
             Text(
                 "${city.administrativeArea1},${city.administrativeArea2}",
-                color = MiuixTheme.colorScheme.surface,
+                color = Color.White,
                 textAlign = TextAlign.Start,
                 style = MiuixTheme.textStyles.body2,
                 fontWeight = FontWeight.Normal,
@@ -287,7 +287,7 @@ private fun WeatherItemContent(
                                     append("℃")
                                 }
                             },
-                            color = MiuixTheme.colorScheme.surface,
+                            color = Color.White,
                             style = MiuixTheme.textStyles.main.copy(fontSize = 32.sp),
                             fontWeight = FontWeight.Light,
                             textAlign = TextAlign.Center,
@@ -297,7 +297,7 @@ private fun WeatherItemContent(
 
                     else -> {
                         InfiniteProgressIndicator(
-                            color = MiuixTheme.colorScheme.surface,
+                            color = Color.White,
                             modifier = Modifier.size(40.dp)
                         )
                     }

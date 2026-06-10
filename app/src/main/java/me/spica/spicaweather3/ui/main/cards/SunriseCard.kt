@@ -21,6 +21,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathMeasure
@@ -40,6 +42,8 @@ import me.spica.spicaweather3.presentation.theme.WIDGET_CARD_TITLE_TEXT_STYLE
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import java.util.*
+import kotlin.math.PI
+import kotlin.math.sin
 
 /**
  * 日出日落信息卡片
@@ -193,17 +197,22 @@ fun SunriseCard(weatherEntity: WeatherData, startAnim: Boolean) {
         .drawWithCache {
           // 路径测量工具，用于计算路径上的点
           val pathMeasure = PathMeasure()
+          val progressValue = progress.value.coerceIn(0f, 1f)
+          val daylight = sin(progressValue * PI).toFloat().coerceAtLeast(0f)
+          val nightAlpha = 1f - daylight
+          val horizonY = size.height * 0.86f
+          val horizonCenter = Offset(size.width * 0.5f, horizonY)
 
           // 创建太阳运动轨迹（使用三次贝塞尔曲线绘制弧线）
           val sunMovePath = Path().apply {
-            moveTo(0f, size.height * 1f) // 起点：左下角
+            moveTo(0f, horizonY) // 起点：左侧地平线
             cubicTo(
               .2f * size.width,  // 控制点1x: 左侧曲率
               size.height * .0f,  // 控制点1y: 顶部高度
               .8f * size.width,  // 控制点2x: 右侧曲率
               size.height * .0f,  // 控制点2y: 顶部高度
               size.width * 1f,   // 终点x: 右下角
-              size.height * 1f   // 终点y: 底部
+              horizonY           // 终点y: 右侧地平线
             )
           }
 
@@ -211,19 +220,78 @@ fun SunriseCard(weatherEntity: WeatherData, startAnim: Boolean) {
           pathMeasure.setPath(sunMovePath, false)
           val movePath = Path()
           // 获取从起点到当前进度的路径段
-          pathMeasure.getSegment(0f, pathMeasure.length * progress.value, movePath, true)
+          pathMeasure.getSegment(0f, pathMeasure.length * progressValue, movePath, true)
+          val sunPosition = pathMeasure.getPosition(pathMeasure.length * progressValue)
 
           onDrawWithContent {
-            // 绘制背景轨迹线（灰色）
+            drawCircle(
+              brush = Brush.radialGradient(
+                colors = listOf(
+                  Color(0xFFFFD666).copy(alpha = 0.10f + daylight * 0.14f),
+                  Color(0xFFFFA940).copy(alpha = 0.05f + daylight * 0.08f),
+                  Color.Transparent
+                ),
+                center = horizonCenter,
+                radius = size.width * 0.72f
+              ),
+              radius = size.width * 0.72f,
+              center = horizonCenter
+            )
+
+            drawLine(
+              brush = Brush.horizontalGradient(
+                colors = listOf(
+                  Color.Transparent,
+                  Color(0xFFFFD666).copy(alpha = 0.22f + daylight * 0.22f),
+                  Color.Transparent
+                )
+              ),
+              start = Offset(0f, horizonY),
+              end = Offset(size.width, horizonY),
+              strokeWidth = 2.dp.toPx(),
+              cap = StrokeCap.Round
+            )
+
+            drawCircle(
+              brush = Brush.radialGradient(
+                colors = listOf(
+                  Color(0xFFFFD666).copy(alpha = 0.16f + daylight * 0.20f),
+                  Color(0xFFFFA940).copy(alpha = 0.08f + daylight * 0.08f),
+                  Color.Transparent
+                ),
+                center = sunPosition,
+                radius = size.minDimension * (0.22f + daylight * 0.18f)
+              ),
+              radius = size.minDimension * (0.22f + daylight * 0.18f),
+              center = sunPosition
+            )
+
+            // 绘制背景轨迹线
             drawPath(
               path = sunMovePath,
-              color = pathBgColor,
+              color = pathBgColor.copy(alpha = 0.42f),
               style = Stroke(
-                width = 7.dp.toPx(),
+                width = 8.dp.toPx(),
+                cap = StrokeCap.Round,
+              ),
+            )
+            drawPath(
+              path = sunMovePath,
+              color = Color.White.copy(alpha = 0.20f),
+              style = Stroke(
+                width = 2.dp.toPx(),
                 cap = StrokeCap.Round,
               ),
             )
             // 绘制已经过的轨迹线（橙色半透明）
+            drawPath(
+              path = movePath,
+              color = Color(0x59FFA940),
+              style = Stroke(
+                width = 15.dp.toPx(),
+                cap = StrokeCap.Round,
+              )
+            )
             drawPath(
               path = movePath,
               color = Color(0xC1FFA940),
@@ -233,22 +301,26 @@ fun SunriseCard(weatherEntity: WeatherData, startAnim: Boolean) {
               )
             )
             // 如果还没日落，绘制太阳位置指示点
-            if (progress.value != 1.0f) {
-              // 绘制内圈（实心太阳）
+            if (progressValue < 0.995f) {
+              drawCircle(
+                color = Color(0x40FFA940),
+                center = sunPosition,
+                radius = 22.dp.toPx()
+              )
+              drawCircle(
+                color = Color(0x66FFD666),
+                center = sunPosition,
+                radius = 15.dp.toPx()
+              )
               drawCircle(
                 color = Color(0xffffa940),
-                center = pathMeasure.getPosition(
-                  pathMeasure.length * progress.value
-                ),
+                center = sunPosition,
                 radius = 10.dp.toPx()
               )
-              // 绘制外圈（发光效果）
               drawCircle(
-                color = Color(0x80FFA940),
-                center = pathMeasure.getPosition(
-                  pathMeasure.length * progress.value
-                ),
-                radius = 15.dp.toPx()
+                color = Color.White.copy(alpha = 0.65f),
+                center = sunPosition - Offset(3.dp.toPx(), 3.dp.toPx()),
+                radius = 3.dp.toPx()
               )
             }
           }

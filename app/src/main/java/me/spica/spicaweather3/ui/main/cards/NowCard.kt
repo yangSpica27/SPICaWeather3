@@ -29,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -195,7 +196,7 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: 
                     // 温度数字（94sp 超大字体）
                     withStyle(
                         style = SpanStyle(
-                            color = MiuixTheme.colorScheme.surface,
+                            color = Color.White,
                             fontSize = 94.sp,
                             fontWeight = FontWeight.W800
                         )
@@ -205,7 +206,7 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: 
                     // 温度单位（45sp 较小字体）
                     withStyle(
                         style = SpanStyle(
-                            color = MiuixTheme.colorScheme.surface,
+                            color = Color.White,
                             fontSize = 45.sp,
                             fontWeight = FontWeight.W800
                         )
@@ -223,7 +224,7 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: 
                     weatherData.current.feelsLike
                 ),
                 style = MiuixTheme.textStyles.body1,
-                color = MiuixTheme.colorScheme.surface,
+                color = Color.White,
                 fontWeight = FontWeight.W600,
                 modifier = Modifier
                     .graphicsLayer {
@@ -241,7 +242,7 @@ fun NowCard(modifier: Modifier = Modifier, weatherData: WeatherData, startAnim: 
                     weatherData.current.humidity
                 ),
                 style = MiuixTheme.textStyles.body2,
-                color = MiuixTheme.colorScheme.surface,
+                color = Color.White,
                 fontWeight = FontWeight.W600,
                 modifier = Modifier
                     .graphicsLayer {
