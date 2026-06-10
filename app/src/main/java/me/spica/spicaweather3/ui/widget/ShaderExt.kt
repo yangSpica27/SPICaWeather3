@@ -13,12 +13,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.IntSize
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import kotlinx.coroutines.Dispatchers
@@ -43,7 +46,7 @@ fun RainDropContent(
   content: @Composable (BoxScope) -> Unit,
 ) {
 
-  if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S || true ) {
+  if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
     // 仅支持 Android 12 及以上版本
     Box(
       modifier = modifier,
@@ -52,20 +55,27 @@ fun RainDropContent(
     return
   }
 
-  val shaderRain: RuntimeShader? = remember {
+  val sizeState = remember { mutableStateOf(IntSize.Zero) }
+  val shaderRain: RuntimeShader? = remember(
+    uStaticDropSize,
+    uStaticDropAmount,
+    uStaticDropSpeed,
+    uRunningDropSize,
+    uRunningDropAmount,
+    uRunningDropSpeed,
+  ) {
     try {
-      return@remember RuntimeShader(rainDropShader).apply {
+      RuntimeShader(rainDropShader).apply {
         setFloatUniform("uStaticDropSize", uStaticDropSize)
         setFloatUniform("uStaticDropAmount", uStaticDropAmount)
         setFloatUniform("uStaticDropSpeed", uStaticDropSpeed)
         setFloatUniform("uRunningDropSize", uRunningDropSize)
         setFloatUniform("uRunningDropAmount", uRunningDropAmount)
         setFloatUniform("uRunningDropSpeed", uRunningDropSpeed)
-        setFloatUniform("uResolution", 1920f, 1080f)
       }
     } catch (e: Exception) {
       e.printStackTrace()
-      return@remember null
+      null
     }
   }
 
@@ -77,41 +87,49 @@ fun RainDropContent(
     return
   }
 
-  val tick = remember { mutableLongStateOf(0L) }
-
-  // RenderEffect 只创建一次，shader uniform 更新不需要重建 effect
-  val rainRenderEffect = remember {
-    RenderEffect.createRuntimeShaderEffect(
-      shaderRain,
-      "uTex"
-    ).asComposeRenderEffect()
+  val size = sizeState.value
+  LaunchedEffect(shaderRain, size) {
+    if (size != IntSize.Zero) {
+      shaderRain.setFloatUniform(
+        "uResolution",
+        size.width.coerceAtLeast(1).toFloat(),
+        size.height.coerceAtLeast(1).toFloat()
+      )
+    }
   }
 
-  LaunchedEffect(Unit) {
+  val tick = remember { mutableLongStateOf(0L) }
+
+  LaunchedEffect(shaderRain, enable) {
     val startTime = withFrameNanos { it }
-    launch(Dispatchers.Default) {
-      while (isActive) {
-        if (!enable) continue
-        withFrameNanos {
-          shaderRain.setFloatUniform("uTime", (it - startTime) / 1.0E9f)
-          tick.longValue = it
-        }
-        delay(16)
+    while (isActive) {
+      if (!enable) {
         awaitFrame()
+        continue
+      }
+      withFrameNanos {
+        shaderRain.setFloatUniform("uTime", (it - startTime) / 1.0E9f)
+        tick.longValue = it
       }
     }
   }
 
-
   Box(
     modifier = modifier
+      .onSizeChanged {
+        if (sizeState.value != it) {
+          sizeState.value = it
+        }
+      }
       .graphicsLayer {
-        // 读取 tick 确保每帧重绘
         tick.longValue
-        if (enable) {
-          this.renderEffect = rainRenderEffect
+        this.renderEffect = if (enable && size != IntSize.Zero) {
+          RenderEffect.createRuntimeShaderEffect(
+            shaderRain,
+            "uTex"
+          ).asComposeRenderEffect()
         } else {
-          this.renderEffect = null
+          null
         }
       },
     content = content

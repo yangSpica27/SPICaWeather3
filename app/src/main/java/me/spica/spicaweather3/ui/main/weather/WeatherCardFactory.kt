@@ -75,6 +75,7 @@ object WeatherCardFactory {
       )
       
       WeatherCardType.HUMIDITY -> HumidityCard(
+        modifier = modifier,
         humidity = weatherData.current.humidity,
         startAnim = startAnim
       )
