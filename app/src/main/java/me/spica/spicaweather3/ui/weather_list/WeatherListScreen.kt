@@ -30,6 +30,7 @@ import me.spica.spicaweather3.route.LocalNavController
 import me.spica.spicaweather3.route.Routes
 import me.spica.spicaweather3.ui.main.WeatherViewModel
 import me.spica.spicaweather3.ui.main.weather.WeatherPageState
+import me.spica.spicaweather3.utils.thanos_effect.ThanosEffectHost
 import org.koin.compose.viewmodel.koinActivityViewModel
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -54,7 +55,7 @@ fun WeatherListScreen() {
   var isDrag by remember { mutableStateOf(false) }
   val showDialog = remember { mutableStateOf(false) }
   var selectedCity by remember { mutableStateOf<City?>(null) }
-  var disintegratingCityId by remember { mutableStateOf<Long?>(null) }
+  var disintegratingCityId by remember { mutableStateOf<String?>(null) }
 
   // 监听城市列表变化，非拖拽状态时同步到临时列表
   LaunchedEffect(trackedCities) {
@@ -66,87 +67,89 @@ fun WeatherListScreen() {
   val listHazeState = rememberHazeState()
 
   // ==================== UI 布局 ====================
-  Scaffold(
-    containerColor = MaterialTheme.colorScheme.surface,
-    topBar = {
-      WeatherListTopBar(
-        scrollBehavior = scrollBehavior,
-        hazeState = listHazeState,
-        onNavigateBack = { navController.removeLastOrNull() },
-        onSearchClick = { navController.add(Routes.CitySelect) }
-      )
-    }
-  ) { paddingValues ->
-
-    // 删除城市确认对话框
-    DeleteCityDialog(
-      cityName = selectedCity?.name.orEmpty(),
-      show = showDialog,
-      onConfirm = {
-        selectedCity?.let { city ->
-          disintegratingCityId = city.id.hashCode().toLong()
-        }
-      },
-      onDismiss = { showDialog.value = false }
-    )
-
-    // ==================== 可拖拽排序列表 ====================
-    val listState = remember { androidx.compose.foundation.lazy.LazyListState() }
-
-    // 拖拽排序状态，限制首个 item 不参与拖拽
-    val reorderableLazyListState = rememberReorderableLazyListState(listState) { from, to ->
-      if (from.index == 0 || to.index == 0) return@rememberReorderableLazyListState
-
-      val city1 = tempList[from.index].city
-      val city2 = tempList[to.index].city
-      viewModel.swapSort(city1, city2)
-      
-      tempList = tempList.toMutableList().apply {
-        add(to.index, removeAt(from.index))
+  ThanosEffectHost(Modifier.fillMaxSize()) {
+    Scaffold(
+      containerColor = MaterialTheme.colorScheme.surface,
+      topBar = {
+        WeatherListTopBar(
+          scrollBehavior = scrollBehavior,
+          hazeState = listHazeState,
+          onNavigateBack = { navController.removeLastOrNull() },
+          onSearchClick = { navController.add(Routes.CitySelect) }
+        )
       }
-      
-      hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
-    }
+    ) { paddingValues ->
 
-    LazyColumn(
-      state = listState,
-      modifier = Modifier
-        .hazeSource(listHazeState)
-        .fillMaxSize()
-        .padding(paddingValues)
-        .nestedScroll(scrollBehavior.nestedScrollConnection),
-      contentPadding = PaddingValues(top = 12.dp, bottom = 48.dp),
-    ) {
-      itemsIndexed(
-        items = tempList,
-        key = { _, city -> city.city.id }
-      ) { index, item ->
-        ReorderableItem(
-          reorderableLazyListState,
-          key = item.city.id,
-          enabled = index != 0
-        ) {
-          WeatherListItem(
-            item = item,
-            index = index,
-            isDrag = isDrag,
-            disintegratingCityId = disintegratingCityId,
-            onDragStart = { isDrag = true },
-            onDragStop = { isDrag = false },
-            onClick = {
-              if (!item.city.isUserLocation && disintegratingCityId == null) {
-                selectedCity = item.city
-                showDialog.value = true
+      // 删除城市确认对话框
+      DeleteCityDialog(
+        cityName = selectedCity?.name.orEmpty(),
+        show = showDialog,
+        onConfirm = {
+          selectedCity?.let { city ->
+            disintegratingCityId = city.id
+          }
+        },
+        onDismiss = { showDialog.value = false }
+      )
+
+      // ==================== 可拖拽排序列表 ====================
+      val listState = remember { androidx.compose.foundation.lazy.LazyListState() }
+
+      // 拖拽排序状态，限制首个 item 不参与拖拽
+      val reorderableLazyListState = rememberReorderableLazyListState(listState) { from, to ->
+        if (from.index == 0 || to.index == 0) return@rememberReorderableLazyListState
+
+        val city1 = tempList[from.index].city
+        val city2 = tempList[to.index].city
+        viewModel.swapSort(city1, city2)
+
+        tempList = tempList.toMutableList().apply {
+          add(to.index, removeAt(from.index))
+        }
+
+        hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+      }
+
+      LazyColumn(
+        state = listState,
+        modifier = Modifier
+          .hazeSource(listHazeState)
+          .fillMaxSize()
+          .padding(paddingValues)
+          .nestedScroll(scrollBehavior.nestedScrollConnection),
+        contentPadding = PaddingValues(top = 12.dp, bottom = 48.dp),
+      ) {
+        itemsIndexed(
+          items = tempList,
+          key = { _, city -> city.city.id }
+        ) { index, item ->
+          ReorderableItem(
+            reorderableLazyListState,
+            key = item.city.id,
+            enabled = index != 0 && disintegratingCityId == null
+          ) {
+            WeatherListItem(
+              item = item,
+              index = index,
+              isDrag = isDrag,
+              disintegratingCityId = disintegratingCityId,
+              onDragStart = { isDrag = true },
+              onDragStop = { isDrag = false },
+              onClick = {
+                if (!item.city.isUserLocation && disintegratingCityId == null) {
+                  selectedCity = item.city
+                  showDialog.value = true
+                }
+              },
+              onDisintegrationComplete = {
+                if (disintegratingCityId == item.city.id) {
+                  viewModel.deleteCity(item.city)
+                  disintegratingCityId = null
+                  selectedCity = null
+                }
               }
-            },
-            onDisintegrationComplete = {
-              selectedCity?.let { city ->
-                viewModel.deleteCity(city)
-              }
-              disintegratingCityId = null
-              selectedCity = null
-            }
-          )
+            )
+          }
         }
       }
     }

@@ -267,6 +267,7 @@ HEFENG_API_ID=your_api_id_here
 - [和风天气](https://www.qweather.com/) - 提供稳定可靠的天气数据服务（[如何配置 API Key](#2-配置-localproperties)）
 - [Jetpack Compose](https://developer.android.com/jetpack/compose) - Google 官方现代 UI 工具包
 - [Compose Material 3](https://developer.android.com/jetpack/androidx/releases/compose-material3) - 原生组件与自定义 MIUI 风格主题
+- [Aghajari/ThanosEffect](https://github.com/Aghajari/ThanosEffect) - 城市删除粒子消散效果的运动算法参考
 - 所有为本项目做出贡献的开发者
 
 ## 📮 联系方式

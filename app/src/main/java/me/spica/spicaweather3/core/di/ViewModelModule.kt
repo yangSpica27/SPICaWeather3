@@ -71,7 +71,7 @@ val viewModelModule = module {
       refreshWeatherUseCase = get(),
       manageCitiesUseCase = get(),
       locationUseCase = get(),
-      dataStoreUtil = get()
+      dataStoreUtil = get(),
     )
   }
 }

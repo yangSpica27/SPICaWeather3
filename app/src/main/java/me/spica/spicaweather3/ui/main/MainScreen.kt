@@ -45,6 +45,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -145,6 +146,8 @@ fun MainScreen(
     val topBarGlassStyle = remember {
         GlassStyle.regular.then {
             shape(RoundedCornerShape(0.dp))
+            edgeShadow(Color.Transparent)
+            specularIntensity(0f)
             optics(blurRadius = 8.dp, refractionDisplacement = 10.dp)
             chromaMultiplier(1.6f)
             chromaticAberrationStrength(0.1f)

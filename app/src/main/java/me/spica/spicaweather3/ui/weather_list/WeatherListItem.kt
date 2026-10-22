@@ -74,7 +74,7 @@ fun ReorderableCollectionItemScope.WeatherListItem(
     item: WeatherPageState,
     index: Int,
     isDrag: Boolean,
-    disintegratingCityId: Long?,
+    disintegratingCityId: String?,
     onDragStart: () -> Unit,
     onDragStop: () -> Unit,
     onClick: () -> Unit,
@@ -125,25 +125,17 @@ fun ReorderableCollectionItemScope.WeatherListItem(
         val shouldShake = isDrag && !draging
 
         // 判断当前卡片是否正在消散
-        val isThisCardDisintegrating =
-            disintegratingCityId == item.city.id.hashCode().toLong()
-
-        // 消散完成后标记，用于隐藏卡片防止闪烁
-        var hasDisintegrated by remember { mutableStateOf(false) }
+        val isThisCardDisintegrating = disintegratingCityId == item.city.id
 
         ThanosDisintegrateContainer(
             isDisintegrating = isThisCardDisintegrating,
-            onDisintegrationComplete = {
-                hasDisintegrated = true
-                onDisintegrationComplete()
-            },
+            onDisintegrationComplete = onDisintegrationComplete,
             modifier = Modifier
                 .fillMaxSize()
                 .graphicsLayer {
                     scaleX = scale * progress
                     scaleY = scale * progress
                     translationY = (1f - progress) * 36.dp.toPx()
-                    alpha = if (hasDisintegrated) 0f else 1f
 
                     // 应用细微的抖动效果（首项不抖动）
                     if (shouldShake && index != 0) {
@@ -153,14 +145,13 @@ fun ReorderableCollectionItemScope.WeatherListItem(
                 }
                 .padding(top = if (index != 0) 12.dp else 0.dp)
                 .padding(horizontal = 22.dp)
-                .then(if (hasDisintegrated) Modifier else Modifier)
         ) {
             WeatherItemContent(
                 modifier = Modifier
                     .fillMaxSize()
                     .noRippleClickable(onClick = onClick)
                     .longPressDraggableHandle(
-                        enabled = index != 0,
+                        enabled = index != 0 && disintegratingCityId == null,
                         onDragStarted = {
                             onDragStart()
                             draging = true
@@ -259,6 +250,10 @@ private fun WeatherItemContent(
         // 温度或加载动画
         AnimatedContent(
             targetState = cityData,
+            // 数据库更新会重建状态对象，仅在加载状态或温度变化时切换内容。
+            contentKey = { state ->
+                (state is WeatherPageState.Data) to state.city.weather?.current?.temperature
+            },
             label = "city_state",
             transitionSpec = { fadeIn() togetherWith fadeOut() }
         ) { state ->
